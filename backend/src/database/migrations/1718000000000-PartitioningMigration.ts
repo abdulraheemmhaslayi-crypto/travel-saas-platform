@@ -2,6 +2,10 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class PartitioningMigration1718000000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const hasTable = await queryRunner.hasTable('audit_logs');
+    if (!hasTable) {
+      return;
+    }
     // 1. Rename existing audit_logs table to a backup table
     await queryRunner.query('ALTER TABLE "audit_logs" RENAME TO "audit_logs_old"');
 

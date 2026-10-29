@@ -66,7 +66,7 @@ import { RecoveryModule } from './recovery/recovery.module';
         synchronize: process.env.NODE_ENV !== 'production' || process.env.DB_SYNCHRONIZE !== 'false',
         logging: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : false,
         migrations: [__dirname + '/database/migrations/**/*{.ts,.js}'],
-        migrationsRun: true,
+        migrationsRun: process.env.MIGRATIONS_RUN === 'true',
         extra: {
           max: 50,
           min: 5,
