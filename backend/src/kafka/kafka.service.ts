@@ -9,21 +9,38 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   constructor(@Inject('KAFKA_CLIENT') private readonly kafka: Kafka) {}
 
   async onModuleInit(): Promise<void> {
-    this.producer = this.kafka.producer({
-      allowAutoTopicCreation: true,
-      transactionTimeout: 30000,
-    });
+    if (process.env.KAFKA_ENABLED === 'false') {
+      this.logger.warn('Kafka is disabled (KAFKA_ENABLED=false). Running in fallback mode.');
+      return;
+    }
+    try {
+      this.producer = this.kafka.producer({
+        allowAutoTopicCreation: true,
+        transactionTimeout: 30000,
+      });
 
-    await this.producer.connect();
-    this.logger.log('Kafka producer connected');
+      await this.producer.connect();
+      this.logger.log('Kafka producer connected');
+    } catch (error: any) {
+      this.logger.warn(`Kafka producer connection failed: ${error?.message || error}. Continuing in fallback mode.`);
+      this.producer = null as any;
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.producer.disconnect();
-    this.logger.log('Kafka producer disconnected');
+    if (this.producer) {
+      try {
+        await this.producer.disconnect();
+        this.logger.log('Kafka producer disconnected');
+      } catch (err) {}
+    }
   }
 
   async publish(topic: string, message: any, key?: string): Promise<void> {
+    if (!this.producer) {
+      this.logger.debug(`Kafka not connected. Skipped publishing to ${topic}`);
+      return;
+    }
     try {
       await this.producer.send({
         topic,
@@ -54,6 +71,10 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   async publishBatch(topic: string, messages: any[]): Promise<void> {
+    if (!this.producer) {
+      this.logger.debug(`Kafka not connected. Skipped publishing batch to ${topic}`);
+      return;
+    }
     try {
       await this.producer.send({
         topic,
@@ -78,6 +99,10 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   async sendTransaction(topics: { topic: string; message: any; key?: string }[]): Promise<void> {
+    if (!this.producer) {
+      this.logger.debug(`Kafka not connected. Skipped transaction`);
+      return;
+    }
     const transaction = await this.producer.transaction();
 
     try {

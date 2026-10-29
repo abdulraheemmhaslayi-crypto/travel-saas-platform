@@ -34,13 +34,18 @@ export class KafkaConsumer implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    this.consumer = this.kafka.consumer({
-      groupId: 'travel-saas-consumer-group',
-      sessionTimeout: 30000,
-      heartbeatInterval: 3000,
-    });
+    if (process.env.KAFKA_ENABLED === 'false') {
+      this.logger.warn('Kafka is disabled (KAFKA_ENABLED=false). Skipping consumer connection.');
+      return;
+    }
+    try {
+      this.consumer = this.kafka.consumer({
+        groupId: 'travel-saas-consumer-group',
+        sessionTimeout: 30000,
+        heartbeatInterval: 3000,
+      });
 
-    await this.consumer.connect();
+      await this.consumer.connect();
 
     for (const topic of this.topics) {
       await this.consumer.subscribe({ topic, fromBeginning: false });
@@ -56,11 +61,19 @@ export class KafkaConsumer implements OnModuleInit, OnModuleDestroy {
     });
 
     this.logger.log(`Kafka consumer started, subscribed to ${this.topics.length} topics and retry queues`);
+    } catch (error: any) {
+      this.logger.warn(`Kafka consumer failed to connect: ${error?.message || error}. Continuing without Kafka consumer.`);
+      this.consumer = null as any;
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.consumer.disconnect();
-    this.logger.log('Kafka consumer disconnected');
+    if (this.consumer) {
+      try {
+        await this.consumer.disconnect();
+        this.logger.log('Kafka consumer disconnected');
+      } catch (err) {}
+    }
   }
 
   private async handleMessage(payload: EachMessagePayload): Promise<void> {
