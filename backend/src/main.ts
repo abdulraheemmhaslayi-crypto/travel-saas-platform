@@ -23,9 +23,7 @@ async function bootstrap() {
     logger,
     rawBody: true,
     cors: {
-      origin: process.env.NODE_ENV === 'production' 
-        ? ['https://yourdomain.com', 'https://admin.yourdomain.com'] 
-        : true,
+      origin: true,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

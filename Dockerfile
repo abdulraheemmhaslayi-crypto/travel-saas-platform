@@ -9,6 +9,7 @@ RUN npm ci
 
 COPY backend/ ./
 RUN npm run build
+RUN if [ -f dist/src/main.js ] && [ ! -f dist/main.js ]; then cp dist/src/main.js dist/main.js; fi
 
 # =============================================================
 # Stage 2: Build Frontend (Next.js)

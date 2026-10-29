@@ -9,10 +9,11 @@ echo "=========================================================="
 echo "==> Starting Redis server..."
 redis-server --daemonize yes --protected-mode no || echo "Redis started or external"
 
-# 2. Setup & Start Local Postgres (if DATABASE_HOST is localhost or 127.0.0.1)
+# 2. Setup & Start Local Postgres (if DATABASE_HOST is localhost or not provided or dummy)
 TARGET_DB_HOST="${DATABASE_HOST:-localhost}"
-if [ "$TARGET_DB_HOST" = "localhost" ] || [ "$TARGET_DB_HOST" = "127.0.0.1" ]; then
+if [ "$TARGET_DB_HOST" = "localhost" ] || [ "$TARGET_DB_HOST" = "127.0.0.1" ] || [ "$TARGET_DB_HOST" = "your-database-host" ] || [ -z "$TARGET_DB_HOST" ]; then
     echo "==> Configuring Embedded PostgreSQL..."
+    export DATABASE_HOST="localhost"
     mkdir -p /var/lib/postgresql/data /run/postgresql
     chown -R postgres:postgres /var/lib/postgresql /run/postgresql
     chmod 0775 /run/postgresql
@@ -55,4 +56,3 @@ envsubst '${PORT_TO_LISTEN}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx
 # 4. Start Supervisord (Backend, Frontend, Nginx)
 echo "==> Launching Supervisord..."
 exec /usr/bin/supervisord -c /etc/supervisord.conf
-

@@ -63,7 +63,7 @@ import { RecoveryModule } from './recovery/recovery.module';
         ssl: configService.get('database.ssl') ? { rejectUnauthorized: false } : false,
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         autoLoadEntities: true,
-        synchronize: process.env.NODE_ENV !== 'production',
+        synchronize: process.env.NODE_ENV !== 'production' || process.env.DB_SYNCHRONIZE !== 'false',
         logging: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : false,
         migrations: [__dirname + '/database/migrations/**/*{.ts,.js}'],
         migrationsRun: true,
