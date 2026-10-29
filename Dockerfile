@@ -20,6 +20,7 @@ COPY frontend-web/package*.json ./
 RUN npm ci
 
 COPY frontend-web/ ./
+RUN mkdir -p /app/frontend-web/public
 ENV NEXT_PUBLIC_API_URL=/api/v1
 RUN npm run build
 
@@ -84,4 +85,3 @@ ENV NODE_ENV=production \
 EXPOSE 80 3000
 
 CMD ["/app/start.sh"]
-
