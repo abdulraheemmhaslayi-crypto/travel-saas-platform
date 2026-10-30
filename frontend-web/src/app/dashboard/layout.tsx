@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/layout/Navbar';
 import Sidebar from '@/components/layout/Sidebar';
@@ -15,6 +16,7 @@ export default function DashboardLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isLoading, isInitializing } = useAuth();
+  const pathname = usePathname();
 
   if (isInitializing) {
     return <Loading fullScreen text="Resolving account role and initializing..." />;
@@ -22,6 +24,15 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return <Loading fullScreen text="Loading dashboard..." />;
+  }
+
+  // Full-bleed seamless layout for passenger home dashboard (matches custom mock design)
+  if (pathname === '/dashboard/passenger') {
+    return (
+      <ProtectedRoute allowedUserTypes={['PASSENGER', 'DRIVER', 'FLEET_OWNER', 'SUPPORT']}>
+        {children}
+      </ProtectedRoute>
+    );
   }
 
   return (
