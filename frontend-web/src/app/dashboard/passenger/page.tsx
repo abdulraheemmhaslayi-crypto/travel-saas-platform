@@ -1,778 +1,617 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import apiClient from '@/lib/api';
 import { useAuthStore } from '@/store/slices/authSlice';
-import { useNotificationStore } from '@/store/slices/notificationSlice';
+import { useBookingStore } from '@/store/slices/bookingSlice';
 import { useTripStore } from '@/store/slices/tripSlice';
-import PassengerTripMap from '@/components/passenger/PassengerTripMap';
+import { useNotificationStore } from '@/store/slices/notificationSlice';
+import { usePassengerStore } from '@/store/slices/passengerStore';
+import { formatDateTime, formatCurrency, cn } from '@/lib/utils';
+import { Booking } from '@/types/booking';
 import {
-  Home,
-  Compass,
   Calendar,
-  Wallet,
-  LifeBuoy,
-  Settings,
   MapPin,
   Bell,
-  ChevronDown,
-  ArrowUpDown,
-  Search,
-  Crosshair,
-  Users,
-  Plane,
-  Car,
+  Wallet,
+  TrendingUp,
+  ArrowRight,
   Clock,
+  Star,
+  Search,
+  Navigation,
+  CreditCard,
+  Shield,
+  CheckCircle,
+  XCircle,
+  Upload,
+  AlertTriangle,
+  Zap,
   ChevronRight,
-  Mountain,
-  Milestone,
-  Check,
-  LogOut,
-  FileText,
+  Car,
+  User as UserIcon,
+  Phone,
+  Share2,
+  Eye,
+  Plus,
+  Sparkles,
+  Route,
+  PlayCircle,
+  Ban,
+  Heart,
+  Ticket,
+  LifeBuoy,
 } from 'lucide-react';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
 
 export default function PassengerDashboardPage() {
-  const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const { unreadCount, getUnreadCount } = useNotificationStore();
+  const { user } = useAuthStore();
+  const { bookings, getMyBookings } = useBookingStore();
   const { popularRoutes, getPopularRoutes } = useTripStore();
+  const { unreadCount, notifications, getUnreadCount, getNotifications } = useNotificationStore();
+  const { favoriteRoutes } = usePassengerStore();
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletCurrency, setWalletCurrency] = useState('INR');
 
-  // Selected City / Location
-  const [currentCity, setCurrentCity] = useState('Mumbai, India');
-  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-
-  // Search parameters matching mockup
-  const [tripType, setTripType] = useState<'ONE_WAY' | 'ROUND_TRIP' | 'HOURLY'>('ONE_WAY');
-  const [origin, setOrigin] = useState('Mumbai, India');
-  const [destination, setDestination] = useState('');
-  const [departureDate, setDepartureDate] = useState('Thu, 30 Oct 2026');
-  const [departureTime, setDepartureTime] = useState('10:30 AM');
-  const [passengerCount, setPassengerCount] = useState(1);
-  const [isPassengerDropdownOpen, setIsPassengerDropdownOpen] = useState(false);
-
-  // Active route preview details
-  const [routeDuration, setRouteDuration] = useState('35 min');
-  const [routeDistance, setRouteDistance] = useState('18 km');
-  const [routeFare, setRouteFare] = useState('₹450 - ₹550');
+  const loadWallet = useCallback(async () => {
+    try {
+      const walletRes = await apiClient.getWallet();
+      setWalletBalance(walletRes.data.balance);
+      setWalletCurrency(walletRes.data.currency || 'INR');
+    } catch {
+      setWalletBalance(null);
+      setWalletCurrency('INR');
+    }
+  }, []);
 
   useEffect(() => {
-    getUnreadCount();
+    getMyBookings({ limit: 10 });
     getPopularRoutes();
-  }, [getUnreadCount, getPopularRoutes]);
+    getUnreadCount();
+    getNotifications({ limit: 3 });
+    loadWallet();
+  }, [getMyBookings, getPopularRoutes, getUnreadCount, getNotifications, loadWallet]);
 
-  // Real user details fallback to mockup
-  const displayName = useMemo(() => {
-    if (user?.firstName) return user.firstName;
-    return 'Arman';
-  }, [user]);
+  // ─── Computed Data ────────────────────────────────────────────────────────
+  const upcomingBookings = useMemo(
+    () => bookings.filter((b) => b.status === 'CONFIRMED' || b.status === 'PENDING'),
+    [bookings]
+  );
+  const ongoingBookings = useMemo(
+    () => bookings.filter((b) => (b.status as string) === 'ON_TRIP' || (b.status as string) === 'CHECKED_IN'),
+    [bookings]
+  );
+  const completedBookings = useMemo(
+    () => bookings.filter((b) => b.status === 'COMPLETED'),
+    [bookings]
+  );
+  const cancelledBookings = useMemo(
+    () => bookings.filter((b) => b.status === 'CANCELLED'),
+    [bookings]
+  );
+  const nextTrip = upcomingBookings[0] || ongoingBookings[0];
 
-  const initials = useMemo(() => {
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
-    }
-    if (user?.firstName) return user.firstName.slice(0, 2).toUpperCase();
-    return 'AK';
-  }, [user]);
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }, []);
 
-  // Swap Origin and Destination
-  const handleSwapLocations = () => {
-    const temp = origin;
-    setOrigin(destination || 'Mumbai, India');
-    setDestination(temp);
-  };
-
-  // Detect GPS Location
-  const handleDetectLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        () => {
-          setOrigin('Current location (Mumbai)');
-        },
-        () => {
-          setOrigin('Mumbai, India');
-        }
-      );
-    }
-  };
-
-  // Category quick selects
-  const handleCategorySelect = (category: string) => {
-    if (category === 'Airport') {
-      setDestination('Chhatrapati Shivaji Maharaj International Airport');
-      setRouteDuration('35 min');
-      setRouteDistance('18 km');
-      setRouteFare('₹450 - ₹550');
-    } else if (category === 'Nearby') {
-      setDestination('Bandra Kurla Complex (BKC), Mumbai');
-      setRouteDuration('25 min');
-      setRouteDistance('12 km');
-      setRouteFare('₹320 - ₹400');
-    } else if (category === 'Weekend getaway') {
-      setDestination('Lonavala, Maharashtra');
-      setRouteDuration('2 h');
-      setRouteDistance('83 km');
-      setRouteFare('₹1,800');
-    } else if (category === 'Outstation') {
-      setDestination('Pune, Maharashtra');
-      setRouteDuration('3 h');
-      setRouteDistance('150 km');
-      setRouteFare('₹2,500');
-    }
-  };
-
-  // Search trips navigation
-  const handleSearchTrips = () => {
-    const targetDest = destination.trim() || 'Chhatrapati Shivaji Maharaj International Airport';
-    router.push(
-      `/dashboard/trips/search?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(
-        targetDest
-      )}&type=${tripType}&passengers=${passengerCount}`
-    );
-  };
-
-  // Book trip CTA
-  const handleBookTrip = () => {
-    const targetDest = destination.trim() || 'Chhatrapati Shivaji Maharaj International Airport';
-    router.push(
-      `/dashboard/trips/search?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(
-        targetDest
-      )}&autoSelect=standard`
-    );
-  };
-
-  // Popular destination card select
-  const handleSelectPopular = (name: string, dist: string, time: string, fare: string) => {
-    setDestination(`${name}, Maharashtra`);
-    setRouteDistance(dist);
-    setRouteDuration(time);
-    setRouteFare(fare);
-  };
-
-  // Available cities in dropdown
-  const cities = ['Mumbai, India', 'Pune, India', 'Delhi NCR, India', 'Bengaluru, India', 'Goa, India'];
+  // ─── KYC Status ───────────────────────────────────────────────────────────
+  const kycStatus = user?.kycStatus || 'PENDING';
+  const showKycBanner = kycStatus === 'PENDING' || kycStatus === 'REJECTED';
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex">
-      {/* ─────────────────────────────────────────────────────────────
-          1. LEFT SIDEBAR (Matching mockup exact layout & styling)
-      ───────────────────────────────────────────────────────────── */}
-      <aside className="w-64 bg-white border-r border-slate-200/80 min-h-screen flex flex-col justify-between p-6 flex-shrink-0 z-20">
+    <div className="space-y-6">
+      {/* ── Welcome Header ──────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          {/* Brand Logo */}
-          <Link href="/dashboard/passenger" className="flex items-center gap-2.5 mb-8 group">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/30">
-              <MapPin className="w-5 h-5 fill-white text-blue-600" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
-              TravelFlow
-            </span>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+            {greeting}, {user?.firstName}! 👋
+          </h1>
+          <p className="text-gray-400 mt-1 text-sm">
+            Here&apos;s what&apos;s happening with your trips today.
+          </p>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <Link href="/dashboard/notifications">
+            <Button variant="secondary" className="relative !py-2.5 !px-3">
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Button>
           </Link>
-
-          {/* Navigation Links */}
-          <nav className="space-y-1.5">
-            {/* Home (Active state matching mockup) */}
-            <Link
-              href="/dashboard/passenger"
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl bg-blue-50 text-blue-600 font-semibold text-sm transition-all"
-            >
-              <Home className="w-5 h-5" />
-              <span>Home</span>
-            </Link>
-
-            {/* Explore */}
-            <Link
-              href="/dashboard/trips/search"
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all"
-            >
-              <Compass className="w-5 h-5" />
-              <span>Explore</span>
-            </Link>
-
-            {/* My Trips */}
-            <Link
-              href="/dashboard/bookings?status=CONFIRMED"
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all"
-            >
-              <Calendar className="w-5 h-5" />
-              <span>My Trips</span>
-            </Link>
-
-            {/* Bookings */}
-            <Link
-              href="/dashboard/bookings"
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all"
-            >
-              <FileText className="w-5 h-5" />
-              <span>Bookings</span>
-            </Link>
-
-            {/* Wallet */}
-            <Link
-              href="/dashboard/wallet"
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all"
-            >
-              <Wallet className="w-5 h-5" />
-              <span>Wallet</span>
-            </Link>
-
-            {/* Support */}
-            <Link
-              href="/dashboard/support"
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all"
-            >
-              <LifeBuoy className="w-5 h-5" />
-              <span>Support</span>
-            </Link>
-
-            {/* Profile & Settings */}
-            <Link
-              href="/dashboard/passenger/settings"
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all"
-            >
-              <Settings className="w-5 h-5" />
-              <span>Profile & Settings</span>
-            </Link>
-          </nav>
+          <Link href="/dashboard/trips/search">
+            <Button className="!py-2.5 gap-2">
+              <Search className="w-4 h-4" />
+              <span className="hidden sm:inline">Book a Trip</span>
+              <span className="sm:hidden">Search</span>
+            </Button>
+          </Link>
         </div>
+      </div>
 
-        {/* Bottom Banner Promo Card (Matching mockup image) */}
-        <div className="relative rounded-2xl p-4 bg-gradient-to-b from-blue-50 via-sky-50 to-blue-100/70 border border-blue-100/90 shadow-sm overflow-hidden mt-6">
-          <div className="relative z-10">
-            <h4 className="text-sm font-bold text-slate-900 leading-snug">
-              Travel anywhere with TravelFlow
-            </h4>
-            <p className="text-[11px] text-slate-500 mt-1">Safe • Reliable • Comfortable</p>
-          </div>
-
-          {/* Car Artwork container */}
-          <div className="mt-4 flex items-center justify-center">
-            <img
-              src="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=350&auto=format&fit=crop&q=80"
-              alt="Travel Blue Car"
-              className="h-16 w-full object-contain filter drop-shadow-md"
-            />
-          </div>
-        </div>
-      </aside>
-
-      {/* ─────────────────────────────────────────────────────────────
-          2. MAIN CONTENT AREA (Topbar + 2-Column Upper + Popular Lower)
-      ───────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header Bar */}
-        <header className="h-18 px-8 py-4 bg-white border-b border-slate-200/80 flex items-center justify-between z-10">
-          {/* Location Selector Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-sm font-semibold text-slate-800 transition-colors"
-            >
-              <MapPin className="w-4 h-4 text-blue-600" />
-              <span>{currentCity}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-500 ml-1" />
-            </button>
-
-            {isCityDropdownOpen && (
-              <div className="absolute left-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-30 animate-in fade-in slide-in-from-top-2 duration-150">
-                {cities.map((city) => (
-                  <button
-                    key={city}
-                    onClick={() => {
-                      setCurrentCity(city);
-                      setOrigin(city);
-                      setIsCityDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center justify-between"
-                  >
-                    <span>{city}</span>
-                    {currentCity === city && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </button>
-                ))}
-              </div>
+      {/* ── KYC Banner ──────────────────────────────────────────────────── */}
+      {showKycBanner && (
+        <div className={`rounded-2xl p-4 flex items-start gap-3 ${
+          kycStatus === 'REJECTED'
+            ? 'bg-red-50 border border-red-100'
+            : 'bg-amber-50 border border-amber-100'
+        }`}>
+          <div className={`p-2 rounded-xl ${
+            kycStatus === 'REJECTED' ? 'bg-red-100' : 'bg-amber-100'
+          }`}>
+            {kycStatus === 'REJECTED' ? (
+              <XCircle className="w-5 h-5 text-red-600" />
+            ) : (
+              <Shield className="w-5 h-5 text-amber-600" />
             )}
           </div>
-
-          {/* Right Header Controls (Notifications & Profile) */}
-          <div className="flex items-center gap-4">
-            {/* Notification Bell with Red Badge */}
-            <Link
-              href="/dashboard/notifications"
-              className="relative p-2 rounded-full hover:bg-slate-100 text-slate-700 transition-colors"
-              title="Notifications"
-            >
-              <Bell className="w-5 h-5 text-slate-600" />
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                {unreadCount > 9 ? '9+' : unreadCount || '0'}
-              </span>
-            </Link>
-
-            {/* User Profile Avatar & Name */}
-            <div className="relative">
-              <button
-                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-50 transition-colors"
-              >
-                <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center border border-blue-200">
-                  {initials}
-                </div>
-                <span className="text-sm font-semibold text-slate-800 hidden sm:inline">
-                  {displayName}
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-              </button>
-
-              {isProfileDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-30">
-                  <div className="px-4 py-2 border-b border-slate-100">
-                    <p className="text-xs font-semibold text-slate-900">{displayName}</p>
-                    <p className="text-[11px] text-slate-500 truncate">{user?.email || 'user@travelflow.com'}</p>
-                  </div>
-                  <Link
-                    href="/dashboard/passenger/settings"
-                    onClick={() => setIsProfileDropdownOpen(false)}
-                    className="block px-4 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600"
-                  >
-                    My Profile
-                  </Link>
-                  <Link
-                    href="/dashboard/wallet"
-                    onClick={() => setIsProfileDropdownOpen(false)}
-                    className="block px-4 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600"
-                  >
-                    Wallet Balance
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setIsProfileDropdownOpen(false);
-                      logout();
-                    }}
-                    className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-1.5"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Sign out</span>
-                  </button>
-                </div>
-              )}
-            </div>
+          <div className="flex-1 min-w-0">
+            <h3 className={`text-sm font-bold ${
+              kycStatus === 'REJECTED' ? 'text-red-800' : 'text-amber-800'
+            }`}>
+              {kycStatus === 'REJECTED' ? 'KYC Verification Rejected' : 'Complete Your KYC'}
+            </h3>
+            <p className={`text-xs mt-0.5 ${
+              kycStatus === 'REJECTED' ? 'text-red-600' : 'text-amber-600'
+            }`}>
+              {kycStatus === 'REJECTED'
+                ? 'Your KYC documents were rejected. Please re-submit with valid documents.'
+                : 'Verify your identity to unlock all features and start booking trips.'}
+            </p>
           </div>
-        </header>
+          <Link href="/dashboard/profile?tab=kyc">
+            <Button size="sm" variant={kycStatus === 'REJECTED' ? 'danger' : 'primary'} className="shrink-0">
+              <Upload className="w-3.5 h-3.5 mr-1.5" />
+              {kycStatus === 'REJECTED' ? 'Re-submit' : 'Complete KYC'}
+            </Button>
+          </Link>
+        </div>
+      )}
 
-        {/* Scrollable Dashboard Body */}
-        <main className="p-8 space-y-8 overflow-y-auto max-w-[1400px]">
-          {/* ─────────────────────────────────────────────────────────
-              UPPER SECTION: 2 COLUMNS (Search Form vs. Interactive Map)
-          ───────────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* LEFT COLUMN: Booking Form (5 Cols) */}
-            <div className="lg:col-span-5 space-y-4">
-              <div>
-                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  Where would you like to go?
-                </h1>
-                <p className="text-slate-500 text-sm mt-1">Your next journey starts here.</p>
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { href: '/dashboard/trips/search', icon: Search, label: 'Search', iconColor: 'text-gray-700 bg-slate-50 border border-slate-100' },
+          { href: '/dashboard/bookings', icon: Ticket, label: 'Bookings', iconColor: 'text-gray-700 bg-slate-50 border border-slate-100' },
+          { href: '/dashboard/wallet', icon: Wallet, label: 'Wallet', iconColor: 'text-gray-700 bg-slate-50 border border-slate-100' },
+          { href: '/dashboard/support', icon: LifeBuoy, label: 'Support', iconColor: 'text-gray-700 bg-slate-50 border border-slate-100' },
+        ].map((action) => (
+          <Link key={action.href} href={action.href}>
+            <div className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl bg-white border border-gray-100 hover:border-gray-200 hover:shadow-[0_1px_3px_rgba(0,0,0,0.03)] transition-all duration-200 cursor-pointer group">
+              <div className={cn('p-2 rounded-xl border border-transparent transition-colors', action.iconColor)}>
+                <action.icon className="w-4 h-4" />
               </div>
-
-              {/* Main Booking Card */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
-                {/* Trip Type Tabs */}
-                <div className="flex items-center gap-6 border-b border-slate-100 pb-3 mb-5 text-sm font-semibold">
-                  <button
-                    onClick={() => setTripType('ONE_WAY')}
-                    className={`flex items-center gap-2 pb-2 transition-all relative ${
-                      tripType === 'ONE_WAY'
-                        ? 'text-blue-600 font-bold after:content-[""] after:absolute after:bottom-[-13px] after:left-0 after:right-0 after:h-0.5 after:bg-blue-600'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Car className="w-4 h-4" />
-                    <span>One Way</span>
-                  </button>
-
-                  <button
-                    onClick={() => setTripType('ROUND_TRIP')}
-                    className={`flex items-center gap-2 pb-2 transition-all relative ${
-                      tripType === 'ROUND_TRIP'
-                        ? 'text-blue-600 font-bold after:content-[""] after:absolute after:bottom-[-13px] after:left-0 after:right-0 after:h-0.5 after:bg-blue-600'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Clock className="w-4 h-4" />
-                    <span>Round Trip</span>
-                  </button>
-
-                  <button
-                    onClick={() => setTripType('HOURLY')}
-                    className={`flex items-center gap-2 pb-2 transition-all relative ${
-                      tripType === 'HOURLY'
-                        ? 'text-blue-600 font-bold after:content-[""] after:absolute after:bottom-[-13px] after:left-0 after:right-0 after:h-0.5 after:bg-blue-600'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Clock className="w-4 h-4" />
-                    <span>Hourly Rental</span>
-                  </button>
-                </div>
-
-                {/* Origin & Destination Container with Connector and Swap */}
-                <div className="relative bg-slate-50/70 border border-slate-200/90 rounded-2xl p-3 space-y-2 mb-4">
-                  {/* Origin */}
-                  <div className="flex items-center gap-3 px-2 py-1.5">
-                    <div className="w-3 h-3 rounded-full bg-blue-600 ring-4 ring-blue-100 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Current location
-                      </label>
-                      <input
-                        type="text"
-                        value={origin}
-                        onChange={(e) => setOrigin(e.target.value)}
-                        placeholder="Enter pickup point"
-                        className="w-full bg-transparent text-sm font-semibold text-slate-800 focus:outline-none truncate"
-                      />
-                    </div>
-                    <button
-                      onClick={handleDetectLocation}
-                      className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                      title="Detect GPS"
-                    >
-                      <Crosshair className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Vertical dotted connecting line */}
-                  <div className="absolute left-[21px] top-[34px] bottom-[34px] w-0.5 border-l-2 border-dotted border-slate-300 pointer-events-none" />
-
-                  {/* Absolute Swap Button */}
-                  <button
-                    onClick={handleSwapLocations}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white rounded-xl shadow-md border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-all z-10"
-                    title="Swap Pickup and Destination"
-                  >
-                    <ArrowUpDown className="w-4 h-4" />
-                  </button>
-
-                  <div className="h-px bg-slate-200/80 my-1 mx-2" />
-
-                  {/* Destination */}
-                  <div className="flex items-center gap-3 px-2 py-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-500 ring-4 ring-red-100 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Search destination
-                      </label>
-                      <input
-                        type="text"
-                        value={destination}
-                        onChange={(e) => setDestination(e.target.value)}
-                        placeholder="Enter city, airport, or landmark"
-                        className="w-full bg-transparent text-sm font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:outline-none truncate"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Date & Time + Passengers Selector */}
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  {/* Date & Time Box */}
-                  <div className="border border-slate-200/90 rounded-xl p-2.5 bg-white flex items-center justify-between cursor-pointer hover:border-blue-400 transition-colors">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Calendar className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                      <div className="truncate">
-                        <div className="text-xs font-bold text-slate-800 truncate">{departureDate}</div>
-                        <div className="text-[11px] text-slate-500">{departureTime}</div>
-                      </div>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 ml-1" />
-                  </div>
-
-                  {/* Passengers Dropdown */}
-                  <div className="relative">
-                    <div
-                      onClick={() => setIsPassengerDropdownOpen(!isPassengerDropdownOpen)}
-                      className="border border-slate-200/90 rounded-xl p-2.5 bg-white flex items-center justify-between cursor-pointer hover:border-blue-400 transition-colors h-full"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Users className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                        <span className="text-xs font-bold text-slate-800">
-                          {passengerCount} {passengerCount === 1 ? 'Passenger' : 'Passengers'}
-                        </span>
-                      </div>
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 ml-1" />
-                    </div>
-
-                    {isPassengerDropdownOpen && (
-                      <div className="absolute top-full mt-1.5 left-0 right-0 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-20">
-                        {[1, 2, 3, 4, 6].map((num) => (
-                          <button
-                            key={num}
-                            onClick={() => {
-                              setPassengerCount(num);
-                              setIsPassengerDropdownOpen(false);
-                            }}
-                            className="w-full text-left px-3.5 py-1.5 text-xs font-medium hover:bg-blue-50 hover:text-blue-600 flex items-center justify-between"
-                          >
-                            <span>
-                              {num} {num === 1 ? 'Passenger' : 'Passengers'}
-                            </span>
-                            {passengerCount === num && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Primary Action Button: Search trips -> */}
-                <button
-                  onClick={handleSearchTrips}
-                  className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-3.5 px-6 rounded-xl text-sm transition-all shadow-md shadow-blue-500/25 flex items-center justify-center gap-2 group"
-                >
-                  <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  <span>Search trips</span>
-                  <span className="text-base leading-none">→</span>
-                </button>
-              </div>
-
-              {/* Quick Category Buttons matching mockup */}
-              <div className="grid grid-cols-4 gap-2.5 pt-1">
-                {/* 1. Airport */}
-                <button
-                  onClick={() => handleCategorySelect('Airport')}
-                  className="bg-white hover:bg-blue-50/50 border border-slate-200/80 hover:border-blue-200 p-2.5 rounded-xl text-left transition-all group flex flex-col justify-between"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-                    <Plane className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-800">Airport</div>
-                    <div className="text-[10px] text-slate-400 truncate">To & from airport</div>
-                  </div>
-                </button>
-
-                {/* 2. Nearby */}
-                <button
-                  onClick={() => handleCategorySelect('Nearby')}
-                  className="bg-white hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-200 p-2.5 rounded-xl text-left transition-all group flex flex-col justify-between"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-                    <MapPin className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-800">Nearby</div>
-                    <div className="text-[10px] text-slate-400 truncate">Places around you</div>
-                  </div>
-                </button>
-
-                {/* 3. Weekend getaway */}
-                <button
-                  onClick={() => handleCategorySelect('Weekend getaway')}
-                  className="bg-white hover:bg-indigo-50/50 border border-slate-200/80 hover:border-indigo-200 p-2.5 rounded-xl text-left transition-all group flex flex-col justify-between"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-                    <Mountain className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-800">Weekend getaway</div>
-                    <div className="text-[10px] text-slate-400 truncate">Short trips</div>
-                  </div>
-                </button>
-
-                {/* 4. Outstation */}
-                <button
-                  onClick={() => handleCategorySelect('Outstation')}
-                  className="bg-white hover:bg-amber-50/50 border border-slate-200/80 hover:border-amber-200 p-2.5 rounded-xl text-left transition-all group flex flex-col justify-between"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-                    <Milestone className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-800">Outstation</div>
-                    <div className="text-[10px] text-slate-400 truncate">Intercity travel</div>
-                  </div>
-                </button>
-              </div>
+              <span className="text-[11px] font-semibold text-gray-500 group-hover:text-gray-900">{action.label}</span>
             </div>
+          </Link>
+        ))}
+      </div>
 
-            {/* RIGHT COLUMN: Interactive Leaflet Map & Floating Ride Card (7 Cols) */}
-            <div className="lg:col-span-7">
-              <PassengerTripMap
-                origin={origin}
-                destination={destination || 'Chhatrapati Shivaji Maharaj International Airport'}
-                duration={routeDuration}
-                distance={routeDistance}
-                estimatedFare={routeFare}
-                onBookTrip={handleBookTrip}
-              />
-            </div>
-          </div>
+      {/* ── Upcoming Trip Hero Card ─────────────────────────────────────── */}
+      {nextTrip && (
+        <UpcomingTripCard booking={nextTrip} />
+      )}
 
-          {/* ─────────────────────────────────────────────────────────
-              LOWER SECTION: Popular destinations from Mumbai (4 Cards)
-          ───────────────────────────────────────────────────────── */}
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                Popular destinations from Mumbai
-              </h2>
+      {/* ── Trip Statistics ─────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <StatCard
+          label="Total Trips"
+          value={bookings.length}
+          icon={<Route className="w-4 h-4" />}
+          iconColor="text-gray-500 border-gray-200/40"
+          iconBg="bg-gray-50/50"
+        />
+        <StatCard
+          label="Upcoming"
+          value={upcomingBookings.length}
+          icon={<Clock className="w-4 h-4" />}
+          iconColor="text-blue-600 border-blue-200/40"
+          iconBg="bg-blue-50/50"
+        />
+        <StatCard
+          label="Completed"
+          value={completedBookings.length}
+          icon={<CheckCircle className="w-4 h-4" />}
+          iconColor="text-emerald-600 border-emerald-200/40"
+          iconBg="bg-emerald-50/50"
+        />
+        <StatCard
+          label="Cancelled"
+          value={cancelledBookings.length}
+          icon={<Ban className="w-4 h-4" />}
+          iconColor="text-rose-600 border-rose-200/40"
+          iconBg="bg-rose-50/50"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* ── Left Column (2/3) ──────────────────────────────────────── */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Recent Bookings */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-gray-900">Recent Bookings</h2>
               <Link
-                href="/dashboard/trips/search"
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 group"
+                href="/dashboard/bookings"
+                className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1"
               >
-                <span>View all</span>
-                <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                View All
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Card 1: Lonavala */}
-              <div
-                onClick={() => handleSelectPopular('Lonavala', '83 km', '2 h', '₹1,800')}
-                className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group flex flex-col justify-between"
-              >
-                <div className="h-32 w-full rounded-xl overflow-hidden mb-3 relative">
-                  <img
-                    src="https://images.unsplash.com/photo-1626014303757-646734d58852?w=500&auto=format&fit=crop&q=80"
-                    alt="Lonavala"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">Lonavala</h3>
-                  <div className="flex items-center gap-3 text-[11px] text-slate-500 mb-2">
-                    <span className="flex items-center gap-1">
-                      <Car className="w-3.5 h-3.5 text-slate-400" />
-                      83 km
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      2 h
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <div>
-                      <span className="text-sm font-extrabold text-slate-900">₹1,800</span>
-                      <span className="text-[10px] text-slate-400 ml-1">One way</span>
-                    </div>
-                    <div className="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center text-slate-600 transition-colors">
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                </div>
+            {bookings.length > 0 ? (
+              <div className="space-y-2.5">
+                {bookings.slice(0, 5).map((booking) => (
+                  <RecentBookingCard key={booking.id} booking={booking} />
+                ))}
               </div>
+            ) : (
+              <Card>
+                <div className="p-8 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                    <Calendar className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-gray-900 mb-1">No bookings yet</h3>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Search for trips and book your first ride
+                  </p>
+                  <Link href="/dashboard/trips/search">
+                    <Button size="sm">
+                      <Search className="w-3.5 h-3.5 mr-1.5" />
+                      Search Trips
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+            )}
+          </div>
 
-              {/* Card 2: Pune */}
-              <div
-                onClick={() => handleSelectPopular('Pune', '150 km', '3 h', '₹2,500')}
-                className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group flex flex-col justify-between"
+          {/* Recommended Trips (Popular Routes) */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-gray-900">Recommended Trips</h2>
+              <Link
+                href="/dashboard/passenger/popular-routes"
+                className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1"
               >
-                <div className="h-32 w-full rounded-xl overflow-hidden mb-3 relative">
-                  <img
-                    src="https://images.unsplash.com/photo-1595658658481-d53d3f999875?w=500&auto=format&fit=crop&q=80"
-                    alt="Pune"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">Pune</h3>
-                  <div className="flex items-center gap-3 text-[11px] text-slate-500 mb-2">
-                    <span className="flex items-center gap-1">
-                      <Car className="w-3.5 h-3.5 text-slate-400" />
-                      150 km
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      3 h
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <div>
-                      <span className="text-sm font-extrabold text-slate-900">₹2,500</span>
-                      <span className="text-[10px] text-slate-400 ml-1">One way</span>
-                    </div>
-                    <div className="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center text-slate-600 transition-colors">
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+                Explore
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
 
-              {/* Card 3: Goa */}
-              <div
-                onClick={() => handleSelectPopular('Goa', '590 km', '10 h', '₹7,500')}
-                className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group flex flex-col justify-between"
-              >
-                <div className="h-32 w-full rounded-xl overflow-hidden mb-3 relative">
-                  <img
-                    src="https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=500&auto=format&fit=crop&q=80"
-                    alt="Goa"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">Goa</h3>
-                  <div className="flex items-center gap-3 text-[11px] text-slate-500 mb-2">
-                    <span className="flex items-center gap-1">
-                      <Car className="w-3.5 h-3.5 text-slate-400" />
-                      590 km
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      10 h
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <div>
-                      <span className="text-sm font-extrabold text-slate-900">₹7,500</span>
-                      <span className="text-[10px] text-slate-400 ml-1">One way</span>
-                    </div>
-                    <div className="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center text-slate-600 transition-colors">
-                      <ChevronRight className="w-3.5 h-3.5" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {popularRoutes.slice(0, 4).map((route) => (
+                <Link
+                  key={route.id}
+                  href={`/dashboard/trips/search?origin=${encodeURIComponent(route.origin)}&destination=${encodeURIComponent(route.destination)}`}
+                >
+                  <div className="p-3.5 rounded-xl bg-white border border-gray-100 hover:border-primary-200 hover:shadow-md transition-all duration-200 group cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary-50 group-hover:bg-primary-100 transition-colors">
+                        <MapPin className="w-4 h-4 text-primary-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {route.origin} → {route.destination}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          From {formatCurrency(route.avgPrice)}
+                        </p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all" />
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Card 4: Nashik */}
-              <div
-                onClick={() => handleSelectPopular('Nashik', '166 km', '3.5 h', '₹2,800')}
-                className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group flex flex-col justify-between"
-              >
-                <div className="h-32 w-full rounded-xl overflow-hidden mb-3 relative">
-                  <img
-                    src="https://images.unsplash.com/photo-1566837945700-30057527ade0?w=500&auto=format&fit=crop&q=80"
-                    alt="Nashik"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">Nashik</h3>
-                  <div className="flex items-center gap-3 text-[11px] text-slate-500 mb-2">
-                    <span className="flex items-center gap-1">
-                      <Car className="w-3.5 h-3.5 text-slate-400" />
-                      166 km
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      3.5 h
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <div>
-                      <span className="text-sm font-extrabold text-slate-900">₹2,800</span>
-                      <span className="text-[10px] text-slate-400 ml-1">One way</span>
-                    </div>
-                    <div className="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center text-slate-600 transition-colors">
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+                </Link>
+              ))}
             </div>
           </div>
-        </main>
+        </div>
+
+        {/* ── Right Column (1/3) ─────────────────────────────────────── */}
+        <div className="space-y-5">
+          {/* Wallet Overview */}
+          <Card className="p-5 border border-gray-150 shadow-sm relative overflow-hidden bg-white">
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <Wallet className="w-4 h-4 text-primary-500" />
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Wallet Balance</span>
+              </div>
+              <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                {walletBalance !== null
+                  ? formatCurrency(walletBalance, walletCurrency)
+                  : '₹0.00'}
+              </p>
+              <div className="flex gap-2 mt-4">
+                <Link href="/dashboard/wallet" className="flex-1">
+                  <Button className="w-full !py-2 rounded-lg text-xs font-semibold shadow-none" size="sm">
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    Add Money
+                  </Button>
+                </Link>
+                <Link href="/dashboard/wallet" className="flex-1">
+                  <Button variant="secondary" className="w-full !py-2 rounded-lg text-xs font-medium" size="sm">
+                    <Eye className="w-3.5 h-3.5 mr-1" />
+                    History
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
+
+          {/* Notifications Summary */}
+          <div className="rounded-2xl bg-white border border-gray-100 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-gray-500" />
+                <h3 className="text-sm font-bold text-gray-900">Notifications</h3>
+              </div>
+              {unreadCount > 0 && (
+                <span className="text-xs font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
+                  {unreadCount} new
+                </span>
+              )}
+            </div>
+
+            {notifications.length > 0 ? (
+              <div className="space-y-2">
+                {notifications.slice(0, 3).map((n) => (
+                  <div key={n.id} className={`p-2.5 rounded-xl text-xs ${n.isRead ? 'bg-gray-50' : 'bg-blue-50/50 border border-blue-100/50'}`}>
+                    <p className={`font-semibold ${n.isRead ? 'text-gray-700' : 'text-gray-900'}`}>{n.title}</p>
+                    <p className="text-gray-500 mt-0.5 line-clamp-1">{n.body}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 text-center py-3">No notifications</p>
+            )}
+
+            <Link href="/dashboard/notifications">
+              <button className="w-full mt-3 py-2 text-xs font-semibold text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-xl transition-colors">
+                View All Notifications →
+              </button>
+            </Link>
+          </div>
+
+          {/* Saved Routes */}
+          <div className="rounded-2xl bg-white border border-gray-100 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Heart className="w-4 h-4 text-gray-500" />
+                <h3 className="text-sm font-bold text-gray-900">Saved Routes</h3>
+              </div>
+              <Link href="/dashboard/passenger/favorites/routes" className="text-xs font-medium text-primary-600 hover:text-primary-700">
+                Manage
+              </Link>
+            </div>
+
+            {favoriteRoutes.length > 0 ? (
+              <div className="space-y-2">
+                {favoriteRoutes.slice(0, 3).map((route) => (
+                  <Link
+                    key={route.id}
+                    href={`/dashboard/trips/search?origin=${encodeURIComponent(route.origin)}&destination=${encodeURIComponent(route.destination)}`}
+                  >
+                    <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <MapPin className="w-3.5 h-3.5 text-primary-500 shrink-0" />
+                        <span className="text-xs font-medium text-gray-700 truncate">
+                          {route.origin} → {route.destination}
+                        </span>
+                      </div>
+                      <Search className="w-3.5 h-3.5 text-gray-300 group-hover:text-primary-500 shrink-0" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-3">
+                <p className="text-xs text-gray-400 mb-2">No saved routes yet</p>
+                <Link href="/dashboard/passenger/saved-routes">
+                  <button className="text-xs font-semibold text-primary-600 hover:text-primary-700">
+                    + Add a Route
+                  </button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+// ─── Upcoming Trip Hero Card ────────────────────────────────────────────────
+function UpcomingTripCard({ booking }: { booking: Booking }) {
+  const trip = booking.trip;
+  const origin = trip?.origin || trip?.source || 'TBD';
+  const destination = trip?.destination || 'TBD';
+  const departure = trip?.departureDate || trip?.departureTime || '';
+  const isOngoing = (booking.status as string) === 'ON_TRIP' || (booking.status as string) === 'CHECKED_IN';
+
+  const departureDate = departure ? new Date(departure) : null;
+  const now = new Date();
+  const hoursUntil = departureDate ? Math.max(0, Math.floor((departureDate.getTime() - now.getTime()) / (1000 * 60 * 60))) : null;
+  const minutesUntil = departureDate ? Math.max(0, Math.floor(((departureDate.getTime() - now.getTime()) / (1000 * 60)) % 60)) : null;
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-5 sm:p-6">
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            {isOngoing ? (
+              <Badge variant="success" className="!bg-emerald-500/10 !text-emerald-700 !border-emerald-500/20">
+                <PlayCircle className="w-3 h-3 mr-1" />
+                Trip In Progress
+              </Badge>
+            ) : (
+              <Badge variant="info" className="!bg-blue-500/10 !text-blue-700 !border-blue-500/20">
+                <Clock className="w-3 h-3 mr-1" />
+                Next Trip
+              </Badge>
+            )}
+          </div>
+          {hoursUntil !== null && !isOngoing && (
+            <div className="text-right">
+              <p className="text-xs text-gray-400">Departing in</p>
+              <p className="text-lg font-bold text-gray-900">
+                {hoursUntil > 24 ? `${Math.floor(hoursUntil / 24)}d ${hoursUntil % 24}h` : `${hoursUntil}h ${minutesUntil}m`}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Route */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-2.5 h-2.5 rounded-full bg-slate-100 border-2 border-slate-300" />
+            <div className="w-0.5 h-8 bg-slate-100" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-emerald-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">From</p>
+            <p className="text-sm font-semibold text-gray-900 truncate">{origin}</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-2.5">To</p>
+            <p className="text-sm font-semibold text-gray-900 truncate">{destination}</p>
+          </div>
+        </div>
+
+        {/* Details Row */}
+        <div className="flex flex-wrap items-center gap-3.5 text-xs text-gray-500 mb-5 border-t border-gray-50 pt-4">
+          {departure && (
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-gray-400" />
+              <span>{formatDateTime(departure)}</span>
+            </div>
+          )}
+          {trip?.driver?.user && (
+            <div className="flex items-center gap-1.5">
+              <UserIcon className="w-3.5 h-3.5 text-gray-400" />
+              <span>{trip.driver.user.firstName} {trip.driver.user.lastName}</span>
+            </div>
+          )}
+          {trip?.vehicle && (
+            <div className="flex items-center gap-1.5">
+              <Car className="w-3.5 h-3.5 text-gray-400" />
+              <span>{trip.vehicle.brand} {trip.vehicle.model}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-wrap gap-2.5">
+          <Link href={`/dashboard/bookings/${booking.id}`}>
+            <Button size="sm" className="gap-1.5 shadow-none rounded-xl">
+              <Eye className="w-3.5 h-3.5" />
+              View Trip
+            </Button>
+          </Link>
+          {trip?.driver?.user?.phone && (
+            <a href={`tel:${trip.driver.user.phone}`}>
+              <Button size="sm" variant="secondary" className="gap-1.5 rounded-xl shadow-none">
+                <Phone className="w-3.5 h-3.5 text-gray-400" />
+                Contact Driver
+              </Button>
+            </a>
+          )}
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: `Trip: ${origin} → ${destination}`,
+                  text: `I'm traveling from ${origin} to ${destination}${departure ? ` on ${formatDateTime(departure)}` : ''}`,
+                });
+              }
+            }}
+            className="gap-1.5 rounded-xl"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            Share
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Stat Card ──────────────────────────────────────────────────────────────
+function StatCard({
+  label,
+  value,
+  icon,
+  iconColor = 'text-gray-500',
+  iconBg = 'bg-gray-50',
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  iconColor?: string;
+  iconBg?: string;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">{label}</span>
+        <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center', iconBg, iconColor)}>
+          {icon}
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-gray-900 tracking-tight mt-1">{value}</p>
+    </div>
+  );
+}
+
+// ─── Recent Booking Card ────────────────────────────────────────────────────
+function RecentBookingCard({ booking }: { booking: Booking }) {
+  const trip = booking.trip;
+  const origin = trip?.origin || trip?.source || 'Unknown';
+  const destination = trip?.destination || 'Unknown';
+  const departure = trip?.departureDate || trip?.departureTime || '';
+
+  const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
+    PENDING: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Pending' },
+    CONFIRMED: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Confirmed' },
+    COMPLETED: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Completed' },
+    CANCELLED: { bg: 'bg-red-50', text: 'text-red-700', label: 'Cancelled' },
+    NO_SHOW: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'No Show' },
+    ON_TRIP: { bg: 'bg-purple-50', text: 'text-purple-700', label: 'On Trip' },
+    CHECKED_IN: { bg: 'bg-indigo-50', text: 'text-indigo-700', label: 'Checked In' },
+  };
+
+  const status = statusConfig[(booking.status || '').toUpperCase()] || statusConfig.PENDING;
+
+  return (
+    <Link href={`/dashboard/bookings/${booking.id}`}>
+      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white border border-gray-100 hover:border-primary-200 hover:shadow-sm transition-all duration-200 cursor-pointer group">
+        <div className="p-2 rounded-lg bg-gray-50 group-hover:bg-primary-50 transition-colors">
+          <MapPin className="w-4 h-4 text-gray-500 group-hover:text-primary-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 truncate">
+            {origin} → {destination}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {departure ? formatDateTime(departure) : 'Date TBD'}
+            {booking.seats ? ` · ${booking.seats} seat${booking.seats > 1 ? 's' : ''}` : ''}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${status.bg} ${status.text}`}>
+            {status.label}
+          </span>
+          <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary-500" />
+        </div>
+      </div>
+    </Link>
   );
 }
