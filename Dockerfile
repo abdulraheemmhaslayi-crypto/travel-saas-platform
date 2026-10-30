@@ -69,7 +69,7 @@ COPY docker/ ./docker/
 COPY docker/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/start.sh /app/start.sh
-RUN chmod +x /app/start.sh /app/docker/run-backend.sh
+RUN chmod +x /app/start.sh /app/docker/run-backend.sh /app/docker/keep-alive.sh
 
 # Environment defaults
 ENV NODE_ENV=production \

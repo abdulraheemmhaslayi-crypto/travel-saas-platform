@@ -30,6 +30,7 @@ import { RateLimiterModule } from './rate-limiter/rate-limiter.module';
 import { JobsModule } from './jobs/jobs.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { RecoveryModule } from './recovery/recovery.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -116,6 +117,7 @@ import { RecoveryModule } from './recovery/recovery.module';
     JobsModule,
     ObservabilityModule,
     RecoveryModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
