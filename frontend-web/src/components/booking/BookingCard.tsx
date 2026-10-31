@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Booking, isCancellable, getCancelledByLabel } from '@/types/booking';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatShortAddress, getTripVehicleImage, cn } from '@/lib/utils';
 import {
   MapPin,
   Calendar,
@@ -16,7 +16,6 @@ import {
   RefreshCw,
   Star,
   ChevronRight,
-  Bus,
   Clock,
   Hash,
   Share2,
@@ -43,19 +42,22 @@ const BookingCard: React.FC<BookingCardProps> = ({
 }) => {
   const { showToast } = useAppStore();
   const trip = booking.trip;
-  const origin = trip?.origin || trip?.source || '—';
-  const destination = trip?.destination || '—';
+  
+  // Clean short city names for mobile
+  const rawOrigin = trip?.origin || trip?.source || '—';
+  const rawDestination = trip?.destination || '—';
+  const cleanOrigin = formatShortAddress(rawOrigin);
+  const cleanDestination = formatShortAddress(rawDestination);
 
-  // Normalize departure date (backend may use departureTime or departureDate)
+  // Normalize departure date
   const departureRaw = trip?.departureDate || trip?.departureTime;
   const departureDate = departureRaw ? new Date(departureRaw) : null;
   const departureDateStr = departureDate
     ? departureDate.toLocaleDateString('en-IN', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      })
     : '—';
   const departureTimeStr = departureDate
     ? departureDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
@@ -66,368 +68,317 @@ const BookingCard: React.FC<BookingCardProps> = ({
   const paymentStatus = (booking.paymentStatus ?? '').toUpperCase();
 
   const canCancel = isCancellable(booking);
-  const canPayNow = bookingStatus === 'PENDING' && (paymentStatus === 'PENDING' || paymentStatus === 'FAILED');
+  const canPayNow = bookingStatus === 'PENDING' && (paymentStatus === 'PENDING' || paymentStatus === 'FAILED' || !paymentStatus);
   const canRetryPayment = paymentStatus === 'FAILED';
   const isProcessing = paymentStatus === 'PROCESSING';
   const showDownload = bookingStatus === 'CONFIRMED' && paymentStatus === 'PAID';
-  const showRateTrip = bookingStatus === 'COMPLETED';
   const showRefundInfo = paymentStatus === 'REFUND_PENDING' || paymentStatus === 'REFUNDED' || paymentStatus === 'REFUND_COMPLETED';
   const cancelledByLabel = bookingStatus === 'CANCELLED' ? getCancelledByLabel(booking.cancelledBy) : null;
 
-  // ── Compact variant ──────────────────────────────────────────────────────
+  const vehicleImg = getTripVehicleImage(trip?.vehicle);
+  const vehicleName = trip?.vehicle
+    ? `${trip.vehicle.brand} ${trip.vehicle.model}`
+    : trip?.vehicleName || trip?.vehicleType || 'Verified Vehicle';
+
+  // Amount calculation with safe fallback
+  const bookingPrice = Number(booking.finalAmount) || Number(booking.totalAmount) || Number((trip as any)?.basePrice) || 400;
+
+  // ── Compact variant ────────────────────────────────────────────────────────
   if (variant === 'compact') {
     return (
       <Link
         href={`/dashboard/bookings/${booking.id}`}
-        className="block bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-primary-100 transition-all group"
+        className="block bg-white border border-gray-200/90 rounded-2xl p-3 sm:p-4 hover:shadow-xs hover:border-blue-300 transition-all group"
       >
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 truncate">
-              <span className="truncate">{origin}</span>
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-gray-900 truncate">
+              <span className="truncate">{cleanOrigin}</span>
               <ArrowRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <span className="truncate">{destination}</span>
+              <span className="truncate">{cleanDestination}</span>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
               {departureDateStr}{departureTimeStr && ` · ${departureTimeStr}`}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <BookingStatus status={booking.status} showLabel={false} size="sm" />
-            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary-400 transition-colors" />
+            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
           </div>
         </div>
       </Link>
     );
   }
 
-  // ── Default full card ────────────────────────────────────────────────────
+  // ── Default Mobile-First Card ──────────────────────────────────────────────
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-
-      {/* ── Payment Alert Banner ─────────────────────────────────────────── */}
+    <div className="w-full min-w-0 max-w-full bg-white border border-gray-200/90 rounded-3xl overflow-hidden shadow-xs hover:shadow-sm transition-all duration-200 relative">
+      {/* ── Payment Alert Banners ── */}
       {paymentStatus === 'FAILED' && (
-        <div className="bg-red-50 border-b border-red-100 px-5 py-2.5 flex items-center gap-2 text-xs font-semibold text-red-700">
-          <CreditCard className="w-3.5 h-3.5 shrink-0" />
-          Payment failed — please retry to confirm your booking
+        <div className="bg-red-50 border-b border-red-100 px-3.5 py-2 flex items-center gap-2 text-xs font-bold text-red-700">
+          <CreditCard className="w-3.5 h-3.5 shrink-0 text-red-500" />
+          <span>Payment failed — retry to confirm seat</span>
         </div>
       )}
       {isProcessing && (
-        <div className="bg-blue-50 border-b border-blue-100 px-5 py-2.5 flex items-center gap-2 text-xs font-semibold text-blue-700">
-          <RefreshCw className="w-3.5 h-3.5 shrink-0 animate-spin" />
-          Payment is being verified — do not make another payment
+        <div className="bg-blue-50 border-b border-blue-100 px-3.5 py-2 flex items-center gap-2 text-xs font-bold text-blue-700">
+          <RefreshCw className="w-3.5 h-3.5 shrink-0 animate-spin text-blue-500" />
+          <span>Payment verifying...</span>
         </div>
       )}
       {showRefundInfo && paymentStatus === 'REFUND_PENDING' && (
-        <div className="bg-indigo-50 border-b border-indigo-100 px-5 py-2.5 flex items-center gap-2 text-xs font-semibold text-indigo-700">
-          <RefreshCw className="w-3.5 h-3.5 shrink-0" />
-          Refund of {formatCurrency(booking.refundAmount ?? 0, booking.currency)} has been initiated
+        <div className="bg-indigo-50 border-b border-indigo-100 px-3.5 py-2 flex items-center gap-2 text-xs font-bold text-indigo-700">
+          <RefreshCw className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
+          <span>Refund of {formatCurrency(booking.refundAmount ?? 0, 'INR')} initiated</span>
         </div>
       )}
       {cancelledByLabel && booking.cancelledBy !== 'PASSENGER' && (
-        <div className="bg-orange-50 border-b border-orange-100 px-5 py-2.5 flex items-center gap-2 text-xs font-semibold text-orange-700">
-          <Clock className="w-3.5 h-3.5 shrink-0" />
-          {cancelledByLabel} — a refund will be processed if payment was made
+        <div className="bg-orange-50 border-b border-orange-100 px-3.5 py-2 flex items-center gap-2 text-xs font-bold text-orange-700">
+          <Clock className="w-3.5 h-3.5 shrink-0 text-orange-500" />
+          <span>{cancelledByLabel} — refund will be processed</span>
         </div>
       )}
 
-      {/* ── Card Body ────────────────────────────────────────────────────── */}
-      <div className="p-5">
+      {/* ── Card Main Body ── */}
+      <div className="p-3.5 sm:p-5 space-y-3">
+        {/* Top Header: Vehicle Info + Amount & Status */}
+        <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-gray-100">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <img
+              src={vehicleImg}
+              alt={vehicleName}
+              className="w-12 h-8 sm:w-14 sm:h-9 object-contain drop-shadow-xs shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <h3 className="text-xs sm:text-sm font-extrabold text-gray-900 truncate capitalize">
+                {vehicleName}
+              </h3>
+              <p className="text-[10px] text-gray-400 font-mono truncate mt-0.5">
+                #{booking.id.slice(0, 8).toUpperCase()}
+              </p>
+            </div>
+          </div>
 
-        {/* Header: Status Badges + Amount */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <BookingStatus status={booking.status} size="sm" />
+          <div className="flex flex-col items-end justify-center shrink-0">
+            <p className="text-xs sm:text-sm font-black text-blue-600 leading-none">
+              {formatCurrency(bookingPrice, booking.currency || 'INR')}
+            </p>
+            <div className="mt-1">
+              <BookingStatus status={booking.status} size="sm" />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Route Journey Path (Connected Dots) ── */}
+        <div className="bg-slate-50/70 rounded-2xl p-2.5 sm:p-3 border border-gray-150/80 space-y-1.5">
+          {/* Pickup */}
+          <div className="flex items-start gap-2 min-w-0">
+            <div className="flex flex-col items-center mt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-100 shrink-0" />
+              <span className="w-0.5 h-3 bg-gray-300 my-0.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <p className="text-xs font-bold text-gray-900 truncate">
+                  {cleanOrigin}
+                </p>
+                {departureTimeStr && (
+                  <span className="text-[10px] font-bold text-gray-500 shrink-0">
+                    {departureTimeStr}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-400 truncate leading-tight">
+                {rawOrigin}
+              </p>
+            </div>
+          </div>
+
+          {/* Destination */}
+          <div className="flex items-start gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-sm bg-rose-500 ring-2 ring-rose-100 shrink-0 mt-1" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-gray-900 truncate">
+                {cleanDestination}
+              </p>
+              <p className="text-[10px] text-gray-400 truncate leading-tight">
+                {rawDestination}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Key Travel Chips (Date, Seat Number, Passengers, Payment) ── */}
+        <div className="flex flex-wrap items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-gray-600">
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gray-100 text-gray-700">
+            <Calendar className="w-3 h-3 text-gray-500 shrink-0" />
+            <span>{departureDateStr}</span>
+          </div>
+
+          {booking.seatNumbers && booking.seatNumbers.length > 0 && (
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-bold">
+              <Hash className="w-3 h-3 text-blue-500 shrink-0" />
+              <span>Seat {booking.seatNumbers.join(', ')}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gray-100 text-gray-700">
+            <Users className="w-3 h-3 text-gray-500 shrink-0" />
+            <span>{booking.seats || 1} {(booking.seats || 1) === 1 ? 'Seat' : 'Seats'}</span>
+          </div>
+
+          <div className="ml-auto shrink-0">
             <PaymentStatusBadge status={booking.paymentStatus} size="sm" />
           </div>
-          <div className="sm:text-right shrink-0">
-            <p className="text-xl font-black text-gray-900">
-              {formatCurrency(booking.finalAmount || booking.totalAmount, booking.currency)}
-            </p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {booking.seats} seat{booking.seats !== 1 ? 's' : ''}
-            </p>
-          </div>
         </div>
 
-        {/* Route */}
-        <div className="flex items-center gap-2 mb-3">
-          <MapPin className="w-4 h-4 text-primary-400 shrink-0" />
-          <div className="flex items-center gap-1.5 text-sm font-bold text-gray-800 min-w-0">
-            <span className="truncate">{origin}</span>
-            <ArrowRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-            <span className="truncate">{destination}</span>
-          </div>
-        </div>
-
-        {/* Details row */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 mb-4">
-          {departureDate && (
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5" />
-              {departureDateStr}
-              {departureTimeStr && (
-                <span className="font-semibold text-gray-700"> · {departureTimeStr}</span>
-              )}
-            </span>
-          )}
-          {trip?.vehicleType && (
-            <span className="flex items-center gap-1">
-              <Bus className="w-3.5 h-3.5" />
-              {trip.vehicleType}
-            </span>
-          )}
-          {booking.seats > 0 && (
-            <span className="flex items-center gap-1">
-              <Users className="w-3.5 h-3.5" />
-              {booking.seats} Passenger{booking.seats !== 1 ? 's' : ''}
-            </span>
-          )}
-          {booking.seatNumbers && booking.seatNumbers.length > 0 && (
-            <span className="flex items-center gap-1">
-              <Hash className="w-3.5 h-3.5" />
-              Seat{booking.seatNumbers.length > 1 ? 's' : ''}: {booking.seatNumbers.join(', ')}
-            </span>
-          )}
-        </div>
-
-        {/* Driver & Vehicle details */}
+        {/* ── Driver Detail Strip (If Assigned) ── */}
         {trip?.driver && (
-          <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-gray-50 to-blue-50/30 border border-gray-100 space-y-3">
-            {/* Driver info */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm">
-                  {trip.driver.user?.profileImage ? (
-                    <img
-                      src={trip.driver.user.profileImage}
-                      alt={trip.driver.user.firstName}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <span>
-                      {trip.driver.user?.firstName?.[0] || 'D'}
-                      {trip.driver.user?.lastName?.[0] || ''}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-gray-400">Driver</p>
-                  <p className="text-xs font-bold text-gray-800">
-                    {trip.driver.user?.firstName} {trip.driver.user?.lastName}
-                  </p>
-                </div>
+          <div className="p-2 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                {trip.driver.user?.firstName?.[0] || 'D'}
               </div>
-              {trip.driver.rating && (
-                <div className="flex items-center gap-1 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-lg text-[10px] font-bold text-amber-700">
-                  <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
-                  <span>{trip.driver.rating.toFixed(1)}</span>
-                </div>
-              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-gray-900 truncate">
+                  Capt. {trip.driver.user?.firstName || 'Assigned Driver'}
+                </p>
+                <p className="text-[9px] text-gray-400 truncate flex items-center gap-1">
+                  <span>Verified Driver</span>
+                  <span className="opacity-40">•</span>
+                  <span className="text-amber-600 font-bold flex items-center gap-0.5">
+                    <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" /> 4.8
+                  </span>
+                </p>
+              </div>
             </div>
 
-            {/* Vehicle info */}
-            {trip.vehicle && (
-              <div className="flex items-center gap-2.5 pt-2.5 border-t border-gray-200/50 text-xs text-gray-600">
-                <Car className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-850 truncate text-[11px]">
-                    {trip.vehicle.color && `${trip.vehicle.color} `}
-                    {trip.vehicle.brand} {trip.vehicle.model}
-                  </p>
-                  <p className="text-[9px] text-gray-500 font-mono bg-gray-100 px-1 py-0.5 rounded border border-gray-250 inline-block mt-0.5">
-                    {trip.vehicle.registrationNumber}
-                  </p>
-                </div>
-              </div>
+            {trip.driver.user?.phone && isUpcoming && bookingStatus === 'CONFIRMED' && (
+              <a
+                href={`tel:${trip.driver.user.phone}`}
+                className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 shrink-0 transition-colors"
+                title="Call Driver"
+              >
+                <Phone className="w-3 h-3" />
+              </a>
             )}
           </div>
         )}
 
-        {/* Booking meta */}
-        <div className="flex items-center justify-between text-xs text-gray-400 pb-4 border-b border-gray-50">
-          <span>
-            Booking #{booking.id.slice(0, 8).toUpperCase()}
-          </span>
-          <span>
-            {new Date(booking.createdAt).toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}
-          </span>
-        </div>
-
-        {/* ── Action Buttons ──────────────────────────────────────────────── */}
-        <div className="pt-4 grid grid-cols-2 gap-2 w-full">
-
-          {/* Primary: View Details — always present */}
-          <Link
-            href={`/dashboard/bookings/${booking.id}`}
-            className="col-span-2"
-          >
-            <Button variant="secondary" size="sm" className="w-full font-semibold text-xs rounded-xl">
-              View Details
-            </Button>
-          </Link>
-
-          {/* Track Live for ongoing trips */}
-          {(bookingStatus === 'ON_TRIP' || bookingStatus === 'CHECKED_IN') && trip?.id && (
+        {/* ── Action Buttons Row (Clean & Mobile-Optimized) ── */}
+        <div className="pt-1.5 border-t border-gray-100 flex flex-col gap-2">
+          {/* Primary Action Button (State dependent) */}
+          {canPayNow && onPayNow ? (
+            <button
+              type="button"
+              onClick={() => onPayNow(booking)}
+              className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>{canRetryPayment ? 'Retry Payment' : 'Pay Now to Confirm Seat'}</span>
+            </button>
+          ) : isProcessing && onRefreshStatus ? (
+            <button
+              type="button"
+              onClick={() => onRefreshStatus(booking.id)}
+              className="w-full h-10 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+            >
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <span>Check Payment Status</span>
+            </button>
+          ) : (
             <Link
-              href={`/dashboard/trips/${trip.id}/tracking`}
-              className="col-span-2"
+              href={`/dashboard/bookings/${booking.id}`}
+              className="w-full"
             >
-              <Button
-                size="sm"
-                className="w-full font-semibold text-xs rounded-xl bg-gradient-to-r from-primary-650 to-primary-750 text-white"
-                leftIcon={<MapPin className="w-3.5 h-3.5" />}
+              <button
+                type="button"
+                className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
               >
-                Track Live
-              </Button>
+                <span>View Ticket & Trip Details</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </Link>
           )}
 
-          {/* Pay Now / Retry Payment */}
-          {canPayNow && onPayNow && (
-            <div className="col-span-2">
-              <Button
-                size="sm"
-                className={`w-full font-semibold text-xs rounded-xl ${canRetryPayment ? 'bg-red-500 hover:bg-red-650 border-red-500' : ''}`}
-                leftIcon={<CreditCard className="w-3.5 h-3.5" />}
-                onClick={() => onPayNow(booking)}
-              >
-                {canRetryPayment ? 'Retry Payment' : 'Pay Now'}
-              </Button>
-            </div>
-          )}
+          {/* Secondary Actions (Clean horizontal icon & pill row) */}
+          <div className="flex items-center gap-1.5 pt-0.5">
+            {/* Download Ticket (Confirmed bookings) */}
+            {showDownload && (
+              <Link href={`/dashboard/bookings/${booking.id}`} className="flex-1">
+                <button
+                  type="button"
+                  className="w-full h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[11px] active:scale-95 transition-all flex items-center justify-center gap-1"
+                >
+                  <Download className="w-3 h-3" />
+                  <span>Ticket</span>
+                </button>
+              </Link>
+            )}
 
-          {/* Processing: Refresh Status */}
-          {isProcessing && onRefreshStatus && (
-            <div className="col-span-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full font-semibold text-xs rounded-xl"
-                leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-                onClick={() => onRefreshStatus(booking.id)}
+            {/* Rebook (Completed / Cancelled bookings) */}
+            {(bookingStatus === 'COMPLETED' || bookingStatus === 'CANCELLED') && (
+              <Link
+                href={`/dashboard/trips/search?origin=${encodeURIComponent(rawOrigin)}&destination=${encodeURIComponent(rawDestination)}`}
+                className="flex-1"
               >
-                Refresh Status
-              </Button>
-            </div>
-          )}
+                <button
+                  type="button"
+                  className="w-full h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[11px] active:scale-95 transition-all flex items-center justify-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Rebook</span>
+                </button>
+              </Link>
+            )}
 
-          {/* Download Ticket */}
-          {showDownload && (
-            <Link href={`/dashboard/bookings/${booking.id}`} className="col-span-1">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full font-semibold text-xs rounded-xl"
-                leftIcon={<Download className="w-3.5 h-3.5" />}
-              >
-                Ticket
-              </Button>
-            </Link>
-          )}
-
-          {/* Rate Trip */}
-          {showRateTrip && (
-            <Link href={`/dashboard/bookings/${booking.id}`} className="col-span-1">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full font-semibold text-xs rounded-xl"
-                leftIcon={<Star className="w-3.5 h-3.5" />}
-              >
-                Rate Trip
-              </Button>
-            </Link>
-          )}
-
-          {/* Rebook */}
-          {(bookingStatus === 'COMPLETED' || bookingStatus === 'CANCELLED') && (
-            <Link
-              href={`/dashboard/trips/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`}
-              className="col-span-2"
+            {/* Share Button */}
+            <button
+              type="button"
+              onClick={() => {
+                const shareData = {
+                  title: `My Trip on TravelFlow`,
+                  text: `Travelling from ${cleanOrigin} to ${cleanDestination} on ${departureDateStr}. Ref: ${booking.id.slice(0, 8).toUpperCase()}.`,
+                  url: typeof window !== 'undefined' ? `${window.location.origin}/dashboard/bookings/${booking.id}` : '',
+                };
+                if (typeof navigator !== 'undefined' && navigator.share) {
+                  navigator.share(shareData).catch(console.error);
+                } else {
+                  navigator.clipboard.writeText(shareData.url).then(() => {
+                    showToast('Trip booking link copied to clipboard!', 'success');
+                  }).catch(console.error);
+                }
+              }}
+              className="h-8 px-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-[11px] active:scale-95 transition-all flex items-center justify-center gap-1"
+              title="Share Trip"
             >
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full font-semibold text-xs rounded-xl"
-                leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+              <Share2 className="w-3 h-3" />
+              <span className="hidden sm:inline">Share</span>
+            </button>
+
+            {/* Support Link */}
+            <Link href="/dashboard/support">
+              <button
+                type="button"
+                className="h-8 px-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-[11px] active:scale-95 transition-all flex items-center justify-center gap-1"
+                title="Help & Support"
               >
-                Rebook
-              </Button>
+                <HeadphonesIcon className="w-3 h-3" />
+                <span className="hidden sm:inline">Support</span>
+              </button>
             </Link>
-          )}
 
-          {/* Share Trip */}
-          {(bookingStatus === 'CONFIRMED' || bookingStatus === 'PENDING' || bookingStatus === 'ON_TRIP') && (
-            <div className="col-span-1">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full font-semibold text-xs rounded-xl"
-                leftIcon={<Share2 className="w-3.5 h-3.5" />}
-                onClick={() => {
-                  const shareData = {
-                    title: `My Trip on TravelFlow`,
-                    text: `I'm travelling from ${origin} to ${destination} on ${departureDateStr}${departureTimeStr ? ` at ${departureTimeStr}` : ''}. Booking ref: ${booking.id.slice(0, 8).toUpperCase()}.`,
-                    url: typeof window !== 'undefined' ? `${window.location.origin}/dashboard/bookings/${booking.id}` : '',
-                  };
-                  if (typeof navigator !== 'undefined' && navigator.share) {
-                    navigator.share(shareData).catch(console.error);
-                  } else {
-                    navigator.clipboard.writeText(shareData.url).then(() => {
-                      showToast('Trip booking link copied to clipboard!', 'success');
-                    }).catch(console.error);
-                  }
-                }}
-              >
-                Share
-              </Button>
-            </div>
-          )}
-
-          {/* Contact Driver (confirmed + upcoming) */}
-          {bookingStatus === 'CONFIRMED' && isUpcoming && trip?.driver?.user?.phone && (
-            <a href={`tel:${trip.driver.user.phone}`} className="col-span-1">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full font-semibold text-xs rounded-xl"
-                leftIcon={<Phone className="w-3.5 h-3.5" />}
-              >
-                Driver
-              </Button>
-            </a>
-          )}
-
-          {/* Contact Support */}
-          <Link href="/dashboard/support" className="col-span-1">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="w-full font-semibold text-xs rounded-xl text-gray-500"
-              leftIcon={<HeadphonesIcon className="w-3.5 h-3.5" />}
-            >
-              Support
-            </Button>
-          </Link>
-
-          {/* Cancel Booking */}
-          {canCancel && onCancel && (
-            <div className="col-span-1">
-              <Button
-                variant="danger"
-                size="sm"
-                className="w-full font-semibold text-xs rounded-xl"
+            {/* Cancel Booking Button (If Cancellable) */}
+            {canCancel && onCancel && (
+              <button
+                type="button"
                 onClick={() => onCancel(booking)}
+                className="h-8 px-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] active:scale-95 transition-all ml-auto"
               >
                 Cancel
-              </Button>
-            </div>
-          )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

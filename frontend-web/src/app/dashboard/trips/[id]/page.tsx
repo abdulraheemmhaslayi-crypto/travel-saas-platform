@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTripStore } from '@/store/slices/tripSlice';
 import { useBookingStore } from '@/store/slices/bookingSlice';
@@ -17,10 +17,36 @@ import apiClient from '@/lib/api';
 import { Trip } from '@/types/trip';
 import { 
   ArrowLeft, MapPin, Calendar, User, Phone, Mail, ShieldAlert, 
-  ArrowRight, Sparkles, CheckCircle2, Ticket, AlertCircle 
+  ArrowRight, Sparkles, CheckCircle2, Ticket, AlertCircle, Car,
+  Clock, ShieldCheck, Navigation, ChevronDown, ChevronUp, Zap,
+  Wifi, Snowflake, Briefcase, Award
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency, formatDateTime, cn } from '@/lib/utils';
+import MapView from '@/components/maps/MapView';
+
+// Clean primary city name for mobile header
+function formatShortAddress(address: string): string {
+  if (!address) return '';
+  const first = address.split(',')[0]?.trim();
+  return first || address;
+}
+
+// Vehicle Image Selector
+function getTripVehicleImage(vehicle?: any): string {
+  if (!vehicle) return '/images/vehicles/comfort.png';
+  const str = `${vehicle.brand || ''} ${vehicle.model || ''} ${vehicle.type || ''}`.toLowerCase();
+  if (str.includes('innova') || str.includes('xl') || str.includes('van') || (vehicle.seatingCapacity && vehicle.seatingCapacity > 5)) {
+    return '/images/vehicles/xl.png';
+  }
+  if (str.includes('suv') || str.includes('fortuner') || str.includes('audi') || str.includes('creta')) {
+    return '/images/vehicles/premium.png';
+  }
+  if (str.includes('camry') || str.includes('city') || str.includes('sedan') || str.includes('comfort')) {
+    return '/images/vehicles/comfort.png';
+  }
+  return '/images/vehicles/economy.png';
+}
 
 export default function TripDetailPage() {
   const params = useParams();
@@ -40,6 +66,9 @@ export default function TripDetailPage() {
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [relatedTrips, setRelatedTrips] = useState<Trip[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Tab State for Mobile Trip Information (Seats, Route, Vehicle)
+  const [mobileActiveTab, setMobileActiveTab] = useState<'seats' | 'route' | 'vehicle'>('seats');
 
   // Booking details form state
   const [pickupPoint, setPickupPoint] = useState('');
@@ -61,8 +90,8 @@ export default function TripDetailPage() {
   // Set default passenger form inputs once trip and user are available
   useEffect(() => {
     if (currentTrip) {
-      setPickupPoint(currentTrip.origin);
-      setDropPoint(currentTrip.destination);
+      setPickupPoint(currentTrip.origin || currentTrip.source || '');
+      setDropPoint(currentTrip.destination || '');
     }
     if (user) {
       setPassengerName(`${user.firstName} ${user.lastName}`);
@@ -76,14 +105,16 @@ export default function TripDetailPage() {
     const fetchRelated = async () => {
       if (!currentTrip) return;
       try {
-        const dateString = new Date(currentTrip.departureDate).toISOString().split('T')[0];
+        const dateString = currentTrip.departureDate 
+          ? new Date(currentTrip.departureDate).toISOString().split('T')[0]
+          : undefined;
+
         const res = await apiClient.searchTrips({
-          origin: currentTrip.origin,
+          origin: currentTrip.origin || currentTrip.source,
           destination: currentTrip.destination,
           date: dateString,
         });
-        const matches: Trip[] = res.data.allMatches || (Array.isArray(res.data) ? res.data : []);
-        // Filter out current trip and restrict to top 3 recommendations
+        const matches: Trip[] = res.data?.allMatches || res.data?.exactMatches || (Array.isArray(res.data) ? res.data : []);
         setRelatedTrips(matches.filter(t => t.id !== currentTrip.id).slice(0, 3));
       } catch (e) {
         console.warn('Failed to fetch related trips', e);
@@ -100,6 +131,21 @@ export default function TripDetailPage() {
     );
   };
 
+  const isBookingDisabled = 
+    !currentTrip ||
+    currentTrip.status === 'COMPLETED' || 
+    currentTrip.status === 'CANCELLED' || 
+    (currentTrip.vehicle && currentTrip.vehicle.status !== 'approved') || 
+    !currentTrip.allowBooking;
+
+  // Fare calculations
+  const seatPrice = currentTrip?.price || currentTrip?.pricePerSeat || currentTrip?.basePrice || 0;
+  const currencySymbol = currentTrip?.currency === 'QAR' ? 'QAR' : '₹';
+  const subtotal = seatPrice * selectedSeats.length;
+  const platformFee = Math.round(subtotal * 0.10);
+  const gstTax = Math.round(subtotal * 0.18);
+  const totalFinalAmount = subtotal + platformFee + gstTax;
+
   const handleBook = async () => {
     if (!user) {
       showToast('Please login to book a seat', 'error');
@@ -113,9 +159,7 @@ export default function TripDetailPage() {
     }
 
     try {
-      // Re-fetch seat availability before validating
       await getTrip(tripId);
-      
       const freshTrip = useTripStore.getState().currentTrip;
       if (!freshTrip) {
         showToast('Trip is no longer available.', 'error');
@@ -131,12 +175,7 @@ export default function TripDetailPage() {
       });
 
       if (unavailableSelected.length > 0) {
-        if (unavailableSelected.length === 1) {
-          showToast(`Seat ${unavailableSelected[0]} has already been booked. Please select another seat.`, 'error');
-        } else {
-          showToast(`Seats ${unavailableSelected.join(', ')} have already been booked. Please select other seats.`, 'error');
-        }
-        // Deselect the unavailable seats from selectedSeats
+        showToast(`Seat ${unavailableSelected.join(', ')} has already been booked. Please select other seats.`, 'error');
         setSelectedSeats((prev) => prev.filter(s => !unavailableSelected.includes(s)));
         setShowBookingModal(false);
         return;
@@ -152,7 +191,7 @@ export default function TripDetailPage() {
         seatNumbers: selectedSeats.map(s => s.toString()),
         bookingType: 'one_way',
         paymentMethod: 'razorpay',
-        pickupLocation: pickupPoint || currentTrip?.origin,
+        pickupLocation: pickupPoint || currentTrip?.origin || currentTrip?.source,
         dropLocation: dropPoint || currentTrip?.destination,
         passengerName: passengerName || `${user.firstName} ${user.lastName}`,
         passengerEmail: passengerEmail || user.email,
@@ -161,7 +200,7 @@ export default function TripDetailPage() {
       });
 
       setBookingId(booking.id);
-      setPaymentAmount(booking.finalAmount);
+      setPaymentAmount(Number(booking.finalAmount) || Number(totalFinalAmount));
       setShowBookingModal(false);
       setShowPaymentModal(true);
       showToast('Booking created! Please complete your payment.', 'success');
@@ -176,26 +215,20 @@ export default function TripDetailPage() {
     router.push('/dashboard/bookings');
   };
 
-  // Render Skeletons for Premium UX
+  // Render Skeletons for Loading State
   if (tripLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-gray-200 rounded-lg" />
-          <div className="space-y-2">
-            <div className="w-32 h-6 bg-gray-200 rounded" />
-            <div className="w-48 h-4 bg-gray-200 rounded" />
+      <div className="space-y-4 animate-pulse max-w-7xl mx-auto px-2 sm:px-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-gray-200 rounded-xl" />
+          <div className="space-y-1.5 flex-1">
+            <div className="w-40 h-5 bg-gray-200 rounded" />
+            <div className="w-56 h-3.5 bg-gray-200 rounded" />
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="w-full h-80 bg-gray-200 rounded-2xl" />
-            <div className="w-full h-64 bg-gray-200 rounded-2xl" />
-            <div className="w-full h-44 bg-gray-200 rounded-2xl" />
-          </div>
-          <div className="space-y-6">
-            <div className="w-full h-[400px] bg-gray-200 rounded-2xl" />
-          </div>
+          <div className="w-full h-72 bg-gray-200 rounded-2xl" />
+          <div className="w-full h-96 bg-gray-200 rounded-2xl" />
         </div>
       </div>
     );
@@ -205,347 +238,518 @@ export default function TripDetailPage() {
   if (loadError || !currentTrip) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4">
-        <Card className="max-w-md w-full border border-red-100 shadow-xl rounded-2xl p-8 text-center space-y-6 bg-white">
-          <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-sm">
-            <ShieldAlert className="w-8 h-8" />
+        <Card className="max-w-md w-full border border-red-100 shadow-xl rounded-2xl p-6 text-center space-y-4 bg-white">
+          <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-xs">
+            <ShieldAlert className="w-7 h-7" />
           </div>
-          <div className="space-y-2">
-            <h2 className="text-xl font-bold text-gray-900">Trip Unavailable</h2>
-            <p className="text-sm text-gray-500 leading-relaxed">
+          <div className="space-y-1">
+            <h2 className="text-lg font-bold text-gray-900">Trip Unavailable</h2>
+            <p className="text-xs text-gray-500 leading-relaxed">
               {loadError || "We couldn't retrieve the details for this trip. It might have been completed, cancelled, or does not exist."}
             </p>
           </div>
           <Button 
-            onClick={() => router.push('/dashboard/trips')} 
-            className="w-full font-bold shadow-md"
+            onClick={() => router.push('/dashboard/passenger')} 
+            className="w-full font-bold shadow-md rounded-xl"
           >
-            Back to Trips Search
+            Back to Ride Booking
           </Button>
         </Card>
       </div>
     );
   }
 
-  const isBookingDisabled = 
-    currentTrip.status === 'COMPLETED' || 
-    currentTrip.status === 'CANCELLED' || 
-    (currentTrip.vehicle && currentTrip.vehicle.status !== 'approved') || 
-    !currentTrip.allowBooking;
+  const vehicleImg = getTripVehicleImage(currentTrip.vehicle);
 
   return (
-    <div className="space-y-8 pb-12">
-      {/* Top Header Navigation */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/dashboard/trips"
-          className="p-2 hover:bg-gray-100 rounded-xl transition-all border border-transparent hover:border-gray-200 shadow-sm bg-white"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Trip Details</h1>
-          <p className="text-sm text-gray-500 font-semibold flex items-center gap-1">
-            <span>{currentTrip.origin}</span>
-            <ArrowRight className="w-3 h-3 text-gray-400" />
-            <span>{currentTrip.destination}</span>
-          </p>
+    <div className="-mx-4 -mt-8 sm:mx-0 sm:mt-0 min-h-screen pb-44 lg:pb-12 bg-slate-50 overflow-x-hidden w-full max-w-full">
+      {/* ── Top Header Navigation Bar ── */}
+      <header className="bg-white/95 backdrop-blur-md px-3.5 sm:px-6 py-2.5 sm:py-3 border-b border-gray-200/80 sticky top-0 z-30 shadow-xs flex items-center justify-between gap-2.5 w-full">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard/passenger')}
+            className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-700 active:scale-90 transition-transform border border-gray-200/80 bg-white shrink-0 shadow-xs"
+            aria-label="Back to ride search"
+          >
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xs sm:text-base font-extrabold text-gray-900 tracking-tight truncate flex items-center gap-1.5">
+              <span>{formatShortAddress(currentTrip.origin || currentTrip.source || '')}</span>
+              <ArrowRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+              <span>{formatShortAddress(currentTrip.destination || '')}</span>
+            </h1>
+            <p className="text-[10px] sm:text-xs text-gray-500 font-semibold truncate flex items-center gap-1.5 mt-0.5">
+              <span>{formatDateTime(currentTrip.departureDate || currentTrip.departureTime || '')}</span>
+              <span className="opacity-40">•</span>
+              <span className="text-blue-600 font-bold">{currencySymbol} {seatPrice} / seat</span>
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Side: Route and Vehicle Details */}
-        <div className="lg:col-span-2">
-          <TripDetails
-            trip={currentTrip}
-            onBook={() => setShowBookingModal(true)}
-          />
+        <div className="shrink-0">
+          <Badge 
+            variant={currentTrip.status === 'SCHEDULED' ? 'info' : currentTrip.status === 'COMPLETED' ? 'success' : 'warning'}
+            className="capitalize text-[10px] sm:text-xs font-bold px-2 py-0.5"
+          >
+            {currentTrip.status}
+          </Badge>
+        </div>
+      </header>
+
+      {/* ── Main Content Container ── */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 w-full max-w-full">
+        {/* Mobile View Tabs Selector (Seats / Route / Vehicle - 3 Equal Balanced Columns) */}
+        <div className="grid grid-cols-3 gap-1 bg-white p-1 rounded-2xl border border-gray-200/90 mb-3 shadow-xs lg:hidden w-full">
+          <button
+            type="button"
+            onClick={() => setMobileActiveTab('seats')}
+            className={cn(
+              'py-1.5 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 truncate',
+              mobileActiveTab === 'seats'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-gray-500 hover:text-gray-900'
+            )}
+          >
+            <Ticket className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Seats</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMobileActiveTab('route')}
+            className={cn(
+              'py-1.5 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 truncate',
+              mobileActiveTab === 'route'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-gray-500 hover:text-gray-900'
+            )}
+          >
+            <Navigation className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Route</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMobileActiveTab('vehicle')}
+            className={cn(
+              'py-1.5 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 truncate',
+              mobileActiveTab === 'vehicle'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-gray-500 hover:text-gray-900'
+            )}
+          >
+            <Car className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Vehicle</span>
+          </button>
         </div>
 
-        {/* Right Side: Seat Selector and Pricing Details */}
-        <div className="space-y-6 lg:sticky lg:top-24">
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Ticket className="w-5 h-5 text-primary-500" /> Ticket Booking
-            </h3>
+        {/* ── Grid: Desktop Split (Left Details / Right Sticky Booking) & Mobile Flow ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start w-full">
+          {/* ════════════════════════════════════════════════════════════════════
+             LEFT SECTION (Desktop: 7 Cols / Mobile: Shown on Route or Vehicle Tab)
+             ════════════════════════════════════════════════════════════════════ */}
+          <div className={cn(
+            'space-y-4 sm:space-y-6 lg:col-span-7 w-full',
+            mobileActiveTab === 'seats' ? 'hidden lg:block' : 'block'
+          )}>
+            <TripDetails
+              trip={currentTrip}
+              onBook={() => setShowBookingModal(true)}
+            />
+          </div>
 
-            {isBookingDisabled ? (
-              <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-2.5 mb-4 text-xs text-red-700 font-medium">
-                <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold">Booking Unavailable</p>
-                  <p className="text-red-600/90 mt-0.5">
-                    This trip is no longer accepting bookings. Status: <span className="font-bold uppercase">{currentTrip.status}</span>.
-                  </p>
+          {/* ════════════════════════════════════════════════════════════════════
+             RIGHT SECTION: SEAT SELECTION & TICKET BOOKING
+             (Desktop: 5 Cols Sticky / Mobile: Primary Focus)
+             ════════════════════════════════════════════════════════════════════ */}
+          <div className={cn(
+            'space-y-3.5 lg:col-span-5 lg:sticky lg:top-20 w-full',
+            mobileActiveTab !== 'seats' ? 'hidden lg:block' : 'block'
+          )}>
+            {/* ── Trip Vehicle Hero Card (Compact for Mobile) ── */}
+            <div className="bg-white rounded-2xl border border-gray-200/90 p-3.5 sm:p-4 shadow-xs relative overflow-hidden w-full">
+              <div className="flex items-center justify-between gap-2.5 mb-2.5 pb-2.5 border-b border-gray-100">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <img
+                    src={vehicleImg}
+                    alt={currentTrip.vehicle?.brand || 'Vehicle'}
+                    className="w-13 h-9 sm:w-16 sm:h-10 object-contain drop-shadow-sm shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-xs sm:text-sm font-extrabold text-gray-900 truncate capitalize">
+                      {currentTrip.vehicle ? `${currentTrip.vehicle.brand} ${currentTrip.vehicle.model}` : currentTrip.vehicleName || 'Toyota Innova'}
+                    </h3>
+                    <p className="text-[10px] sm:text-[11px] text-gray-500 truncate flex items-center gap-1.5 mt-0.5">
+                      <span className="truncate">{currentTrip.driver?.user ? `Capt. ${currentTrip.driver.user.firstName}` : currentTrip.operatorName || 'Verified Fleet'}</span>
+                      <span className="opacity-40">•</span>
+                      <span className="text-amber-600 font-bold flex items-center gap-0.5 shrink-0">
+                        <Award className="w-3 h-3" /> 4.8
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0 min-w-[65px] pl-1">
+                  <span className="text-xs sm:text-sm font-black text-blue-600 block whitespace-nowrap">
+                    {currencySymbol} {seatPrice}
+                  </span>
+                  <span className="text-[10px] text-gray-400 block whitespace-nowrap">per seat</span>
                 </div>
               </div>
-            ) : null}
 
-            <div className="mb-4 space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase block">Passenger Gender</label>
-              <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-xl border border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => setPassengerGender('male')}
-                  className={cn(
-                    'py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5',
-                    passengerGender === 'male'
-                      ? 'bg-blue-600 text-white shadow-sm font-extrabold'
-                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                  )}
-                >
-                  <span className="text-sm font-bold">♂</span> Male
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPassengerGender('female')}
-                  className={cn(
-                    'py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5',
-                    passengerGender === 'female'
-                      ? 'bg-pink-600 text-white shadow-sm font-extrabold'
-                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                  )}
-                >
-                  <span className="text-sm font-bold">♀</span> Female
-                </button>
+              {/* Boarding Summary (Compact) */}
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ring-2 ring-emerald-100" />
+                  <span className="font-bold text-gray-900 text-xs truncate">
+                    {formatShortAddress(currentTrip.origin || currentTrip.source || '')}
+                  </span>
+                  <span className="text-[10px] text-gray-400 shrink-0 ml-auto">
+                    {currentTrip.departureTime ? new Date(currentTrip.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '5:35 PM'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-sm bg-rose-500 shrink-0 ring-2 ring-rose-100" />
+                  <span className="font-bold text-gray-900 text-xs truncate">
+                    {formatShortAddress(currentTrip.destination || '')}
+                  </span>
+                  <span className="text-[10px] text-gray-400 shrink-0 ml-auto">
+                    {currentTrip.arrivalTime ? new Date(currentTrip.arrivalTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '8:35 PM'}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <SeatMap
-              seats={currentTrip.seats}
-              vehicleType={currentTrip.vehicleType}
-              selectedSeats={selectedSeats}
-              onSeatSelect={handleSeatSelect}
-              maxSelectable={Math.min(4, currentTrip.availableSeats)}
-              passengerGender={passengerGender}
-            />
+            {/* ── Interactive Seat Selector Card ── */}
+            <div className="bg-white rounded-2xl border border-gray-200/90 p-3.5 sm:p-5 shadow-xs space-y-3.5 w-full max-w-full overflow-hidden">
+              <div className="flex items-center justify-between pb-2.5 border-b border-gray-100">
+                <h3 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                  <Ticket className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span>Choose Your Seat</span>
+                </h3>
+                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                  {currentTrip.availableSeats} of {currentTrip.totalSeats} open
+                </span>
+              </div>
 
-            <div className="mt-6 pt-4 border-t border-gray-100 space-y-4">
-              <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-gray-500">Selected Seats</span>
-                <span className="bg-primary-50 text-primary-700 px-2 py-0.5 rounded-md">
-                  {selectedSeats.length > 0 ? selectedSeats.join(', ') : 'None'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-gray-500">Base Ticket Price</span>
-                <span className="text-gray-800">
-                  {formatCurrency(currentTrip.price * selectedSeats.length, currentTrip.currency)}
-                </span>
-              </div>
-              
-              {/* Est. taxes and platform fee breakdown */}
-              {selectedSeats.length > 0 && (
-                <div className="space-y-1.5 bg-gray-50 p-3 rounded-xl text-[11px] font-semibold text-gray-500 border border-gray-100">
-                  <div className="flex justify-between">
-                    <span>Platform Service Fee (10%)</span>
-                    <span>{formatCurrency(currentTrip.price * selectedSeats.length * 0.10, currentTrip.currency)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>GST Tax (18%)</span>
-                    <span>{formatCurrency(currentTrip.price * selectedSeats.length * 0.18, currentTrip.currency)}</span>
+              {isBookingDisabled && (
+                <div className="p-2.5 bg-red-50 border border-red-100 rounded-xl flex items-start gap-2 text-xs text-red-700 font-medium">
+                  <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold">Booking Unavailable</p>
+                    <p className="text-red-600/90 mt-0.5">
+                      This trip is not accepting bookings right now. Status: <span className="font-bold uppercase">{currentTrip.status}</span>.
+                    </p>
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <span className="text-sm font-bold text-gray-900">Total Est. Price</span>
-                <span className="text-xl font-black text-primary-600">
-                  {formatCurrency(currentTrip.price * selectedSeats.length * 1.28, currentTrip.currency)}
-                </span>
+              {/* Gender Preference Toggle (100% Mobile Safe) */}
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                  Passenger Gender
+                </label>
+                <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-xl border border-gray-200 w-full">
+                  <button
+                    type="button"
+                    onClick={() => setPassengerGender('male')}
+                    className={cn(
+                      'py-1.5 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 truncate',
+                      passengerGender === 'male'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-gray-500 hover:text-gray-900'
+                    )}
+                  >
+                    <span className="text-xs font-bold">♂</span>
+                    <span>Male</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPassengerGender('female')}
+                    className={cn(
+                      'py-1.5 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 truncate',
+                      passengerGender === 'female'
+                        ? 'bg-pink-600 text-white shadow-xs'
+                        : 'text-gray-500 hover:text-gray-900'
+                    )}
+                  >
+                    <span className="text-xs font-bold">♀</span>
+                    <span>Female</span>
+                  </button>
+                </div>
               </div>
 
-              <Button
-                onClick={() => setShowBookingModal(true)}
-                disabled={selectedSeats.length === 0 || isBookingDisabled}
-                className="w-full py-3 font-bold shadow-md transition-all mt-2"
-              >
-                Proceed to Book
-              </Button>
-              
-              <p className="text-[10px] text-center text-gray-400 font-semibold">
-                Remaining Available Seats: {currentTrip.availableSeats} of {currentTrip.totalSeats}
-              </p>
+              {/* SeatMap Layout */}
+              <div className="pt-0.5 w-full">
+                <SeatMap
+                  seats={currentTrip.seats}
+                  vehicleType={currentTrip.vehicleType || currentTrip.vehicle?.type}
+                  selectedSeats={selectedSeats}
+                  onSeatSelect={handleSeatSelect}
+                  maxSelectable={Math.min(4, currentTrip.availableSeats)}
+                  passengerGender={passengerGender}
+                />
+              </div>
+
+              {/* Pricing Breakdown Summary */}
+              <div className="pt-2.5 border-t border-gray-100 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 font-medium">Selected Seats</span>
+                  <span className="font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
+                    {selectedSeats.length > 0 ? selectedSeats.join(', ') : 'None'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 font-medium">Ticket Price ({selectedSeats.length} × {currencySymbol}{seatPrice})</span>
+                  <span className="font-semibold text-gray-800">{currencySymbol} {subtotal}</span>
+                </div>
+
+                {selectedSeats.length > 0 && (
+                  <div className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-gray-150 text-[11px] text-gray-500">
+                    <div className="flex justify-between">
+                      <span>Platform Service Fee (10%)</span>
+                      <span>{currencySymbol} {platformFee}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>GST Tax (18%)</span>
+                      <span>{currencySymbol} {gstTax}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">
+                  <span className="text-xs sm:text-sm font-bold text-gray-900">Total Amount</span>
+                  <span className="text-base sm:text-lg font-black text-blue-600">
+                    {currencySymbol} {totalFinalAmount}
+                  </span>
+                </div>
+
+                {/* Desktop "Proceed to Book" Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowBookingModal(true)}
+                  disabled={selectedSeats.length === 0 || isBookingDisabled}
+                  className="hidden lg:flex w-full h-11 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 active:scale-[0.98] transition-all items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  <Ticket className="w-4 h-4" />
+                  <span>{selectedSeats.length === 0 ? 'Select a Seat to Continue' : 'Proceed to Book'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Alternative Recommendations Section */}
-      {relatedTrips.length > 0 && (
-        <div className="pt-6 border-t border-gray-100 space-y-4">
-          <h2 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-1.5">
-            <Sparkles className="w-5 h-5 text-yellow-500 fill-yellow-100" /> Similar Routes Available
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {relatedTrips.map((related) => (
-              <Card 
-                key={related.id} 
-                className="border border-gray-200 hover:border-primary-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div className="p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="capitalize">{related.vehicleType}</Badge>
-                    <span className="text-lg font-black text-primary-600">
-                      {formatCurrency(related.price, related.currency)}
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-800 text-sm">{related.origin} to {related.destination}</h4>
-                    <p className="text-xs text-gray-500 mt-1 font-medium">
-                      Date: {formatDateTime(related.departureDate)}
+        {/* ── Related Alternative Routes (Bottom recommendations) ── */}
+        {relatedTrips.length > 0 && (
+          <div className="mt-6 pt-5 border-t border-gray-200 space-y-3">
+            <h2 className="text-xs sm:text-sm font-black text-gray-900 tracking-tight flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Other Trips on Similar Routes</span>
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
+              {relatedTrips.map((related) => (
+                <div
+                  key={related.id} 
+                  className="p-3.5 rounded-2xl bg-white border border-gray-200 hover:border-blue-400 hover:shadow-xs transition-all flex flex-col justify-between gap-2"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-700 uppercase">
+                        {related.vehicleType}
+                      </span>
+                      <span className="text-xs font-black text-blue-600">
+                        {currencySymbol} {related.pricePerSeat || related.price}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-gray-900 text-xs mt-1 truncate">
+                      {formatShortAddress(related.origin || related.source || '')} ➔ {formatShortAddress(related.destination)}
+                    </h4>
+                    <p className="text-[10px] text-gray-400">
+                      {formatDateTime(related.departureDate || related.departureTime || '')}
                     </p>
                   </div>
-                </div>
-                <div className="bg-gray-50 p-4 border-t border-gray-100 flex items-center justify-between text-xs">
-                  <span className="text-gray-500 font-semibold">{related.availableSeats} seats left</span>
+
                   <Link 
                     href={`/dashboard/trips/${related.id}`}
-                    className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1"
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 pt-1.5 border-t border-gray-100"
                   >
-                    View Details <ArrowRight className="w-3.5 h-3.5" />
+                    <span>View Trip</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
-              </Card>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
 
-      {/* Booking Form Confirmation Modal */}
+      {/* ════════════════════════════════════════════════════════════════════════
+         STICKY BOTTOM ACTION BAR ON MOBILE (Fixed above MobileNav)
+         ════════════════════════════════════════════════════════════════════════ */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-3 pb-20 lg:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[10px] text-gray-400 font-semibold block leading-none mb-1 truncate">
+              {selectedSeats.length > 0 ? `${selectedSeats.length} Seat${selectedSeats.length > 1 ? 's' : ''} (#${selectedSeats.join(', #')})` : 'Select Seat(s)'}
+            </span>
+            <span className="text-base font-black text-blue-600 leading-none">
+              {currencySymbol} {selectedSeats.length > 0 ? totalFinalAmount : seatPrice}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowBookingModal(true)}
+            disabled={selectedSeats.length === 0 || isBookingDisabled}
+            className="flex-1 max-w-[190px] h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
+          >
+            <span>{selectedSeats.length === 0 ? 'Pick a Seat' : 'Proceed to Book'}</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Booking Form Confirmation Modal ── */}
       <Modal
         isOpen={showBookingModal}
         onClose={() => setShowBookingModal(false)}
         title="Verify Passenger & Booking Details"
         size="md"
       >
-        <div className="space-y-5">
-          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-            <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0" />
-            <div>
-              <p className="font-bold text-gray-900 text-sm">
-                {currentTrip.origin} → {currentTrip.destination}
+        <div className="space-y-3.5">
+          {/* Trip Header Banner */}
+          <div className="flex items-center gap-2.5 p-2.5 bg-blue-50/60 rounded-xl border border-blue-200/60">
+            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-gray-900 text-xs truncate">
+                {currentTrip.origin || currentTrip.source} ➔ {currentTrip.destination}
               </p>
-              <p className="text-xs text-gray-500 font-semibold">
-                Departure: {new Date(currentTrip.departureDate).toLocaleDateString()}
+              <p className="text-[10px] text-gray-500">
+                Departure: {formatDateTime(currentTrip.departureDate || currentTrip.departureTime || '')}
               </p>
             </div>
           </div>
 
-          {/* Passenger Information Details */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Passenger Information</h4>
-            <div className="space-y-3 text-xs">
+          {/* Passenger Information */}
+          <div className="space-y-2">
+            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Passenger Contact</h4>
+            <div className="space-y-2 text-xs">
               <div className="relative">
-                <span className="absolute left-3.5 top-3.5 text-gray-400">
-                  <User className="w-4 h-4" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <User className="w-3.5 h-3.5" />
                 </span>
                 <input 
                   type="text" 
-                  placeholder="Passenger Name" 
+                  placeholder="Full Name" 
                   value={passengerName}
                   onChange={(e) => setPassengerName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500 font-medium"
+                  className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900 text-xs"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="relative">
-                  <span className="absolute left-3.5 top-3.5 text-gray-400">
-                    <Phone className="w-4 h-4" />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <Phone className="w-3.5 h-3.5" />
                   </span>
                   <input 
                     type="tel" 
                     placeholder="Phone Number" 
                     value={passengerPhone}
                     onChange={(e) => setPassengerPhone(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500 font-medium"
+                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900 text-xs"
                   />
                 </div>
+
                 <div className="relative">
-                  <span className="absolute left-3.5 top-3.5 text-gray-400">
-                    <Mail className="w-4 h-4" />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <Mail className="w-3.5 h-3.5" />
                   </span>
                   <input 
                     type="email" 
                     placeholder="Email Address" 
                     value={passengerEmail}
                     onChange={(e) => setPassengerEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500 font-medium"
+                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900 text-xs"
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Pickup and Drop Point Details */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Boarding Locations</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          {/* Boarding Points */}
+          <div className="space-y-2">
+            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Boarding & Dropping Points</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Pickup Point</label>
+                <label className="text-[10px] font-semibold text-gray-500 block mb-0.5">Pickup Location</label>
                 <input 
                   type="text" 
                   placeholder="e.g. Bus Stand / Hotel" 
                   value={pickupPoint}
                   onChange={(e) => setPickupPoint(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500 font-semibold"
+                  className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-blue-500 font-medium text-gray-900 text-xs"
                 />
               </div>
+
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Drop Point</label>
+                <label className="text-[10px] font-semibold text-gray-500 block mb-0.5">Drop Location</label>
                 <input 
                   type="text" 
                   placeholder="e.g. Railway Station" 
                   value={dropPoint}
                   onChange={(e) => setDropPoint(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500 font-semibold"
+                  className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-blue-500 font-medium text-gray-900 text-xs"
                 />
               </div>
             </div>
           </div>
 
           {/* Pricing Summary */}
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-2.5 text-xs font-semibold text-gray-600">
+          <div className="bg-slate-50 p-2.5 rounded-xl border border-gray-200 space-y-1.5 text-xs">
             <div className="flex justify-between">
-              <span>Selected Seats ({selectedSeats.length})</span>
-              <span className="text-gray-800">{selectedSeats.join(', ')}</span>
+              <span className="text-gray-500">Selected Seats ({selectedSeats.length})</span>
+              <span className="font-bold text-gray-800">{selectedSeats.join(', ')}</span>
             </div>
             <div className="flex justify-between">
-              <span>Price per seat</span>
-              <span>{formatCurrency(currentTrip.price, currentTrip.currency)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Base Fare</span>
-              <span>{formatCurrency(currentTrip.price * selectedSeats.length, currentTrip.currency)}</span>
+              <span className="text-gray-500">Base Fare ({selectedSeats.length} × {currencySymbol}{seatPrice})</span>
+              <span className="font-semibold text-gray-800">{currencySymbol} {subtotal}</span>
             </div>
             <div className="flex justify-between text-[11px] text-gray-500">
-              <span>Taxes & Service Fees (Platform + GST)</span>
-              <span>{formatCurrency(currentTrip.price * selectedSeats.length * 0.28, currentTrip.currency)}</span>
+              <span>Platform Fee & GST Taxes</span>
+              <span>{currencySymbol} {platformFee + gstTax}</span>
             </div>
-            <div className="border-t border-gray-200 pt-2 flex justify-between text-sm font-bold text-gray-900">
-              <span>Estimated Final Amount</span>
-              <span className="text-primary-600 font-black">
-                {formatCurrency(currentTrip.price * selectedSeats.length * 1.28, currentTrip.currency)}
-              </span>
+            <div className="border-t border-gray-200 pt-1 flex justify-between text-xs sm:text-sm font-extrabold text-gray-900">
+              <span>Final Total Amount</span>
+              <span className="text-blue-600 font-black">{currencySymbol} {totalFinalAmount}</span>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-1.5">
             <Button
               variant="secondary"
               onClick={() => setShowBookingModal(false)}
-              className="flex-1 font-bold rounded-xl"
+              className="flex-1 font-bold rounded-xl h-10 text-xs"
             >
               Cancel
             </Button>
-            <Button onClick={handleBook} className="flex-1 font-bold rounded-xl shadow-md">
+            <Button 
+              onClick={handleBook} 
+              className="flex-1 font-bold rounded-xl h-10 text-xs shadow-md bg-blue-600 hover:bg-blue-700"
+            >
               Confirm & Pay
             </Button>
           </div>
         </div>
       </Modal>
 
-      {/* Payment Gateway Modal */}
+      {/* ── Payment Gateway Modal ── */}
       <Modal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
@@ -553,8 +757,8 @@ export default function TripDetailPage() {
         size="md"
       >
         <PaymentForm
-          amount={paymentAmount}
-          currency={currentTrip.currency}
+          amount={Number(paymentAmount) || Number(totalFinalAmount)}
+          currency={currentTrip.currency || 'INR'}
           bookingId={bookingId}
           provider="RAZORPAY"
           onSuccess={handlePaymentSuccess}

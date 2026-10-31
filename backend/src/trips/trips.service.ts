@@ -218,17 +218,19 @@ export class TripsService {
       }
     }
 
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
     const where: any = {
-      departureTime: Between(startOfDay, endOfDay),
       availableSeats: MoreThanOrEqual(seats),
       status: TripStatus.SCHEDULED,
       allowBooking: true,
     };
+
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      where.departureTime = Between(startOfDay, endOfDay);
+    }
 
     if (tripType) {
       where.tripType = tripType;

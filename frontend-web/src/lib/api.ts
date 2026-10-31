@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 import { API_BASE_URL } from './constants';
 import { AuthResponse, RefreshTokenDto } from '@/types/auth';
 import { parseApiError, getFieldValidationErrors } from './errorHandler';
+import { setCookie, getCookie, deleteCookie } from './cookieUtils';
 
 interface TokenResponse {
   accessToken: string;
@@ -65,7 +66,9 @@ class ApiClient {
             return this.client(originalRequest);
           } catch (refreshError) {
             this.clearTokens();
-            window.location.href = '/login';
+            if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+              window.location.href = `/login?returnUrl=${encodeURIComponent(window.location.pathname)}`;
+            }
             // Rewrite the refresh error too
             const friendlyMsg = parseApiError(refreshError);
             const friendlyErr = new Error(friendlyMsg);
@@ -99,14 +102,14 @@ class ApiClient {
 
   private getAccessToken(): string | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('accessToken');
+      return localStorage.getItem('accessToken') || getCookie('accessToken');
     }
     return null;
   }
 
   private getRefreshToken(): string | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('refreshToken');
+      return localStorage.getItem('refreshToken') || getCookie('refreshToken');
     }
     return null;
   }
@@ -139,8 +142,8 @@ class ApiClient {
             : (response.data as TokenResponse);
 
         const { accessToken, refreshToken: newRefreshToken } = payload;
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
+        this.setTokens(accessToken, newRefreshToken);
+
         return accessToken;
       } finally {
         this.refreshPromise = null;
@@ -150,15 +153,29 @@ class ApiClient {
     return this.refreshPromise;
   }
 
-  public setTokens(accessToken: string, refreshToken: string) {
+  public setTokens(
+    accessToken: string,
+    refreshToken: string,
+    user?: { role?: string; userType?: string },
+    rememberMe: boolean = true
+  ) {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
+    const days = rememberMe ? 30 : 1;
+    setCookie('accessToken', accessToken, days);
+    setCookie('refreshToken', refreshToken, days);
+    if (user?.role) setCookie('userRole', user.role, days);
+    if (user?.userType) setCookie('userType', user.userType, days);
   }
 
   public clearTokens() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    deleteCookie('accessToken');
+    deleteCookie('refreshToken');
+    deleteCookie('userRole');
+    deleteCookie('userType');
   }
 
   public getClient(): AxiosInstance {

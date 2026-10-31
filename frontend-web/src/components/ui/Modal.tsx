@@ -67,7 +67,7 @@ const Modal: React.FC<ModalProps> = ({
       />
       <div
         className={cn(
-          'relative bg-white rounded-lg shadow-xl w-full transform transition-all',
+          'relative bg-white rounded-2xl shadow-2xl w-full transform transition-all max-h-[92vh] flex flex-col overflow-hidden',
           sizes[size]
         )}
       >
@@ -92,7 +92,7 @@ const Modal: React.FC<ModalProps> = ({
             )}
           </div>
         )}
-        <div className="px-6 py-4">{children}</div>
+        <div className="px-5 sm:px-6 py-4 overflow-y-auto flex-1">{children}</div>
         {footer && <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">{footer}</div>}
       </div>
     </div>,

@@ -54,8 +54,17 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
     const rect = buttonRef.current.getBoundingClientRect();
     const top = rect.bottom + 8;
-    const left = rect.left;
-    const width = rect.width;
+    const minWidth = 280;
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 360;
+    let width = Math.max(rect.width, minWidth);
+    if (width > viewportWidth - 24) {
+      width = viewportWidth - 24;
+    }
+
+    let left = rect.left;
+    if (left + width > viewportWidth - 12) {
+      left = Math.max(12, viewportWidth - width - 12);
+    }
 
     setPopupStyle({ left, top, width });
   }, [isOpen, value]);

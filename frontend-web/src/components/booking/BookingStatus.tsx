@@ -27,13 +27,13 @@ interface StatusConfigEntry {
 
 const bookingStatusConfig: Record<string, StatusConfigEntry> = {
   PENDING: {
-    label: 'Awaiting Confirmation',
+    label: 'Pending',
     icon: Clock,
     color: 'text-amber-700 bg-amber-50 border-amber-200',
     dotColor: 'bg-amber-400',
   },
   CONFIRMED: {
-    label: 'Booking Confirmed',
+    label: 'Confirmed',
     icon: CheckCircle2,
     color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
     dotColor: 'bg-emerald-400',
@@ -45,7 +45,7 @@ const bookingStatusConfig: Record<string, StatusConfigEntry> = {
     dotColor: 'bg-red-400',
   },
   COMPLETED: {
-    label: 'Trip Completed',
+    label: 'Completed',
     icon: CheckCheck,
     color: 'text-blue-700 bg-blue-50 border-blue-200',
     dotColor: 'bg-blue-400',
@@ -69,25 +69,25 @@ const bookingStatusFallback: StatusConfigEntry = {
 
 const paymentStatusConfig: Record<string, StatusConfigEntry> = {
   PENDING: {
-    label: 'Payment Pending',
+    label: 'Unpaid',
     icon: Clock,
     color: 'text-amber-700 bg-amber-50 border-amber-200',
     dotColor: 'bg-amber-400',
   },
   PROCESSING: {
-    label: 'Processing Payment',
+    label: 'Processing',
     icon: Loader2,
     color: 'text-blue-700 bg-blue-50 border-blue-200',
     dotColor: 'bg-blue-400',
   },
   PAID: {
-    label: 'Payment Successful',
+    label: 'Paid',
     icon: CircleDollarSign,
     color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
     dotColor: 'bg-emerald-400',
   },
   FAILED: {
-    label: 'Payment Failed',
+    label: 'Failed',
     icon: XCircle,
     color: 'text-red-700 bg-red-50 border-red-200',
     dotColor: 'bg-red-400',
@@ -99,13 +99,13 @@ const paymentStatusConfig: Record<string, StatusConfigEntry> = {
     dotColor: 'bg-purple-400',
   },
   REFUND_PENDING: {
-    label: 'Refund Initiated',
+    label: 'Refunding',
     icon: Clock,
     color: 'text-indigo-700 bg-indigo-50 border-indigo-200',
     dotColor: 'bg-indigo-400',
   },
   REFUND_COMPLETED: {
-    label: 'Refund Completed',
+    label: 'Refunded',
     icon: CheckCircle2,
     color: 'text-teal-700 bg-teal-50 border-teal-200',
     dotColor: 'bg-teal-400',

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import {
   Elements,
@@ -13,11 +13,12 @@ import apiClient from '@/lib/api';
 import { useAppStore } from '@/store';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import { cn } from '@/lib/utils';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY || '');
 
 interface PaymentFormProps {
-  amount: number;
+  amount: number | string;
   currency?: string;
   bookingId?: string;
   paymentType?: 'booking' | 'wallet_topup';
@@ -34,6 +35,7 @@ const StripePaymentForm: React.FC<Omit<PaymentFormProps, 'provider'>> = ({
   onSuccess,
   onError,
 }) => {
+  const numericAmount = Number(amount) || 0;
   const stripe = useStripe();
   const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +58,7 @@ const StripePaymentForm: React.FC<Omit<PaymentFormProps, 'provider'>> = ({
 
     try {
       const response = await apiClient.createStripeIntent({
-        amount,
+        amount: numericAmount,
         currency,
         bookingId,
         paymentType,
@@ -112,7 +114,7 @@ const StripePaymentForm: React.FC<Omit<PaymentFormProps, 'provider'>> = ({
         disabled={!stripe}
         className="w-full"
       >
-        Pay {formatAmount(amount)}
+        Pay {formatAmount(numericAmount)}
       </Button>
     </form>
   );
@@ -126,15 +128,26 @@ const RazorpayPaymentForm: React.FC<Omit<PaymentFormProps, 'provider'>> = ({
   onSuccess,
   onError,
 }) => {
+  const numericAmount = Number(amount) || 0;
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useAppStore();
+
+  // Load Razorpay checkout script dynamically if missing
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.Razorpay) {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
 
   const handlePayment = async () => {
     setIsLoading(true);
 
     try {
       const response = await apiClient.createRazorpayOrder({
-        amount,
+        amount: numericAmount,
         currency,
         bookingId,
         paymentType,
@@ -142,13 +155,29 @@ const RazorpayPaymentForm: React.FC<Omit<PaymentFormProps, 'provider'>> = ({
 
       const { orderId, keyId } = response.data;
 
+      // Handle mock / simulated orders in development mode
+      if (orderId && orderId.startsWith('order_mock_')) {
+        try {
+          await apiClient.verifyRazorpayPayment({
+            orderId,
+            paymentId: `pay_mock_${Date.now()}`,
+            signature: 'simulated_signature',
+          });
+          showToast('Payment confirmed successfully (Test/Simulated Mode)!', 'success');
+          onSuccess?.();
+          return;
+        } catch (verifyErr) {
+          console.warn('Simulation verification err', verifyErr);
+        }
+      }
+
       if (!window.Razorpay) {
-        throw new Error('Razorpay SDK is not available.');
+        throw new Error('Razorpay SDK is loading. Please try again in a few seconds.');
       }
 
       const options = {
         key: keyId,
-        amount: Math.round(amount * 100),
+        amount: Math.round(numericAmount * 100),
         currency,
         name: 'TravelFlow',
         description: 'Trip Booking',
@@ -174,7 +203,7 @@ const RazorpayPaymentForm: React.FC<Omit<PaymentFormProps, 'provider'>> = ({
           contact: '',
         },
         theme: {
-          color: '#3b82f6',
+          color: '#2563eb',
         },
       };
 
@@ -191,19 +220,19 @@ const RazorpayPaymentForm: React.FC<Omit<PaymentFormProps, 'provider'>> = ({
 
   return (
     <div className="space-y-4">
-      <div className="text-center p-6 bg-gray-50 rounded-lg">
-        <p className="text-2xl font-bold text-gray-900">
+      <div className="text-center p-6 bg-gray-50 rounded-2xl border border-gray-150">
+        <p className="text-2xl font-black text-blue-600">
           {new Intl.NumberFormat('en-IN', {
             style: 'currency',
             currency,
-          }).format(amount)}
+          }).format(numericAmount)}
         </p>
-        <p className="text-sm text-gray-500 mt-1">Total amount to pay</p>
+        <p className="text-xs text-gray-500 mt-1 font-semibold">Total Amount to Pay</p>
       </div>
       <Button
         onClick={handlePayment}
         isLoading={isLoading}
-        className="w-full"
+        className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold text-sm shadow-md shadow-blue-500/20"
       >
         Pay with Razorpay
       </Button>
@@ -217,6 +246,7 @@ const WalletPaymentForm: React.FC<Omit<PaymentFormProps, 'provider'>> = ({
   onSuccess,
   onError,
 }) => {
+  const numericAmount = Number(amount) || 0;
   const [isLoading, setIsLoading] = useState(false);
   const [wallet, setWallet] = useState<any>(null);
   const { showToast } = useAppStore();
@@ -232,7 +262,7 @@ const WalletPaymentForm: React.FC<Omit<PaymentFormProps, 'provider'>> = ({
       showToast('Booking ID is missing', 'error');
       return;
     }
-    if (!wallet || Number(wallet.balance) < amount) {
+    if (!wallet || Number(wallet.balance) < numericAmount) {
       showToast('Insufficient wallet balance', 'error');
       return;
     }
@@ -253,23 +283,23 @@ const WalletPaymentForm: React.FC<Omit<PaymentFormProps, 'provider'>> = ({
 
   return (
     <div className="space-y-4">
-      <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl space-y-2">
+      <div className="p-4 bg-gray-50 border border-gray-150 rounded-2xl space-y-2">
         <div className="flex justify-between items-center text-xs font-semibold text-gray-500">
           <span>Wallet Balance</span>
-          <span className={wallet && Number(wallet.balance) >= amount ? 'text-green-600' : 'text-red-600'}>
+          <span className={wallet && Number(wallet.balance) >= numericAmount ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
             {wallet ? `₹${Number(wallet.balance).toFixed(2)}` : 'Loading...'}
           </span>
         </div>
         <div className="flex justify-between items-center text-xs font-semibold text-gray-500">
           <span>Amount to Pay</span>
-          <span className="text-gray-950 font-bold">₹{amount.toFixed(2)}</span>
+          <span className="text-gray-950 font-black text-sm">₹{numericAmount.toFixed(2)}</span>
         </div>
       </div>
       <Button
         onClick={handleWalletPay}
         isLoading={isLoading}
-        disabled={!wallet || Number(wallet.balance) < amount}
-        className="w-full"
+        disabled={!wallet || Number(wallet.balance) < numericAmount}
+        className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold text-sm shadow-md shadow-blue-500/20"
       >
         Confirm Wallet Payment
       </Button>
@@ -283,54 +313,51 @@ declare global {
   }
 }
 
-import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
-
 const PaymentForm: React.FC<PaymentFormProps> = (props) => {
   const { paymentType = 'booking' } = props;
   const [selectedProvider, setSelectedProvider] = useState<PaymentProvider>(props.provider || 'RAZORPAY');
 
   return (
-    <Card className="max-w-md mx-auto">
-      <div className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    <Card className="max-w-md mx-auto shadow-none border-0">
+      <div className="p-2 sm:p-4">
+        <h2 className="text-base font-extrabold text-gray-900 mb-3">
           Complete Payment
         </h2>
 
         {/* Tab selection */}
-        <div className="flex border-b border-gray-200 mb-6 space-x-4">
+        <div className="flex border-b border-gray-200 mb-4 space-x-3">
           <button
             type="button"
             onClick={() => setSelectedProvider('RAZORPAY')}
             className={cn(
-              'pb-2 text-sm font-semibold border-b-2 transition-all',
+              'pb-2 text-xs sm:text-sm font-bold border-b-2 transition-all',
               selectedProvider === 'RAZORPAY'
-                ? 'border-primary-500 text-primary-600'
+                ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-900'
             )}
           >
-            UPI/Bank (Razorpay)
+            UPI / Cards (Razorpay)
           </button>
           <button
             type="button"
             onClick={() => setSelectedProvider('STRIPE')}
             className={cn(
-              'pb-2 text-sm font-semibold border-b-2 transition-all',
+              'pb-2 text-xs sm:text-sm font-bold border-b-2 transition-all',
               selectedProvider === 'STRIPE'
-                ? 'border-primary-500 text-primary-600'
+                ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-900'
             )}
           >
-            Card (Stripe)
+            Credit/Debit (Stripe)
           </button>
           {paymentType === 'booking' && props.bookingId && (
             <button
               type="button"
               onClick={() => setSelectedProvider('WALLET')}
               className={cn(
-                'pb-2 text-sm font-semibold border-b-2 transition-all',
+                'pb-2 text-xs sm:text-sm font-bold border-b-2 transition-all',
                 selectedProvider === 'WALLET'
-                  ? 'border-primary-500 text-primary-600'
+                  ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-900'
               )}
             >
@@ -348,7 +375,7 @@ const PaymentForm: React.FC<PaymentFormProps> = (props) => {
         ) : selectedProvider === 'WALLET' ? (
           <WalletPaymentForm {...props} />
         ) : (
-          <p className="text-red-600">Unsupported payment provider</p>
+          <p className="text-red-600 text-xs">Unsupported payment provider</p>
         )}
       </div>
     </Card>

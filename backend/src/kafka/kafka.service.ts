@@ -1,5 +1,5 @@
 import { Injectable, Logger, Inject, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Producer, Kafka } from 'kafkajs';
+import { Producer, Kafka, Partitioners } from 'kafkajs';
 
 @Injectable()
 export class KafkaService implements OnModuleInit, OnModuleDestroy {
@@ -15,6 +15,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     }
     try {
       this.producer = this.kafka.producer({
+        createPartitioner: Partitioners.LegacyPartitioner,
         allowAutoTopicCreation: true,
         transactionTimeout: 30000,
       });

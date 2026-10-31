@@ -4,7 +4,7 @@ import React from 'react';
 import { Booking, BookingFilters } from '@/types/booking';
 import BookingCard from './BookingCard';
 import Link from 'next/link';
-import { Calendar, Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, Sparkles } from 'lucide-react';
 
 interface BookingListProps {
   bookings: Booking[];
@@ -29,67 +29,56 @@ const STATUS_TABS = [
 const EMPTY_STATE_CONFIG: Record<string, { title: string; description: string; emoji: string }> = {
   '': {
     title: "You haven't made any bookings yet",
-    description: 'Start exploring trips and book your first journey today.',
+    description: 'Explore live rides and book your first journey today.',
     emoji: '🗺️',
   },
   CONFIRMED: {
     title: 'No upcoming trips',
-    description: 'You have no confirmed bookings. Search for trips to plan your next journey.',
-    emoji: '🚌',
+    description: 'You have no confirmed bookings right now. Book a ride to plan your next journey.',
+    emoji: '🚗',
   },
   PENDING: {
     title: 'No pending bookings',
-    description: "You don't have any bookings awaiting payment or confirmation.",
+    description: "You don't have any bookings awaiting payment or driver confirmation.",
     emoji: '⏳',
   },
   COMPLETED: {
     title: 'No completed trips yet',
-    description: 'Your completed trips will appear here.',
+    description: 'Your completed journeys and ride receipts will appear here.',
     emoji: '🏁',
   },
   CANCELLED: {
     title: 'No cancelled bookings',
-    description: "You haven't cancelled any bookings.",
+    description: "You haven't cancelled any ride bookings.",
     emoji: '✅',
   },
 };
 
 // ── Skeleton loader ────────────────────────────────────────────────────────
-
 function BookingCardSkeleton() {
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4 animate-pulse">
+    <div className="bg-white border border-gray-200/90 rounded-3xl p-4 sm:p-5 space-y-3.5 animate-pulse">
       <div className="flex justify-between items-start">
-        <div className="flex gap-2">
-          <div className="h-6 w-28 bg-gray-100 rounded-full" />
-          <div className="h-6 w-32 bg-gray-100 rounded-full" />
+        <div className="flex gap-2.5 items-center">
+          <div className="h-8 w-12 bg-gray-200 rounded-xl" />
+          <div className="space-y-1">
+            <div className="h-4 w-28 bg-gray-200 rounded" />
+            <div className="h-3 w-20 bg-gray-200 rounded" />
+          </div>
         </div>
-        <div className="h-7 w-20 bg-gray-100 rounded-lg" />
+        <div className="h-6 w-20 bg-gray-200 rounded-lg" />
       </div>
-      <div className="flex items-center gap-2">
-        <div className="h-4 w-4 bg-gray-100 rounded-full" />
-        <div className="h-4 w-48 bg-gray-100 rounded" />
+      <div className="h-16 bg-gray-100 rounded-2xl" />
+      <div className="flex gap-2">
+        <div className="h-6 w-24 bg-gray-200 rounded-lg" />
+        <div className="h-6 w-16 bg-gray-200 rounded-lg" />
       </div>
-      <div className="flex gap-4">
-        <div className="h-3 w-32 bg-gray-100 rounded" />
-        <div className="h-3 w-24 bg-gray-100 rounded" />
-        <div className="h-3 w-20 bg-gray-100 rounded" />
-      </div>
-      <div className="flex justify-between pt-3 border-t border-gray-50">
-        <div className="h-3 w-28 bg-gray-100 rounded" />
-        <div className="h-3 w-16 bg-gray-100 rounded" />
-      </div>
-      <div className="flex gap-2 pt-1">
-        <div className="h-8 flex-1 bg-gray-100 rounded-xl" />
-        <div className="h-8 flex-1 bg-gray-100 rounded-xl" />
-        <div className="h-8 w-16 bg-gray-100 rounded-xl" />
-      </div>
+      <div className="h-10 w-full bg-gray-200 rounded-xl" />
     </div>
   );
 }
 
 // ── Main Component ────────────────────────────────────────────────────────
-
 const BookingList: React.FC<BookingListProps> = ({
   bookings,
   isLoading = false,
@@ -108,12 +97,12 @@ const BookingList: React.FC<BookingListProps> = ({
     : bookings;
 
   return (
-    <div className="space-y-4">
-      {/* ── Status Tab Filter ──────────────────────────────────────────── */}
+    <div className="space-y-3 sm:space-y-4">
+      {/* ── Status Tab Filter (Scrollable on mobile) ──────────────────────── */}
       {onFilterChange && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          <SlidersHorizontal className="w-4 h-4 text-gray-400 shrink-0" />
-          <div className="flex items-center gap-2 min-w-max">
+        <div className="w-full min-w-0 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+          <div className="inline-flex items-center gap-1.5 min-w-max py-0.5">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-gray-400 shrink-0 ml-1 mr-0.5" />
             {STATUS_TABS.map((tab) => {
               const isActive = activeStatus === tab.value;
               const tabCount = tab.value === ''
@@ -123,25 +112,26 @@ const BookingList: React.FC<BookingListProps> = ({
               return (
                 <button
                   key={tab.value}
+                  type="button"
                   onClick={() =>
                     onFilterChange({
                       ...filters,
                       status: tab.value as BookingFilters['status'],
                     })
                   }
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
                     isActive
-                      ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300 hover:text-primary-600'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600'
                   }`}
                 >
-                  {tab.label}
+                  <span>{tab.label}</span>
                   {!isLoading && tabCount > 0 && (
                     <span
-                      className={`inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold rounded-full ${
+                      className={`inline-flex items-center justify-center px-1.5 py-0.2 text-[10px] font-black rounded-full ${
                         isActive
                           ? 'bg-white/20 text-white'
-                          : 'bg-gray-100 text-gray-500'
+                          : 'bg-gray-100 text-gray-600'
                       }`}
                     >
                       {tabCount}
@@ -156,7 +146,7 @@ const BookingList: React.FC<BookingListProps> = ({
 
       {/* ── Loading Skeletons ─────────────────────────────────────────── */}
       {isLoading && (
-        <div className="space-y-4">
+        <div className="space-y-3.5">
           {Array.from({ length: 3 }).map((_, i) => (
             <BookingCardSkeleton key={i} />
           ))}
@@ -165,25 +155,25 @@ const BookingList: React.FC<BookingListProps> = ({
 
       {/* ── Empty State ────────────────────────────────────────────────── */}
       {!isLoading && displayedBookings.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <div className="text-5xl mb-4">{emptyConfig.emoji}</div>
-          <h3 className="text-lg font-bold text-gray-800 mb-2">{emptyConfig.title}</h3>
-          <p className="text-sm text-gray-500 max-w-xs leading-relaxed mb-6">
+        <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-white rounded-3xl border border-gray-200/90 shadow-2xs">
+          <div className="text-4xl mb-3">{emptyConfig.emoji}</div>
+          <h3 className="text-sm sm:text-base font-extrabold text-gray-900 mb-1">{emptyConfig.title}</h3>
+          <p className="text-xs text-gray-500 max-w-xs leading-relaxed mb-4">
             {emptyConfig.description}
           </p>
           <Link
-            href="/dashboard/trips"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white text-sm font-bold rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
+            href="/dashboard/passenger"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/20 active:scale-95"
           >
             <Search className="w-4 h-4" />
-            Search Trips
+            <span>Search & Book a Ride</span>
           </Link>
         </div>
       )}
 
-      {/* ── Booking Cards ─────────────────────────────────────────────── */}
+      {/* ── Booking Cards List ─────────────────────────────────────────── */}
       {!isLoading && displayedBookings.length > 0 && (
-        <div className={variant === 'compact' ? 'space-y-2' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'}>
+        <div className={variant === 'compact' ? 'space-y-2' : 'grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4'}>
           {displayedBookings.map((booking) =>
             variant === 'compact' ? (
               <BookingCard

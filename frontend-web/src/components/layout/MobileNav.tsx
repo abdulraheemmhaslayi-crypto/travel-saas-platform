@@ -13,30 +13,40 @@ import {
   Wallet,
   Bell,
   User,
+  Compass,
 } from 'lucide-react';
 
 const MobileNav: React.FC = () => {
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const unreadCount = useNotificationStore((s) => s.unreadCount);
 
+  // Hide on authentication screens so they remain focused
+  if (
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/register') ||
+    pathname?.startsWith('/forgot-password')
+  ) {
+    return null;
+  }
+
   const navItems = (() => {
-    if (!user) {
+    if (!isAuthenticated || !user) {
       return [
-        { href: '/dashboard/passenger', label: 'Home', icon: LayoutDashboard },
-        { href: '/dashboard/trips/search', label: 'Search', icon: Search },
-        { href: '/dashboard/bookings', label: 'Bookings', icon: Calendar },
+        { href: '/dashboard/passenger', label: 'Search', icon: Search },
+        { href: '/dashboard/bookings', label: 'My Trips', icon: Calendar },
         { href: '/dashboard/wallet', label: 'Wallet', icon: Wallet },
-        { href: '/dashboard/notifications', label: 'Alerts', icon: Bell, badge: unreadCount },
+        { href: '/login', label: 'Sign In', icon: User },
       ];
     }
 
     const type = String(user.userType || '').toUpperCase();
+
     if (type === 'DRIVER') {
       return [
         { href: '/dashboard/driver', label: 'Home', icon: LayoutDashboard },
         { href: '/dashboard/trips', label: 'Trips', icon: Calendar },
-        { href: '/dashboard/wallet', label: 'Wallet', icon: Wallet },
+        { href: '/dashboard/wallet', label: 'Earnings', icon: Wallet },
         { href: '/dashboard/notifications', label: 'Alerts', icon: Bell, badge: unreadCount },
         { href: '/dashboard/profile', label: 'Profile', icon: User },
       ];
@@ -52,28 +62,28 @@ const MobileNav: React.FC = () => {
       ];
     }
 
-    if (type === 'SUPPORT') {
-      return [
-        { href: '/dashboard/support', label: 'Home', icon: LayoutDashboard },
-        { href: '/dashboard/profile', label: 'Profile', icon: User },
-      ];
-    }
-
-    // Passenger (default) — prioritized for mobile: Home, Search, Bookings, Wallet, Notifications
+    // Default: Passenger
     return [
-      { href: '/dashboard/passenger', label: 'Home', icon: LayoutDashboard },
-      { href: '/dashboard/trips/search', label: 'Search', icon: Search },
-      { href: '/dashboard/bookings', label: 'Bookings', icon: Calendar },
+      { href: '/dashboard/passenger', label: 'Search', icon: Search },
+      { href: '/dashboard/bookings', label: 'My Trips', icon: Calendar },
       { href: '/dashboard/wallet', label: 'Wallet', icon: Wallet },
       { href: '/dashboard/notifications', label: 'Alerts', icon: Bell, badge: unreadCount },
+      { href: '/dashboard/profile', label: 'Account', icon: User },
     ];
   })();
 
+  const isCurrentActive = (href: string) => {
+    if (href === '/dashboard/passenger') {
+      return pathname === '/dashboard/passenger' || pathname === '/' || pathname === '/dashboard/trips/search';
+    }
+    return pathname === href || pathname?.startsWith(`${href}/`);
+  };
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/80 z-50 lg:hidden safe-area-bottom">
-      <div className="flex items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200/80 z-50 md:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom,0px)]">
+      <div className="flex items-center justify-around h-16 px-1">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+          const isActive = isCurrentActive(item.href);
           const Icon = item.icon;
           const badge = (item as any).badge;
 
@@ -82,31 +92,42 @@ const MobileNav: React.FC = () => {
               key={item.href}
               href={item.href}
               className={cn(
-                'relative flex flex-col items-center py-2 px-3 min-w-[4rem] transition-colors duration-200',
-                isActive ? 'text-primary-600' : 'text-gray-400'
+                'relative flex-1 flex flex-col items-center justify-center py-1.5 transition-all duration-150 active:scale-95 select-none',
+                isActive ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'
               )}
             >
               <div className="relative">
-                <div className={cn(
-                  'p-1 rounded-xl transition-all duration-200',
-                  isActive ? 'bg-primary-50' : ''
-                )}>
-                  <Icon className={cn('w-5 h-5', isActive ? 'text-primary-600' : '')} />
+                <div
+                  className={cn(
+                    'w-10 h-7 flex items-center justify-center rounded-full transition-all duration-200',
+                    isActive ? 'bg-primary-50 text-primary-600' : 'text-gray-500'
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      'w-5 h-5 transition-transform duration-200',
+                      isActive ? 'stroke-[2.5] scale-105' : 'stroke-[1.75]'
+                    )}
+                  />
                 </div>
                 {badge > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center">
-                    {badge > 99 ? '99+' : badge}
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 text-[9px] font-extrabold text-white bg-danger-500 rounded-full flex items-center justify-center ring-2 ring-white">
+                    {badge > 9 ? '9+' : badge}
                   </span>
                 )}
               </div>
-              <span className={cn(
-                'text-[10px] mt-0.5 font-semibold',
-                isActive ? 'text-primary-600' : 'text-gray-400'
-              )}>
+
+              <span
+                className={cn(
+                  'text-[10px] mt-0.5 tracking-tight transition-colors',
+                  isActive ? 'font-bold text-primary-600' : 'font-medium text-gray-500'
+                )}
+              >
                 {item.label}
               </span>
+
               {isActive && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-primary-600" />
+                <div className="absolute bottom-0 w-8 h-0.5 rounded-full bg-primary-600 animate-fadeIn" />
               )}
             </Link>
           );

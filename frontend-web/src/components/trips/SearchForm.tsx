@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchFilters } from '@/types/trip';
-import { Search, AlertCircle, ArrowLeftRight, Calendar, Users, MapPin } from 'lucide-react';
+import { Search, AlertCircle, ArrowUpDown, ArrowLeftRight, Calendar, Users, Sparkles } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
 import SearchInput from '@/components/maps/SearchInput';
+import { cn } from '@/lib/utils';
 
 interface SearchFormProps {
   initialFilters?: SearchFilters;
@@ -47,6 +47,11 @@ const SearchForm: React.FC<SearchFormProps> = ({
   });
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const todayStr = formatLocalDate(new Date());
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = formatLocalDate(tomorrow);
 
   useEffect(() => {
     setFilters((prev) => ({
@@ -105,146 +110,176 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
   if (variant === 'hero') {
     return (
-      <Card className="max-w-5xl mx-auto border border-gray-100 bg-white/95 backdrop-blur-sm overflow-visible relative" shadow="none">
-        <div className="absolute top-0 left-0 right-0 h-1.5 rounded-t-xl" />
-        <form onSubmit={handleSubmit} className="p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-              Where is your next adventure?
-            </h2>
-            <p className="text-gray-500 mt-2 text-sm">
-              Discover reliable trips, booked in seconds. Enforced location security checks apply.
-            </p>
-          </div>
+      <div className="max-w-4xl mx-auto w-full">
+        <div className="bg-white rounded-3xl border border-gray-200/90 shadow-lg shadow-gray-200/50 p-4 sm:p-6 lg:p-7 relative">
+          <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
+            {errorMsg && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-2.5 text-xs sm:text-sm text-red-700 animate-shake">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                <span className="font-semibold">{errorMsg}</span>
+              </div>
+            )}
 
-          {errorMsg && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-sm text-red-700 animate-shake">
-              <AlertCircle className="w-5 h-5 shrink-0 text-red-500" />
-              <span className="font-medium">{errorMsg}</span>
+            {/* ── Route Input Section (Connected Pickup & Destination) ── */}
+            <div className="relative space-y-2 sm:space-y-0 sm:grid sm:grid-cols-11 sm:gap-3 sm:items-center">
+              {/* Pickup Location */}
+              <div className="sm:col-span-5 relative">
+                <SearchInput
+                  label="Pickup Location"
+                  value={filters.origin || ''}
+                  required
+                  isSource
+                  onChange={(v) => {
+                    handleChange('origin', v);
+                    handleChange('originLat', undefined);
+                    handleChange('originLng', undefined);
+                  }}
+                  onPlaceSelect={(address, lat, lng) => {
+                    setFilters((prev) => ({
+                      ...prev,
+                      origin: address,
+                      originLat: lat,
+                      originLng: lng,
+                    }));
+                    setErrorMsg(null);
+                  }}
+                />
+              </div>
+
+              {/* Swap Button (Floating neatly between inputs) */}
+              <div className="flex justify-center sm:col-span-1 -my-1 sm:my-0 sm:pt-6 z-10">
+                <button
+                  type="button"
+                  onClick={handleSwap}
+                  tabIndex={-1}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-50 border border-blue-200 hover:bg-blue-100 flex items-center justify-center text-blue-600 shadow-xs hover:shadow transition-all duration-200 active:scale-90"
+                  title="Swap Locations"
+                  aria-label="Swap Locations"
+                >
+                  <ArrowUpDown className="w-4 h-4 sm:hidden" />
+                  <ArrowLeftRight className="hidden sm:block w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Destination Location */}
+              <div className="sm:col-span-5 relative">
+                <SearchInput
+                  label="Destination / Where to?"
+                  value={filters.destination || ''}
+                  required
+                  onChange={(v) => {
+                    handleChange('destination', v);
+                    handleChange('destLat', undefined);
+                    handleChange('destLng', undefined);
+                  }}
+                  onPlaceSelect={(address, lat, lng) => {
+                    setFilters((prev) => ({
+                      ...prev,
+                      destination: address,
+                      destLat: lat,
+                      destLng: lng,
+                    }));
+                    setErrorMsg(null);
+                  }}
+                />
+              </div>
             </div>
-          )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-end relative">
-            {/* From Field */}
-            <div className="lg:col-span-4 relative group">
-              <SearchInput
-                label="From"
-                value={filters.origin || ''}
-                required
-                isSource
-                onChange={(v) => {
-                  handleChange('origin', v);
-                  handleChange('originLat', undefined);
-                  handleChange('originLng', undefined);
-                }}
-                onPlaceSelect={(address, lat, lng) => {
-                  setFilters((prev) => ({
-                    ...prev,
-                    origin: address,
-                    originLat: lat,
-                    originLng: lng,
-                  }));
-                  setErrorMsg(null);
-                }}
-              />
+            {/* ── Date & Passenger Details Row ── */}
+            <div className="grid grid-cols-2 sm:grid-cols-12 gap-2.5 sm:gap-4 pt-1">
+              {/* Date Field with quick tap chips */}
+              <div className="col-span-1 sm:col-span-7">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] sm:text-xs font-bold text-gray-700 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Departure Date</span>
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleChange('date', todayStr)}
+                      className={cn(
+                        'px-1.5 py-0.5 rounded-md text-[10px] font-bold transition-all active:scale-95',
+                        filters.date === todayStr
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      )}
+                    >
+                      Today
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleChange('date', tomorrowStr)}
+                      className={cn(
+                        'px-1.5 py-0.5 rounded-md text-[10px] font-bold transition-all active:scale-95',
+                        filters.date === tomorrowStr
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      )}
+                    >
+                      Tmrw
+                    </button>
+                  </div>
+                </div>
+                <DatePicker
+                  value={parseLocalDate(filters.date)}
+                  onChange={(date) => handleChange('date', formatLocalDate(date))}
+                  placeholder="Select Date"
+                  minDate={new Date()}
+                  className="w-full text-xs sm:text-sm h-10"
+                />
+              </div>
+
+              {/* Seats Field */}
+              <div className="col-span-1 sm:col-span-5">
+                <label className="block text-[11px] sm:text-xs font-bold text-gray-700 mb-1 flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Passengers</span>
+                </label>
+                <select
+                  value={filters.seats || 1}
+                  onChange={(e) => handleChange('seats', Number(e.target.value))}
+                  className="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold text-gray-900 text-xs sm:text-sm cursor-pointer"
+                >
+                  {[1, 2, 3, 4, 5, 6].map((num) => (
+                    <option key={num} value={num}>
+                      {num} {num === 1 ? 'Passenger' : 'Passengers'}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Swap Button */}
-            <div className="flex justify-center lg:col-span-1 py-2 lg:py-0 lg:mb-2">
+            {/* ── Search Available Rides Action Button ── */}
+            <div className="pt-1.5">
               <button
-                type="button"
-                onClick={handleSwap}
-                tabIndex={-1}
-                className="w-10 h-10 rounded-full bg-blue-50 border border-blue-100 hover:bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm hover:shadow transition-all duration-200 hover:rotate-180 transform"
-                title="Swap Locations"
+                type="submit"
+                className="w-full h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
-                <ArrowLeftRight className="w-4 h-4" />
+                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Search Available Rides</span>
               </button>
             </div>
-
-            {/* To Field */}
-            <div className="lg:col-span-4 relative group">
-              <SearchInput
-                label="To"
-                value={filters.destination || ''}
-                required
-                onChange={(v) => {
-                  handleChange('destination', v);
-                  handleChange('destLat', undefined);
-                  handleChange('destLng', undefined);
-                }}
-                onPlaceSelect={(address, lat, lng) => {
-                  setFilters((prev) => ({
-                    ...prev,
-                    destination: address,
-                    destLat: lat,
-                    destLng: lng,
-                  }));
-                  setErrorMsg(null);
-                }}
-              />
-            </div>
-
-            {/* Date Field */}
-            <div className="lg:col-span-3">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                Date
-              </label>
-              <DatePicker
-                value={parseLocalDate(filters.date)}
-                onChange={(date) => handleChange('date', formatLocalDate(date))}
-                placeholder="When?"
-                minDate={new Date()}
-                className="w-full"
-              />
-            </div>
-
-            {/* Seats Field */}
-            <div className="lg:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-gray-400" />
-                Seats
-              </label>
-              <select
-                value={filters.seats || 1}
-                onChange={(e) => handleChange('seats', Number(e.target.value))}
-                className="input-field cursor-pointer"
-              >
-                {[1, 2, 3, 4, 5, 6].map((num) => (
-                  <option key={num} value={num}>
-                    {num} seat{num !== 1 ? 's' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Search Button */}
-            <div className="lg:col-span-10">
-              <Button type="submit" size="lg" className="w-full h-12 rounded-xl text-white shadow-none font-semibold">
-                <Search className="w-5 h-5 mr-2 inline" />
-                Find Available Trips
-              </Button>
-            </div>
-          </div>
-        </form>
-      </Card>
+          </form>
+        </div>
+      </div>
     );
   }
 
+  // ─── Compact Variant (For internal search headers) ──────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full bg-white p-5 rounded-2xl border border-gray-100">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-full bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200/90 shadow-xs">
       {errorMsg && (
-        <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5 text-sm text-red-700 animate-shake">
+        <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700 animate-shake">
           <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
-          <span className="font-medium">{errorMsg}</span>
+          <span className="font-semibold">{errorMsg}</span>
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 sm:gap-3 items-end">
         {/* From */}
         <div className="md:col-span-4 relative">
           <SearchInput
-            label="From"
+            label="Pickup"
             value={filters.origin || ''}
             required
             isSource
@@ -265,23 +300,24 @@ const SearchForm: React.FC<SearchFormProps> = ({
           />
         </div>
 
-        {/* Swap (In between on desktop, stacked on mobile) */}
-        <div className="md:col-span-1 flex justify-center pb-2">
+        {/* Swap */}
+        <div className="md:col-span-1 flex justify-center -my-1 md:my-0 pb-1 md:pb-2 z-10">
           <button
             type="button"
             onClick={handleSwap}
             tabIndex={-1}
-            className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 hover:bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm transition-all duration-200 hover:rotate-180 transform"
+            className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 hover:bg-blue-100 flex items-center justify-center text-blue-600 shadow-xs transition-all active:scale-90"
             title="Swap Locations"
           >
-            <ArrowLeftRight className="w-3.5 h-3.5" />
+            <ArrowUpDown className="w-3.5 h-3.5 md:hidden" />
+            <ArrowLeftRight className="hidden md:block w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* To */}
         <div className="md:col-span-4 relative">
           <SearchInput
-            label="To"
+            label="Destination"
             value={filters.destination || ''}
             required
             onChange={(v) => {
@@ -301,45 +337,72 @@ const SearchForm: React.FC<SearchFormProps> = ({
           />
         </div>
 
-        {/* Date */}
-        <div className="md:col-span-3">
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            Date
-          </label>
-          <DatePicker
-            value={parseLocalDate(filters.date)}
-            onChange={(date) => handleChange('date', formatLocalDate(date))}
-            placeholder="Date"
-            minDate={new Date()}
-            className="w-full"
-          />
-        </div>
+        {/* Date & Seats side-by-side on mobile */}
+        <div className="grid grid-cols-2 gap-2 md:contents">
+          {/* Date */}
+          <div className="col-span-1 md:col-span-3">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[11px] sm:text-xs font-semibold text-gray-700 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                <span>Date</span>
+              </label>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleChange('date', todayStr)}
+                  className={cn(
+                    'px-1.5 py-0.5 rounded text-[10px] font-bold transition-all',
+                    filters.date === todayStr ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                  )}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChange('date', tomorrowStr)}
+                  className={cn(
+                    'px-1.5 py-0.5 rounded text-[10px] font-bold transition-all',
+                    filters.date === tomorrowStr ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                  )}
+                >
+                  Tmrw
+                </button>
+              </div>
+            </div>
+            <DatePicker
+              value={parseLocalDate(filters.date)}
+              onChange={(date) => handleChange('date', formatLocalDate(date))}
+              placeholder="Date"
+              minDate={new Date()}
+              className="w-full text-xs h-10"
+            />
+          </div>
 
-        {/* Seats */}
-        <div className="md:col-span-2">
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-            <Users className="w-4 h-4 text-gray-400" />
-            Seats
-          </label>
-          <select
-            value={filters.seats || 1}
-            onChange={(e) => handleChange('seats', Number(e.target.value))}
-            className="input-field cursor-pointer"
-          >
-            {[1, 2, 3, 4, 5, 6].map((num) => (
-              <option key={num} value={num}>
-                {num} seat{num !== 1 ? 's' : ''}
-              </option>
-            ))}
-          </select>
+          {/* Seats */}
+          <div className="col-span-1 md:col-span-3">
+            <label className="block text-[11px] sm:text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
+              <Users className="w-3.5 h-3.5 text-gray-400" />
+              <span>Seats</span>
+            </label>
+            <select
+              value={filters.seats || 1}
+              onChange={(e) => handleChange('seats', Number(e.target.value))}
+              className="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white text-xs font-medium text-gray-900 cursor-pointer"
+            >
+              {[1, 2, 3, 4, 5, 6].map((num) => (
+                <option key={num} value={num}>
+                  {num} seat{num !== 1 ? 's' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Search */}
-        <div className="md:col-span-10">
-          <Button type="submit" className="w-full h-11 rounded-xl shadow-none font-semibold">
-            <Search className="w-4 h-4 mr-2 inline" />
-            Search
+        <div className="md:col-span-9 mt-1 md:mt-0">
+          <Button type="submit" className="w-full h-10 rounded-xl shadow-none font-bold text-xs sm:text-sm active:scale-[0.98] bg-blue-600 hover:bg-blue-700">
+            <Search className="w-3.5 h-3.5 mr-1.5 inline" />
+            Search Trips
           </Button>
         </div>
       </div>

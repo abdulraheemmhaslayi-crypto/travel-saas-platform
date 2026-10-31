@@ -79,6 +79,7 @@ export interface TripSummary {
   arrivalDate?: string;
   arrivalTime?: string;
   vehicleType?: string;
+  vehicleName?: string;
   status?: string;
   vehicle?: VehicleSummary;
   driver?: DriverSummary;

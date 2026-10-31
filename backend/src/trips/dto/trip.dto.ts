@@ -270,9 +270,10 @@ export class TripSearchDto {
   @IsNumber()
   destLng?: number;
 
-  @ApiProperty({ example: '2026-05-23' })
+  @ApiPropertyOptional({ example: '2026-05-23' })
+  @IsOptional()
   @IsDateString()
-  date: string;
+  date?: string;
 
   @ApiPropertyOptional({ example: 2 })
   @IsOptional()

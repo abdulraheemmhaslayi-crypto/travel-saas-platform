@@ -681,13 +681,13 @@ export class AnalyticsService {
     const query = this.bookingRepository
       .createQueryBuilder("booking")
       .select(
-        'CONCAT(tripRoute.source, " → ", tripRoute.destination)',
+        'CONCAT(trip.source, " → ", trip.destination)',
         "routeName",
       )
       .addSelect("COUNT(booking.id)", "bookings")
       .addSelect("COALESCE(SUM(booking.totalPrice), 0)", "revenue")
       .innerJoin("booking.trip", "trip")
-      .innerJoin("trip.route", "tripRoute")
+      
       .where("booking.createdAt BETWEEN :startDate AND :endDate", {
         startDate,
         endDate,

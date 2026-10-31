@@ -4,6 +4,7 @@ import { useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/store/slices/authSlice';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api';
+import { getCookie } from '@/lib/cookieUtils';
 import type { User } from '@/types/auth';
 
 const normalizeRole = (role?: string) => String(role || '').toUpperCase();
@@ -32,67 +33,101 @@ export const getDashboardPath = (user: User): string => {
 };
 
 export function useAuth() {
-  const { user, isAuthenticated, isInitializing, isLoading, error, login, register, logout, setUser, setIsInitializing, clearError } = useAuthStore();
+  const {
+    user,
+    isAuthenticated,
+    isInitializing,
+    isLoading,
+    error,
+    login,
+    register,
+    logout,
+    setUser,
+    setIsInitializing,
+    clearError,
+  } = useAuthStore();
   const router = useRouter();
 
-  // Effect to handle redirect when user is authenticated
   useEffect(() => {
-    if (isAuthenticated && user && !isLoading) {
-      // Don't redirect here - let the user navigate naturally or use page-level redirects
-      // This effect is just to ensure user is properly hydrated
-    }
-  }, [isAuthenticated, user, isLoading]);
+    let isMounted = true;
 
-  useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (token && !user) {
-        try {
-          const response = await apiClient.getProfile();
-          setUser(response.data);
-        } catch {
-          apiClient.clearTokens();
+      if (typeof window === 'undefined') return;
+
+      const token = localStorage.getItem('accessToken') || getCookie('accessToken');
+
+      if (token) {
+        const currentUser = useAuthStore.getState().user;
+        if (!currentUser) {
+          try {
+            const response = await apiClient.getProfile();
+            if (isMounted) {
+              setUser(response.data);
+            }
+          } catch (err: any) {
+            // Only clear tokens if the token is definitely rejected (401)
+            if (err?.status === 401 || err?.response?.status === 401) {
+              apiClient.clearTokens();
+              setUser(null);
+            }
+          }
+        }
+      } else {
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser) {
+          setUser(null);
         }
       }
-      setIsInitializing(false);
+
+      if (isMounted) {
+        setIsInitializing(false);
+      }
     };
+
     initAuth();
-  }, [user, setUser, setIsInitializing]);
 
-  const handleLogin = useCallback(async (credentials: { email?: string; phone?: string; password: string }) => {
-    try {
-      await login(credentials);
-      // Give the store a moment to update
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const { user: loggedInUser } = useAuthStore.getState();
-      console.log('Logged in user after login:', loggedInUser);
-      if (loggedInUser) {
-        const dashboardPath = getDashboardPath(loggedInUser);
-        router.push(dashboardPath);
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      throw err;
-    }
-  }, [login, router]);
+    return () => {
+      isMounted = false;
+    };
+  }, [setUser, setIsInitializing]);
 
-  const handleRegister = useCallback(async (data: unknown) => {
-    try {
-      await register(data);
-      // Give the store a moment to update
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const { user: registeredUser } = useAuthStore.getState();
-      if (registeredUser) {
-        const dashboardPath = getDashboardPath(registeredUser);
-        router.push(dashboardPath);
+  const handleLogin = useCallback(
+    async (credentials: { email?: string; phone?: string; password: string; rememberMe?: boolean }) => {
+      try {
+        await login(credentials);
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        const { user: loggedInUser } = useAuthStore.getState();
+        if (loggedInUser) {
+          const dashboardPath = getDashboardPath(loggedInUser);
+          router.push(dashboardPath);
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        throw err;
       }
-    } catch (err) {
-      console.error('Register error:', err);
-      throw err;
-    }
-  }, [register, router]);
+    },
+    [login, router]
+  );
+
+  const handleRegister = useCallback(
+    async (data: unknown) => {
+      try {
+        await register(data);
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        const { user: registeredUser } = useAuthStore.getState();
+        if (registeredUser) {
+          const dashboardPath = getDashboardPath(registeredUser);
+          router.push(dashboardPath);
+        }
+      } catch (err) {
+        console.error('Register error:', err);
+        throw err;
+      }
+    },
+    [register, router]
+  );
 
   const handleLogout = useCallback(async () => {
     await logout();
@@ -100,10 +135,10 @@ export function useAuth() {
   }, [logout, router]);
 
   const requireAuth = useCallback(() => {
-    if (!isAuthenticated && !isLoading) {
+    if (!isAuthenticated && !isLoading && !isInitializing) {
       router.push('/login');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, isInitializing, router]);
 
   return {
     user,

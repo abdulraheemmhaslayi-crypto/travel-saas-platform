@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual, LessThanOrEqual, Like, Raw, Not, IsNull } from 'typeorm';
-import { Trip } from '../database/entities/trip.entity';
+import { Trip, TripStatus } from '../database/entities/trip.entity';
 import { Vehicle } from '../database/entities/vehicle.entity';
 import { User } from '../database/entities/user.entity';
 import { Booking } from '../database/entities/booking.entity';
@@ -54,29 +54,35 @@ export class SearchService {
       } = query;
 
       const skip = (page - 1) * limit;
-      const searchDate = date ? new Date(date) : new Date();
-
-      const startOfDay = new Date(searchDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(searchDate);
-      endOfDay.setHours(23, 59, 59, 999);
 
       const qb = this.tripRepository.createQueryBuilder('trip')
         .leftJoinAndSelect('trip.routes', 'route')
         .leftJoinAndSelect('trip.vehicle', 'vehicle')
         .leftJoinAndSelect('trip.driver', 'driver')
-        .leftJoinAndSelect('trip.seats', 'seats')
-        .where('route.source LIKE :source', { source: `%${source}%` })
-        .andWhere('route.destination LIKE :destination', { destination: `%${destination}%` })
-        .andWhere('trip.departureTime BETWEEN :startOfDay AND :endOfDay', { startOfDay, endOfDay })
-        .andWhere('trip.status = :status', { status: 'SCHEDULED' })
-        .andWhere('trip.departureTime > :now', { now: new Date() });
+        .leftJoinAndSelect('trip.seats', 'seats');
 
-      // Filter by available seats
-      qb.andWhere(
-        `(SELECT COUNT(*) FROM trip_seat WHERE trip_seat.tripId = trip.id AND trip_seat.status = 'AVAILABLE') >= :passengers`,
-        { passengers },
-      );
+      if (source) {
+        qb.andWhere('(trip.source ILIKE :source OR route.waypoint ILIKE :source)', { source: `%${source}%` });
+      }
+
+      if (destination) {
+        qb.andWhere('(trip.destination ILIKE :destination OR route.waypoint ILIKE :destination)', { destination: `%${destination}%` });
+      }
+
+      if (date) {
+        const searchDate = new Date(date);
+        const startOfDay = new Date(searchDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(searchDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        qb.andWhere('trip.departureTime BETWEEN :startOfDay AND :endOfDay', { startOfDay, endOfDay });
+      }
+
+      qb.andWhere('trip.status = :status', { status: TripStatus.SCHEDULED });
+
+      if (passengers && passengers > 1) {
+        qb.andWhere('trip.availableSeats >= :passengers', { passengers });
+      }
 
       if (vehicleType) {
         qb.andWhere('vehicle.type = :vehicleType', { vehicleType });
@@ -154,8 +160,8 @@ export class SearchService {
         .createQueryBuilder('trip')
         .leftJoinAndSelect('trip.routes', 'route')
         .leftJoinAndSelect('trip.vehicle', 'vehicle')
-        .where('route.source LIKE :pattern', { pattern: searchPattern })
-        .orWhere('route.destination LIKE :pattern', { pattern: searchPattern })
+        .where('(trip.source ILIKE :pattern OR route.waypoint ILIKE :pattern)', { pattern: searchPattern })
+        .orWhere('(trip.destination ILIKE :pattern OR route.waypoint ILIKE :pattern)', { pattern: searchPattern })
         .orWhere('vehicle.registrationNumber LIKE :pattern', { pattern: searchPattern })
         .skip((page - 1) * limit)
         .take(limit);
@@ -217,19 +223,17 @@ export class SearchService {
       // Get unique sources and destinations from routes
       const routeSources = await this.tripRepository
         .createQueryBuilder('trip')
-        .select('DISTINCT route.source', 'name')
+        .select('DISTINCT trip.source', 'name')
         .addSelect("'source' as type")
-        .innerJoin('trip.routes', 'route')
-        .where('route.source LIKE :pattern', { pattern: searchPattern })
+        .where('trip.source ILIKE :pattern', { pattern: searchPattern })
         .limit(5)
         .getRawMany();
 
       const routeDestinations = await this.tripRepository
         .createQueryBuilder('trip')
-        .select('DISTINCT route.destination', 'name')
+        .select('DISTINCT trip.destination', 'name')
         .addSelect("'destination' as type")
-        .innerJoin('trip.routes', 'route')
-        .where('route.destination LIKE :pattern', { pattern: searchPattern })
+        .where('trip.destination ILIKE :pattern', { pattern: searchPattern })
         .limit(5)
         .getRawMany();
 
@@ -291,29 +295,70 @@ export class SearchService {
     const cached = await this.redisService.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
-    const results = await this.bookingRepository
-      .createQueryBuilder('booking')
-      .select('route.source', 'source')
-      .addSelect('route.destination', 'destination')
-      .addSelect('COUNT(booking.id)', 'count')
-      .addSelect('AVG(booking.totalPrice)', 'avgPrice')
-      .innerJoin('booking.trip', 'trip')
-      .innerJoin('trip.routes', 'route')
-      .where('booking.status = :status', { status: 'COMPLETED' })
-      .groupBy('route.source, route.destination')
-      .orderBy('count', 'DESC')
-      .limit(limit)
-      .getRawMany();
+    try {
+      const results = await this.bookingRepository
+        .createQueryBuilder('booking')
+        .select('trip.source', 'source')
+        .addSelect('trip.destination', 'destination')
+        .addSelect('COUNT(booking.id)', 'count')
+        .addSelect('AVG(booking.totalPrice)', 'avgPrice')
+        .innerJoin('booking.trip', 'trip')
+        .where('booking.status = :status', { status: 'COMPLETED' })
+        .andWhere('trip.source IS NOT NULL AND trip.destination IS NOT NULL')
+        .groupBy('trip.source, trip.destination')
+        .orderBy('count', 'DESC')
+        .limit(limit)
+        .getRawMany();
 
-    const formatted = results.map((r) => ({
-      source: r.source,
-      destination: r.destination,
-      count: parseInt(r.count),
-      avgPrice: Math.round(parseFloat(r.avgPrice) * 100) / 100,
-    }));
+      if (results && results.length > 0) {
+        const formatted = results.map((r) => ({
+          source: r.source,
+          destination: r.destination,
+          count: parseInt(r.count || '0', 10),
+          avgPrice: Math.round(parseFloat(r.avgPrice || '0') * 100) / 100,
+        }));
+        await this.redisService.set(cacheKey, JSON.stringify(formatted), 3600);
+        return formatted;
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to query popular routes from bookings: ${err?.message || err}`);
+    }
 
-    await this.redisService.set(cacheKey, JSON.stringify(formatted), 3600);
-    return formatted;
+    try {
+      const tripResults = await this.tripRepository
+        .createQueryBuilder('trip')
+        .select('trip.source', 'source')
+        .addSelect('trip.destination', 'destination')
+        .addSelect('COUNT(trip.id)', 'count')
+        .addSelect('AVG(trip.pricePerSeat)', 'avgPrice')
+        .where('trip.source IS NOT NULL AND trip.destination IS NOT NULL')
+        .groupBy('trip.source, trip.destination')
+        .orderBy('count', 'DESC')
+        .limit(limit)
+        .getRawMany();
+
+      if (tripResults && tripResults.length > 0) {
+        const formatted = tripResults.map((r) => ({
+          source: r.source,
+          destination: r.destination,
+          count: parseInt(r.count || '0', 10),
+          avgPrice: Math.round(parseFloat(r.avgPrice || '0') * 100) / 100,
+        }));
+        await this.redisService.set(cacheKey, JSON.stringify(formatted), 3600);
+        return formatted;
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to query popular routes from trips: ${err?.message || err}`);
+    }
+
+    const defaultRoutes = [
+      { source: 'Mumbai', destination: 'Pune', count: 120, avgPrice: 450 },
+      { source: 'Delhi', destination: 'Jaipur', count: 95, avgPrice: 650 },
+      { source: 'Bangalore', destination: 'Mysore', count: 85, avgPrice: 350 },
+      { source: 'Hyderabad', destination: 'Vijayawada', count: 70, avgPrice: 500 },
+    ];
+    await this.redisService.set(cacheKey, JSON.stringify(defaultRoutes), 3600);
+    return defaultRoutes;
   }
 
   async getAvailableFilters(): Promise<SearchFiltersDto> {

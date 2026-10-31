@@ -38,12 +38,18 @@ export function formatDateTime(date: string | Date | null | undefined): string {
   }
 }
 
-export function formatCurrency(amount: number, currency: string = 'INR'): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount);
+export function formatCurrency(amount: number | string | undefined | null, currency?: string | null): string {
+  const safeCurrency = currency && typeof currency === 'string' && currency.trim().length === 3 ? currency.trim().toUpperCase() : 'INR';
+  const num = typeof amount === 'number' && !isNaN(amount) ? amount : (Number(amount) || 0);
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: safeCurrency,
+      minimumFractionDigits: 2,
+    }).format(num);
+  } catch {
+    return `₹${num.toFixed(2)}`;
+  }
 }
 
 export function formatDuration(minutes: number): string {
@@ -107,4 +113,27 @@ export function calculateDistance(
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c * 100) / 100;
+}
+
+
+export function formatShortAddress(address: string): string {
+  if (!address) return '';
+  const first = address.split(',')[0]?.trim();
+  return first || address;
+}
+
+
+export function getTripVehicleImage(vehicle?: any): string {
+  if (!vehicle) return '/images/vehicles/comfort.png';
+  const str = `${vehicle.brand || ''} ${vehicle.model || ''} ${vehicle.type || ''}`.toLowerCase();
+  if (str.includes('innova') || str.includes('xl') || str.includes('van') || (vehicle.seatingCapacity && vehicle.seatingCapacity > 5)) {
+    return '/images/vehicles/xl.png';
+  }
+  if (str.includes('suv') || str.includes('fortuner') || str.includes('audi') || str.includes('creta')) {
+    return '/images/vehicles/premium.png';
+  }
+  if (str.includes('camry') || str.includes('city') || str.includes('sedan') || str.includes('comfort')) {
+    return '/images/vehicles/comfort.png';
+  }
+  return '/images/vehicles/economy.png';
 }

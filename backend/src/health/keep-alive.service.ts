@@ -19,13 +19,16 @@ export class KeepAliveService implements OnApplicationBootstrap {
   }
 
   private async pingSelf(): Promise<void> {
+    if (process.env.NODE_ENV === 'development' && !process.env.APP_URL && !process.env.PING_URL) {
+      return;
+    }
     const rawUrl =
       process.env.APP_URL ||
       process.env.PING_URL ||
       'https://travel-saas-platform.quick.blitz.cloud';
 
     const baseUrl = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
-    const targetUrl = `${baseUrl}/health`;
+    const targetUrl = baseUrl.includes('/api/v1') ? `${baseUrl}/health` : `${baseUrl}/api/v1/health`;
 
     try {
       this.logger.log(`[KeepAlive] Sending keep-alive request to: ${targetUrl}`);

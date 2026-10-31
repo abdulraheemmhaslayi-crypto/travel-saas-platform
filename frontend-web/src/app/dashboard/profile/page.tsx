@@ -11,9 +11,7 @@ import apiClient from '@/lib/api';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
 import Avatar from '@/components/ui/Avatar';
-import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import Loading from '@/components/common/Loading';
 import { 
@@ -24,9 +22,19 @@ import {
   Upload, 
   CheckCircle, 
   XCircle, 
-  FileText
+  FileText,
+  MapPin,
+  Edit3,
+  Calendar,
+  AlertCircle,
+  Clock,
+  Sparkles,
+  ChevronRight,
+  ShieldCheck,
+  Check,
 } from 'lucide-react';
 import { KycStatus } from '@/types/auth';
+import { cn } from '@/lib/utils';
 
 function ProfileContent() {
   const router = useRouter();
@@ -44,7 +52,7 @@ function ProfileContent() {
     setIsTabLoading(true);
     const timer = setTimeout(() => {
       setIsTabLoading(false);
-    }, 400); // 400ms transition loader
+    }, 250);
     return () => clearTimeout(timer);
   }, [activeTab]);
 
@@ -137,7 +145,7 @@ function ProfileContent() {
         [field]: { ...prev[field], status: 'success', url, progress: 100 }
       }));
       kycForm.setValue(field, url, { shouldValidate: true });
-      showToast(`${field === 'selfie' ? 'Selfie' : field === 'documentFront' ? 'Front ID' : 'Back ID'} uploaded successfully`, 'success');
+      showToast(`${field === 'selfie' ? 'Selfie' : field === 'documentFront' ? 'Front ID' : 'Back ID'} uploaded`, 'success');
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Upload failed';
       setUploads(prev => ({
@@ -184,7 +192,6 @@ function ProfileContent() {
       showToast('KYC submitted for review', 'success');
       setShowKycModal(false);
 
-      // Update user in global store dynamically to show actual status!
       if (user) {
         setUser({
           ...user,
@@ -210,17 +217,9 @@ function ProfileContent() {
     return <Loading fullScreen text="Loading profile..." />;
   }
 
-  const kycStatusConfig: Record<KycStatus, { color: string; icon: React.ReactNode }> = {
-    PENDING: { color: 'bg-gray-100 text-gray-800', icon: <Shield className="w-4 h-4 text-gray-500" /> },
-    SUBMITTED: { color: 'bg-yellow-100 text-yellow-800', icon: <Upload className="w-4 h-4 text-yellow-600 animate-bounce" /> },
-    VERIFIED: { color: 'bg-green-100 text-green-800', icon: <CheckCircle className="w-4 h-4 text-green-600" /> },
-    REJECTED: { color: 'bg-red-100 text-red-800', icon: <XCircle className="w-4 h-4 text-red-600" /> },
-  };
+  const kycStatus = (user?.kycStatus || 'PENDING') as KycStatus;
 
-  const kycKey = (user?.kycStatus || 'PENDING') as KycStatus;
-  const kycConfig = kycStatusConfig[kycKey] ?? kycStatusConfig.PENDING;
-
-  // Build user documents list dynamically from actual user KYC properties
+  // Real user documents list
   const userDocs = [];
   if (user.kycDocumentType || user.kycDocumentNumber) {
     userDocs.push({
@@ -238,443 +237,485 @@ function ProfileContent() {
     });
   }
 
+  const fullAddress = [user.address, user.city, user.state, user.pincode, user.country]
+    .filter(Boolean)
+    .join(', ');
+
   const tabs = [
-    { id: 'personal', label: 'Personal Details', icon: <User className="w-4 h-4" /> },
-    { id: 'documents', label: 'Verification Documents', icon: <FileText className="w-4 h-4" /> },
-    { id: 'kyc', label: 'KYC Status', icon: <Shield className="w-4 h-4" /> },
+    { id: 'personal', label: 'Personal', icon: <User className="w-3.5 h-3.5" /> },
+    { id: 'documents', label: 'Documents', icon: <FileText className="w-3.5 h-3.5" /> },
+    { id: 'kyc', label: 'KYC Status', icon: <Shield className="w-3.5 h-3.5" /> },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Account Management</h1>
-        <p className="text-gray-600 mt-1">Manage profile information, submit compliance papers, and check verification statuses.</p>
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 w-full min-w-0 pb-28 md:pb-12">
+      {/* ── Page Header ────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 pt-1">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+            My Profile
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+            Manage your account and verification details
+          </p>
+        </div>
+
+        {/* KYC Badge */}
+        <div className="shrink-0">
+          {kycStatus === 'VERIFIED' ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <CheckCircle className="w-3 h-3 text-emerald-600" />
+              <span>Verified</span>
+            </span>
+          ) : kycStatus === 'SUBMITTED' ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+              <Clock className="w-3 h-3 text-amber-600 animate-spin" />
+              <span>In Review</span>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowKycModal(true)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 active:scale-95 transition-all"
+            >
+              <Shield className="w-3 h-3 text-blue-600" />
+              <span>Verify KYC</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Profile Card */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card>
-            <div className="p-6 text-center">
-              <Avatar
-                src={user.profileImage}
-                name={`${user.firstName} ${user.lastName}`}
-                size="xl"
-                className="mx-auto mb-4"
-              />
-              <h2 className="text-xl font-bold text-gray-900">
-                {user.firstName} {user.lastName}
+      {/* ── Profile Summary Card (Compact & Mobile-First) ─────────── */}
+      <div className="bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs">
+        <div className="flex items-center gap-3.5 sm:gap-4">
+          <Avatar
+            src={user.profileImage}
+            name={`${user.firstName || ''} ${user.lastName || ''}`}
+            size="lg"
+            className="shrink-0 shadow-xs"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-black text-gray-900 truncate">
+                {user.firstName || 'User'} {user.lastName || ''}
               </h2>
-              <p className="text-gray-500 text-sm truncate">{user.email}</p>
-              <div className="flex items-center justify-center gap-2 mt-3">
-                <Badge variant="outline">{user.userType}</Badge>
-                <Badge variant="info">{user.role}</Badge>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-semibold ${kycConfig.color}`}>
-                  {kycConfig.icon}
-                  <span>KYC: {user.kycStatus ?? 'PENDING'}</span>
-                </div>
-              </div>
+              <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                {user.userType || 'PASSENGER'}
+              </span>
             </div>
-          </Card>
+            <p className="text-xs text-gray-500 truncate mt-0.5">{user.email}</p>
+            {user.phone && (
+              <p className="text-[11px] text-gray-400 font-mono mt-0.5">{user.phone}</p>
+            )}
+          </div>
+        </div>
 
-          {/* KYC Action Box */}
-          {user.kycStatus === 'PENDING' && (
-            <Card className="bg-indigo-50/30 border-indigo-100">
-              <div className="p-5">
-                <div className="flex items-start gap-3">
-                  <Shield className="w-6 h-6 text-primary-600 shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">Complete KYC Verification</h3>
-                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                      Unlock wallet withdrawals, higher booking limits, and full trip access by verifying your identity documents.
-                    </p>
-                    <Button
-                      size="sm"
-                      className="mt-4 w-full bg-primary-600 hover:bg-primary-700 text-white font-medium"
-                      onClick={() => setShowKycModal(true)}
+        {/* KYC Incomplete Notice (Only if pending) */}
+        {kycStatus === 'PENDING' && (
+          <div className="mt-4 pt-3.5 border-t border-gray-100 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+              <p className="text-xs text-gray-600 truncate">
+                Identity verification is pending
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowKycModal(true)}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 shrink-0"
+            >
+              Verify Now →
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Mobile-Optimized Tab Bar ───────────────────────────────── */}
+      <div className="w-full min-w-0 overflow-x-auto pb-0.5 scrollbar-hide">
+        <div className="flex items-center gap-1.5 p-1 bg-gray-100/90 rounded-2xl w-full">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap',
+                  isActive
+                    ? 'bg-white text-gray-900 shadow-2xs'
+                    : 'text-gray-500 hover:text-gray-900'
+                )}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Tab Content Panels ───────────────────────────────────────── */}
+      {isTabLoading ? (
+        <div className="p-8 text-center bg-white rounded-2xl border border-gray-200/90">
+          <Loading text="Loading..." />
+        </div>
+      ) : (
+        <div>
+          {/* TAB 1: PERSONAL DETAILS */}
+          {activeTab === 'personal' && (
+            <div className="space-y-4">
+              <div className="bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs">
+                <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
+                  <h3 className="text-sm sm:text-base font-extrabold text-gray-900">
+                    Personal Details
+                  </h3>
+                  {!isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-xl border border-blue-200/80 active:scale-95 transition-all shadow-2xs"
                     >
-                      Submit ID Proof
-                    </Button>
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                  )}
+                </div>
+
+                {!isEditing ? (
+                  /* Clean Read-Only Data Rows (iOS / Uber Style) */
+                  <div className="divide-y divide-gray-100 text-xs sm:text-sm">
+                    <div className="py-2.5 flex items-start justify-between gap-3">
+                      <span className="text-gray-500 font-medium">Full Name</span>
+                      <span className="font-bold text-gray-900 text-right">
+                        {user.firstName} {user.lastName || '—'}
+                      </span>
+                    </div>
+
+                    <div className="py-2.5 flex items-start justify-between gap-3">
+                      <span className="text-gray-500 font-medium">Email Address</span>
+                      <span className="font-bold text-gray-900 text-right truncate">
+                        {user.email}
+                      </span>
+                    </div>
+
+                    <div className="py-2.5 flex items-start justify-between gap-3">
+                      <span className="text-gray-500 font-medium">Phone Number</span>
+                      <span className="font-bold text-gray-900 text-right font-mono">
+                        {user.phone || 'Not provided'}
+                      </span>
+                    </div>
+
+                    <div className="py-2.5 flex items-start justify-between gap-3">
+                      <span className="text-gray-500 font-medium">Street Address</span>
+                      <span className="font-bold text-gray-900 text-right max-w-xs break-words">
+                        {fullAddress || 'Not provided'}
+                      </span>
+                    </div>
+
+                    <div className="py-2.5 flex items-start justify-between gap-3">
+                      <span className="text-gray-500 font-medium">Emergency Contact</span>
+                      <span className="font-bold text-gray-900 text-right">
+                        {user.emergencyContactName ? (
+                          <span>{user.emergencyContactName} ({user.emergencyContactPhone || '—'})</span>
+                        ) : (
+                          'Not provided'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Edit Form */
+                  <form onSubmit={handleSubmit(onSubmitProfile)} className="space-y-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Input
+                        label="First Name"
+                        error={errors.firstName?.message}
+                        {...register('firstName')}
+                      />
+                      <Input
+                        label="Last Name"
+                        error={errors.lastName?.message}
+                        {...register('lastName')}
+                      />
+                      <Input
+                        label="Phone Number"
+                        type="tel"
+                        error={errors.phone?.message}
+                        {...register('phone')}
+                      />
+                      <Input
+                        label="Email Address"
+                        type="email"
+                        disabled
+                        value={user.email}
+                      />
+                    </div>
+
+                    <div className="pt-2">
+                      <p className="text-xs font-bold text-gray-700 mb-2">Address Details</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="sm:col-span-2">
+                          <Input
+                            label="Street Address"
+                            error={errors.address?.message}
+                            {...register('address')}
+                          />
+                        </div>
+                        <Input
+                          label="City"
+                          error={errors.city?.message}
+                          {...register('city')}
+                        />
+                        <Input
+                          label="State"
+                          error={errors.state?.message}
+                          {...register('state')}
+                        />
+                        <Input
+                          label="Pincode"
+                          error={errors.pincode?.message}
+                          {...register('pincode')}
+                        />
+                        <Input
+                          label="Country"
+                          error={errors.country?.message}
+                          {...register('country')}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <p className="text-xs font-bold text-gray-700 mb-2">Emergency Contact</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Input
+                          label="Contact Name"
+                          error={errors.emergencyContactName?.message}
+                          {...register('emergencyContactName')}
+                        />
+                        <Input
+                          label="Contact Phone"
+                          error={errors.emergencyContactPhone?.message}
+                          {...register('emergencyContactPhone')}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 pt-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditing(false);
+                          reset();
+                        }}
+                        className="flex-1 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs active:scale-95 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white font-bold text-xs shadow-xs active:scale-95 transition-all"
+                      >
+                        {isSubmitting ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+
+              {/* Account Metadata */}
+              <div className="bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
+                  Account Details
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-100">
+                    <p className="text-[10px] text-gray-400 font-semibold">User ID</p>
+                    <p className="font-mono text-gray-900 font-bold truncate mt-0.5">{user.id.slice(0, 12)}...</p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-100">
+                    <p className="text-[10px] text-gray-400 font-semibold">Member Since</p>
+                    <p className="font-bold text-gray-900 mt-0.5">
+                      {new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+                    </p>
                   </div>
                 </div>
               </div>
-            </Card>
-          )}
-        </div>
-
-        {/* Right Column: Tabbed Forms */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Tab Selector Headers */}
-          <div className="bg-white rounded-xl border border-gray-100 p-1.5 shadow-sm flex gap-1">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`
-                    flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-150
-                    ${isActive 
-                      ? 'bg-slate-900 text-white shadow-sm' 
-                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
-                  `}
-                >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Tab Content Panels */}
-          {isTabLoading ? (
-            <Loading text={`Loading ${activeTab}...`} />
-          ) : (
-            <div className="animate-fadeIn">
-              
-              {/* TAB 1: PERSONAL INFORMATION */}
-              {activeTab === 'personal' && (
-                <div className="space-y-6">
-                  <Card>
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
-                        {!isEditing && (
-                          <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
-                            Edit Profile
-                          </Button>
-                        )}
-                      </div>
-
-                      <form onSubmit={handleSubmit(onSubmitProfile)} className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <Input
-                            label="First Name"
-                            disabled={!isEditing}
-                            leftIcon={<User className="w-4 h-4 text-gray-400" />}
-                            error={errors.firstName?.message}
-                            {...register('firstName')}
-                          />
-                          <Input
-                            label="Last Name"
-                            disabled={!isEditing}
-                            leftIcon={<User className="w-4 h-4 text-gray-400" />}
-                            error={errors.lastName?.message}
-                            {...register('lastName')}
-                          />
-                          <Input
-                            label="Email Address"
-                            type="email"
-                            disabled
-                            leftIcon={<Mail className="w-4 h-4 text-gray-400" />}
-                            value={user.email}
-                          />
-                          <Input
-                            label="Phone Number"
-                            disabled={!isEditing}
-                            leftIcon={<Phone className="w-4 h-4 text-gray-400" />}
-                            error={errors.phone?.message}
-                            {...register('phone')}
-                          />
-                          <div className="sm:col-span-2">
-                            <Input
-                              label="Profile Image URL"
-                              disabled={!isEditing}
-                              error={errors.profileImage?.message}
-                              {...register('profileImage')}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="pt-4 border-t border-gray-100">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Street Address</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="sm:col-span-2">
-                              <Input
-                                label="Street Address"
-                                disabled={!isEditing}
-                                error={errors.address?.message}
-                                {...register('address')}
-                              />
-                            </div>
-                            <Input
-                              label="City"
-                              disabled={!isEditing}
-                              error={errors.city?.message}
-                              {...register('city')}
-                            />
-                            <Input
-                              label="State"
-                              disabled={!isEditing}
-                              error={errors.state?.message}
-                              {...register('state')}
-                            />
-                            <Input
-                              label="Pincode"
-                              disabled={!isEditing}
-                              error={errors.pincode?.message}
-                              {...register('pincode')}
-                            />
-                            <Input
-                              label="Country"
-                              disabled={!isEditing}
-                              error={errors.country?.message}
-                              {...register('country')}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="pt-4 border-t border-gray-100">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Emergency Contact</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Input
-                              label="Contact Person Name"
-                              disabled={!isEditing}
-                              leftIcon={<User className="w-4 h-4 text-gray-400" />}
-                              error={errors.emergencyContactName?.message}
-                              {...register('emergencyContactName')}
-                            />
-                            <Input
-                              label="Emergency Contact Phone"
-                              disabled={!isEditing}
-                              leftIcon={<Phone className="w-4 h-4 text-gray-400" />}
-                              error={errors.emergencyContactPhone?.message}
-                              {...register('emergencyContactPhone')}
-                            />
-                          </div>
-                        </div>
-
-                        {isEditing && (
-                          <div className="flex gap-3 pt-4">
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => {
-                                setIsEditing(false);
-                                reset();
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                            <Button type="submit" isLoading={isSubmitting}>
-                              Save Changes
-                            </Button>
-                          </div>
-                        )}
-                      </form>
-                    </div>
-                  </Card>
-
-                  {/* Account Metadata Card */}
-                  <Card>
-                    <div className="p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">System Information</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-gray-500 font-medium text-xs uppercase tracking-wider">Unique User ID</p>
-                          <p className="font-mono text-gray-900 mt-1">{user.id}</p>
-                        </div>
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-gray-500 font-medium text-xs uppercase tracking-wider">Account Role Type</p>
-                          <p className="font-semibold text-gray-900 mt-1 capitalize">{user.userType}</p>
-                        </div>
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-gray-500 font-medium text-xs uppercase tracking-wider">Registration Date</p>
-                          <p className="font-semibold text-gray-900 mt-1">
-                            {new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-                          </p>
-                        </div>
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-gray-500 font-medium text-xs uppercase tracking-wider">Last Sync Date</p>
-                          <p className="font-semibold text-gray-900 mt-1">
-                            {new Date(user.updatedAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              )}
-
-              {/* TAB 2: VERIFICATION DOCUMENTS PANEL */}
-              {activeTab === 'documents' && (
-                <div className="space-y-6">
-                  {/* Documents List */}
-                  <Card>
-                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                      <h3 className="font-bold text-gray-900">Submitted Documents Checklist</h3>
-                      <Badge variant="outline">{userDocs.length} Active Files</Badge>
-                    </div>
-                    {userDocs.length === 0 ? (
-                      <div className="p-12 text-center text-gray-500 space-y-2">
-                        <FileText className="w-10 h-10 text-gray-300 mx-auto" />
-                        <p className="font-semibold text-gray-700">No verification documents uploaded</p>
-                        <p className="text-xs max-w-sm mx-auto">Please submit your identity details below to complete your profile verification checklist.</p>
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-gray-100 bg-white">
-                        {userDocs.map((doc, idx) => (
-                          <div key={idx} className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:bg-gray-50/30 transition-colors">
-                            <div className="flex items-start gap-3">
-                              <div className="p-2.5 bg-indigo-50 rounded-xl">
-                                <FileText className="w-5 h-5 text-indigo-600" />
-                              </div>
-                              <div>
-                                <h4 className="font-semibold text-gray-900">{doc.name}</h4>
-                                <p className="font-mono text-xs text-gray-500 mt-0.5">ID: {doc.number}</p>
-                                <p className="text-xs text-gray-400 mt-1">
-                                  Submitted on: {new Date(doc.uploadedAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                </p>
-                              </div>
-                            </div>
-                            <div>
-                              <Badge variant={doc.status === 'VERIFIED' ? 'success' : doc.status === 'SUBMITTED' ? 'warning' : 'danger'}>
-                                {doc.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Card>
-
-                  {/* KYC submit card inline if not verified */}
-                  {user.kycStatus !== 'VERIFIED' && (
-                    <Card className="p-6 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 border-indigo-100">
-                      <h3 className="font-bold text-gray-900 text-lg mb-2">Upload Verification Papers</h3>
-                      <p className="text-sm text-gray-500 mb-5 leading-relaxed">
-                        To match with passengers/rides and handle online billing, verify your government ID.
-                      </p>
-                      <Button 
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                        onClick={() => setShowKycModal(true)}
-                      >
-                        <Upload className="w-4 h-4 mr-1.5" />
-                        Submit Verification Document
-                      </Button>
-                    </Card>
-                  )}
-                </div>
-              )}
-
-              {/* TAB 3: KYC STATUS DETAILS PANEL */}
-              {activeTab === 'kyc' && (
-                <div className="space-y-6">
-                  {/* Status Banner */}
-                  <Card className="p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${
-                        user.kycStatus === 'VERIFIED' 
-                          ? 'bg-green-100 text-green-700' 
-                          : user.kycStatus === 'SUBMITTED' 
-                          ? 'bg-yellow-100 text-yellow-700' 
-                          : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {user.kycStatus === 'VERIFIED' ? (
-                          <CheckCircle className="w-8 h-8" />
-                        ) : user.kycStatus === 'SUBMITTED' ? (
-                          <Upload className="w-8 h-8 animate-bounce" />
-                        ) : (
-                          <Shield className="w-8 h-8" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">
-                          KYC Status: {user.kycStatus || 'NOT VERIFIED'}
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {user.kycStatus === 'VERIFIED' 
-                            ? 'Your account is fully compliant. All matching and payments features are available.'
-                            : user.kycStatus === 'SUBMITTED'
-                            ? 'Your papers are under verification. This typically takes between 12-24 hours.'
-                            : 'Identity validation is required. Complete verification to activate ride matching.'}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-
-                  {/* Verification Criteria Checklist */}
-                  <Card>
-                    <div className="px-6 py-4 border-b border-gray-100">
-                      <h3 className="font-bold text-gray-900">Compliance Checklist</h3>
-                    </div>
-                    <div className="divide-y divide-gray-100 bg-white text-sm text-gray-600">
-                      <div className="p-4 flex items-center justify-between">
-                        <span className="font-medium text-gray-950">Mobile OTP Verification</span>
-                        <Badge variant="success">Completed</Badge>
-                      </div>
-                      <div className="p-4 flex items-center justify-between">
-                        <span className="font-medium text-gray-950">Email Link Verification</span>
-                        <Badge variant="success">Completed</Badge>
-                      </div>
-                      <div className="p-4 flex items-center justify-between">
-                        <span className="font-medium text-gray-950">Identity Proof Matching</span>
-                        <Badge 
-                          variant={user.kycStatus === 'VERIFIED' ? 'success' : user.kycStatus === 'SUBMITTED' ? 'warning' : 'danger'}
-                        >
-                          {user.kycStatus === 'VERIFIED' ? 'Passed' : user.kycStatus === 'SUBMITTED' ? 'In Review' : 'Missing'}
-                        </Badge>
-                      </div>
-                      <div className="p-4 flex items-center justify-between">
-                        <span className="font-medium text-gray-950">Business Credentials Check</span>
-                        <Badge 
-                          variant={user.kycStatus === 'VERIFIED' ? 'success' : user.kycStatus === 'SUBMITTED' ? 'warning' : 'danger'}
-                        >
-                          {user.kycStatus === 'VERIFIED' ? 'Passed' : user.kycStatus === 'SUBMITTED' ? 'In Review' : 'Missing'}
-                        </Badge>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              )}
-
             </div>
           )}
 
+          {/* TAB 2: VERIFICATION DOCUMENTS */}
+          {activeTab === 'documents' && (
+            <div className="space-y-4">
+              <div className="bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs">
+                <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
+                  <h3 className="text-sm sm:text-base font-extrabold text-gray-900">
+                    Verification Documents
+                  </h3>
+                  <span className="text-xs font-bold text-gray-400">
+                    {userDocs.length} {userDocs.length === 1 ? 'file' : 'files'}
+                  </span>
+                </div>
+
+                {userDocs.length === 0 ? (
+                  <div className="py-10 text-center space-y-2">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center mx-auto">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-bold text-gray-700">No documents uploaded</p>
+                    <p className="text-[11px] text-gray-400 max-w-xs mx-auto">
+                      Submit your identity document (Aadhaar, DL, or Passport) to verify your account.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowKycModal(true)}
+                      className="mt-3 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs active:scale-95 transition-all shadow-xs"
+                    >
+                      Upload ID Document
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {userDocs.map((doc, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 sm:p-3.5 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-gray-900 truncate">{doc.name}</p>
+                            <p className="text-[10px] text-gray-400 font-mono truncate mt-0.5">#{doc.number}</p>
+                          </div>
+                        </div>
+
+                        <span
+                          className={cn(
+                            'px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 uppercase tracking-wide',
+                            doc.status === 'VERIFIED'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-100 text-amber-800'
+                          )}
+                        >
+                          {doc.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: KYC STATUS */}
+          {activeTab === 'kyc' && (
+            <div className="space-y-4">
+              <div className="bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      'w-11 h-11 rounded-2xl flex items-center justify-center shrink-0',
+                      kycStatus === 'VERIFIED'
+                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                        : kycStatus === 'SUBMITTED'
+                        ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                        : 'bg-gray-100 text-gray-600'
+                    )}
+                  >
+                    {kycStatus === 'VERIFIED' ? (
+                      <CheckCircle className="w-6 h-6" />
+                    ) : kycStatus === 'SUBMITTED' ? (
+                      <Clock className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <Shield className="w-6 h-6" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-extrabold text-gray-900">
+                      Status: {kycStatus}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                      {kycStatus === 'VERIFIED'
+                        ? 'Your identity is fully verified.'
+                        : kycStatus === 'SUBMITTED'
+                        ? 'Your documents are being reviewed (typically within 24 hours).'
+                        : 'Identity verification is required for full account access.'}
+                    </p>
+                  </div>
+                </div>
+
+                {kycStatus === 'PENDING' && (
+                  <button
+                    type="button"
+                    onClick={() => setShowKycModal(true)}
+                    className="w-full mt-4 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs active:scale-95 transition-all shadow-xs"
+                  >
+                    Start Verification
+                  </button>
+                )}
+              </div>
+
+              {/* Compliance checklist */}
+              <div className="bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs">
+                <h4 className="text-xs font-bold text-gray-900 mb-3">Verification Checklist</h4>
+                <div className="space-y-2 text-xs">
+                  <div className="p-2.5 rounded-xl bg-gray-50 flex items-center justify-between">
+                    <span className="font-semibold text-gray-800">Phone Verification</span>
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Completed
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-gray-50 flex items-center justify-between">
+                    <span className="font-semibold text-gray-800">Email Verification</span>
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Completed
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-gray-50 flex items-center justify-between">
+                    <span className="font-semibold text-gray-800">Government ID Proof</span>
+                    <span
+                      className={cn(
+                        'text-[10px] font-bold',
+                        kycStatus === 'VERIFIED'
+                          ? 'text-emerald-600'
+                          : kycStatus === 'SUBMITTED'
+                          ? 'text-amber-600'
+                          : 'text-gray-400'
+                      )}
+                    >
+                      {kycStatus === 'VERIFIED' ? 'Verified' : kycStatus === 'SUBMITTED' ? 'In Review' : 'Pending'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+      )}
 
-      </div>
-
-      {/* KYC Upload Modal */}
+      {/* ── KYC Upload Modal ─────────────────────────────────────────── */}
       <Modal
         isOpen={showKycModal}
         onClose={() => {
           if (!kycForm.formState.isSubmitting) setShowKycModal(false);
         }}
-        title="Submit Verification Credentials"
-        size="md"
-        footer={
-          <div className="flex gap-3">
-            <Button 
-              variant="secondary" 
-              onClick={() => setShowKycModal(false)}
-              disabled={kycForm.formState.isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={kycForm.handleSubmit(onSubmitKyc)}
-              isLoading={kycForm.formState.isSubmitting}
-            >
-              Submit Credentials
-            </Button>
-          </div>
-        }
+        title="Submit Verification Document"
+        size="sm"
       >
-        <form onSubmit={kycForm.handleSubmit(onSubmitKyc)} className="space-y-4">
+        <form onSubmit={kycForm.handleSubmit(onSubmitKyc)} className="space-y-3.5 pt-1">
           <Select
-            label="Document ID Proof Type"
-            placeholder="Choose verification document"
+            label="ID Document Type"
+            placeholder="Select document"
             options={[
               { value: 'AADHAAR', label: 'Aadhaar Card' },
               { value: 'DRIVERS_LICENSE', label: "Driver's License" },
-              { value: 'NATIONAL_ID', label: 'Passport / National ID' },
-              { value: 'PAN', label: 'PAN Card Details' },
+              { value: 'PASSPORT', label: 'Passport' },
+              { value: 'PAN', label: 'PAN Card' },
             ]}
             error={kycForm.formState.errors.documentType?.message}
             {...kycForm.register('documentType')}
@@ -689,10 +730,10 @@ function ProfileContent() {
             required
           />
 
-          <div className="grid grid-cols-1 gap-4 pt-2">
-            {/* Front Document Upload */}
+          <div className="space-y-2.5 pt-1">
+            {/* Front Document */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-gray-700 mb-1">
                 Document Front Copy <span className="text-red-500">*</span>
               </label>
               <input
@@ -707,47 +748,28 @@ function ProfileContent() {
               />
               <div
                 onClick={() => document.getElementById('docFrontInput')?.click()}
-                className={`p-4 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all ${
-                  uploads.documentFront.status === 'uploading'
-                    ? 'border-indigo-400 bg-indigo-50/20'
-                    : uploads.documentFront.status === 'success'
-                    ? 'border-green-400 bg-green-50/20'
-                    : uploads.documentFront.status === 'error'
-                    ? 'border-red-400 bg-red-50/20'
-                    : 'border-gray-200 hover:border-indigo-400 bg-gray-50/50'
-                }`}
+                className={cn(
+                  'p-3 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all',
+                  uploads.documentFront.status === 'success'
+                    ? 'border-emerald-400 bg-emerald-50/20'
+                    : 'border-gray-200 hover:border-blue-400 bg-gray-50/50'
+                )}
               >
                 {uploads.documentFront.status === 'success' ? (
-                  <div className="flex flex-col items-center">
-                    <CheckCircle className="w-6 h-6 text-green-500 mb-1" />
-                    <p className="text-xs font-semibold text-gray-700 truncate max-w-full">
-                      {uploads.documentFront.fileName}
-                    </p>
-                    <p className="text-[10px] text-green-600">Click to replace</p>
-                  </div>
-                ) : uploads.documentFront.status === 'uploading' ? (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-indigo-700">Uploading: {uploads.documentFront.progress}%</p>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700 animate-pulse">
-                      <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-150" style={{ width: `${uploads.documentFront.progress}%` }}></div>
-                    </div>
-                  </div>
+                  <p className="text-xs font-bold text-emerald-700 truncate">
+                    ✓ {uploads.documentFront.fileName}
+                  </p>
                 ) : (
-                  <div>
-                    <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                    <p className="text-xs font-semibold text-gray-700">Browse ID Front page</p>
-                    <p className="text-[10px] text-gray-400">PDF, JPG, PNG up to 5MB</p>
-                  </div>
+                  <p className="text-xs font-bold text-gray-600">
+                    + Upload Front Copy (PDF/JPG/PNG)
+                  </p>
                 )}
               </div>
-              {kycForm.formState.errors.documentFront && (
-                <p className="text-xs text-red-500 mt-1">{kycForm.formState.errors.documentFront.message}</p>
-              )}
             </div>
 
-            {/* Back Document Upload */}
+            {/* Back Document */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-gray-700 mb-1">
                 Document Back Copy <span className="text-red-500">*</span>
               </label>
               <input
@@ -762,48 +784,29 @@ function ProfileContent() {
               />
               <div
                 onClick={() => document.getElementById('docBackInput')?.click()}
-                className={`p-4 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all ${
-                  uploads.documentBack.status === 'uploading'
-                    ? 'border-indigo-400 bg-indigo-50/20'
-                    : uploads.documentBack.status === 'success'
-                    ? 'border-green-400 bg-green-50/20'
-                    : uploads.documentBack.status === 'error'
-                    ? 'border-red-400 bg-red-50/20'
-                    : 'border-gray-200 hover:border-indigo-400 bg-gray-50/50'
-                }`}
+                className={cn(
+                  'p-3 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all',
+                  uploads.documentBack.status === 'success'
+                    ? 'border-emerald-400 bg-emerald-50/20'
+                    : 'border-gray-200 hover:border-blue-400 bg-gray-50/50'
+                )}
               >
                 {uploads.documentBack.status === 'success' ? (
-                  <div className="flex flex-col items-center">
-                    <CheckCircle className="w-6 h-6 text-green-500 mb-1" />
-                    <p className="text-xs font-semibold text-gray-700 truncate max-w-full">
-                      {uploads.documentBack.fileName}
-                    </p>
-                    <p className="text-[10px] text-green-600">Click to replace</p>
-                  </div>
-                ) : uploads.documentBack.status === 'uploading' ? (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-indigo-700">Uploading: {uploads.documentBack.progress}%</p>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700 animate-pulse">
-                      <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-150" style={{ width: `${uploads.documentBack.progress}%` }}></div>
-                    </div>
-                  </div>
+                  <p className="text-xs font-bold text-emerald-700 truncate">
+                    ✓ {uploads.documentBack.fileName}
+                  </p>
                 ) : (
-                  <div>
-                    <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                    <p className="text-xs font-semibold text-gray-700">Browse ID Back page</p>
-                    <p className="text-[10px] text-gray-400">PDF, JPG, PNG up to 5MB</p>
-                  </div>
+                  <p className="text-xs font-bold text-gray-600">
+                    + Upload Back Copy (PDF/JPG/PNG)
+                  </p>
                 )}
               </div>
-              {kycForm.formState.errors.documentBack && (
-                <p className="text-xs text-red-500 mt-1">{kycForm.formState.errors.documentBack.message}</p>
-              )}
             </div>
 
-            {/* Selfie Upload */}
+            {/* Selfie Photo */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Your Selfie Photo <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+                Selfie Photo <span className="text-red-500">*</span>
               </label>
               <input
                 type="file"
@@ -817,43 +820,34 @@ function ProfileContent() {
               />
               <div
                 onClick={() => document.getElementById('selfieInput')?.click()}
-                className={`p-4 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all ${
-                  uploads.selfie.status === 'uploading'
-                    ? 'border-indigo-400 bg-indigo-50/20'
-                    : uploads.selfie.status === 'success'
-                    ? 'border-green-400 bg-green-50/20'
-                    : uploads.selfie.status === 'error'
-                    ? 'border-red-400 bg-red-50/20'
-                    : 'border-gray-200 hover:border-indigo-400 bg-gray-50/50'
-                }`}
+                className={cn(
+                  'p-3 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all',
+                  uploads.selfie.status === 'success'
+                    ? 'border-emerald-400 bg-emerald-50/20'
+                    : 'border-gray-200 hover:border-blue-400 bg-gray-50/50'
+                )}
               >
                 {uploads.selfie.status === 'success' ? (
-                  <div className="flex flex-col items-center">
-                    <CheckCircle className="w-6 h-6 text-green-500 mb-1" />
-                    <p className="text-xs font-semibold text-gray-700 truncate max-w-full">
-                      {uploads.selfie.fileName}
-                    </p>
-                    <p className="text-[10px] text-green-600">Click to replace</p>
-                  </div>
-                ) : uploads.selfie.status === 'uploading' ? (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-indigo-700">Uploading: {uploads.selfie.progress}%</p>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700 animate-pulse">
-                      <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-150" style={{ width: `${uploads.selfie.progress}%` }}></div>
-                    </div>
-                  </div>
+                  <p className="text-xs font-bold text-emerald-700 truncate">
+                    ✓ {uploads.selfie.fileName}
+                  </p>
                 ) : (
-                  <div>
-                    <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                    <p className="text-xs font-semibold text-gray-700">Browse Selfie Image</p>
-                    <p className="text-[10px] text-gray-400">JPG, PNG up to 5MB</p>
-                  </div>
+                  <p className="text-xs font-bold text-gray-600">
+                    + Upload Selfie Photo
+                  </p>
                 )}
               </div>
-              {kycForm.formState.errors.selfie && (
-                <p className="text-xs text-red-500 mt-1">{kycForm.formState.errors.selfie.message}</p>
-              )}
             </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={kycForm.formState.isSubmitting}
+              className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white font-bold text-xs sm:text-sm active:scale-[0.98] transition-all"
+            >
+              {kycForm.formState.isSubmitting ? 'Submitting...' : 'Submit Credentials'}
+            </button>
           </div>
         </form>
       </Modal>
@@ -863,7 +857,7 @@ function ProfileContent() {
 
 export default function ProfilePage() {
   return (
-    <Suspense fallback={<Loading text="Loading profile content..." />}>
+    <Suspense fallback={<Loading text="Loading profile..." />}>
       <ProfileContent />
     </Suspense>
   );

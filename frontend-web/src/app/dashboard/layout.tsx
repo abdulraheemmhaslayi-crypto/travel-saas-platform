@@ -26,14 +26,14 @@ export default function DashboardLayout({
 
   return (
     <ProtectedRoute allowedUserTypes={['PASSENGER', 'DRIVER', 'FLEET_OWNER', 'SUPPORT']}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col w-full overflow-x-hidden">
         <Navbar />
 
-        <div className="flex">
+        <div className="flex flex-1 min-w-0 w-full overflow-x-hidden">
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-          <main className="flex-1 min-h-[calc(100vh-4rem)] pb-20 lg:pb-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <main className="flex-1 min-w-0 w-full overflow-x-hidden min-h-[calc(100vh-4rem)] pb-24 lg:pb-8">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 w-full min-w-0">
               {children}
             </div>
           </main>

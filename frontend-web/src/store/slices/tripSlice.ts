@@ -69,15 +69,33 @@ export const useTripStore = create<TripState>((set, get) => ({
 
       const norm = (arr: any[]) => (arr || []).map((t) => normalizeTrip(t as Record<string, any>));
 
-      if (data && typeof data === 'object' && 'allMatches' in data) {
+      if (data && typeof data === 'object' && ('allMatches' in data || 'exactMatches' in data)) {
+        const combined = data.allMatches || [
+          ...(data.exactMatches || []),
+          ...(data.partialMatches || []),
+          ...(data.nearbyDeparture || []),
+          ...(data.nearbyDestination || []),
+        ];
         set({ 
-          trips: norm(data.allMatches), 
-          exactMatches: norm(data.exactMatches),
-          partialMatches: norm(data.partialMatches),
-          nearbyDeparture: norm(data.nearbyDeparture),
-          nearbyDestination: norm(data.nearbyDestination),
-          similarRoutes: norm(data.similarRoutes),
-          totalCount: (data.exactMatches?.length || 0) + (data.partialMatches?.length || 0),
+          trips: norm(combined), 
+          exactMatches: norm(data.exactMatches || []),
+          partialMatches: norm(data.partialMatches || []),
+          nearbyDeparture: norm(data.nearbyDeparture || []),
+          nearbyDestination: norm(data.nearbyDestination || []),
+          similarRoutes: norm(data.similarRoutes || []),
+          totalCount: combined.length,
+          isLoading: false 
+        });
+      } else if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+        const arrayData = norm(data.data);
+        set({ 
+          trips: arrayData, 
+          exactMatches: arrayData,
+          partialMatches: [],
+          nearbyDeparture: [],
+          nearbyDestination: [],
+          similarRoutes: [],
+          totalCount: data.total ?? arrayData.length,
           isLoading: false 
         });
       } else {
@@ -116,7 +134,17 @@ export const useTripStore = create<TripState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.getPopularRoutes();
-      set({ popularRoutes: response.data, isLoading: false });
+      const raw = Array.isArray(response.data) ? response.data : [];
+      const normalized: RouteSuggestion[] = raw.map((r: any, idx: number) => ({
+        id: r.id || ('route-' + idx),
+        origin: r.origin || r.source || '',
+        source: r.source || r.origin || '',
+        destination: r.destination || '',
+        popularity: r.popularity || r.count || 0,
+        count: r.count || r.popularity || 0,
+        avgPrice: typeof r.avgPrice === 'number' ? r.avgPrice : parseFloat(r.avgPrice || '0') || 0,
+      }));
+      set({ popularRoutes: normalized, isLoading: false });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to get popular routes';
       set({ error: message, isLoading: false });

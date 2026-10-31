@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/slices/authSlice';
+import { getCookie } from '@/lib/cookieUtils';
 import { Role, UserType } from '@/types/auth';
 import { getDashboardPath } from '@/hooks/useAuth';
 import Loading from './Loading';
@@ -40,15 +41,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo = '/login',
 }) => {
   const { user, isAuthenticated, isLoading, isInitializing } = useAuthStore();
+  const [hasHydrated, setHasHydrated] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (isInitializing || isLoading) {
+    setHasHydrated(true);
+  }, []);
+
+  const hasToken = typeof window !== 'undefined' && Boolean(localStorage.getItem('accessToken') || getCookie('accessToken'));
+
+  useEffect(() => {
+    if (!hasHydrated || isInitializing || isLoading) {
       return;
     }
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !hasToken) {
       const returnUrl = encodeURIComponent(pathname);
       router.push(`${redirectTo}?returnUrl=${returnUrl}`);
       return;
@@ -62,13 +70,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         router.push(getDashboardPath(user));
       }
     }
-  }, [isInitializing, isLoading, isAuthenticated, user, router, pathname, redirectTo, requiredRole, allowedUserTypes]);
+  }, [hasHydrated, isInitializing, isLoading, isAuthenticated, hasToken, user, router, pathname, redirectTo, requiredRole, allowedUserTypes]);
 
-  if (isInitializing || isLoading) {
+  if (!hasHydrated || isInitializing || isLoading || (!isAuthenticated && hasToken)) {
     return <Loading fullScreen text="Checking authentication..." />;
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !hasToken) {
     return fallback || <Loading fullScreen text="Redirecting to login..." />;
   }
 

@@ -62,7 +62,7 @@ async function bootstrap() {
   );
 
   // API prefix
-  app.setGlobalPrefix(apiPrefix);
+  app.setGlobalPrefix(apiPrefix, { exclude: ['/'] });
 
   // WebSocket adapter
   app.useWebSocketAdapter(new IoAdapter(app));

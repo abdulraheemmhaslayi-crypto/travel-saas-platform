@@ -38,6 +38,8 @@ export interface Trip {
   fleetId?: string;
   description?: string;
   amenities: string[];
+  vehicleName?: string;
+  operatorName?: string;
   createdAt: string;
   updatedAt: string;
   matchDetails?: {
@@ -163,8 +165,10 @@ export interface SearchFilters {
 export interface RouteSuggestion {
   id: string;
   origin: string;
+  source: string;
   destination: string;
   popularity: number;
+  count: number;
   avgPrice: number;
 }
 

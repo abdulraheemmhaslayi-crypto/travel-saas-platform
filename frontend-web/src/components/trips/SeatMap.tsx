@@ -116,12 +116,19 @@ const SeatMap: React.FC<SeatMapProps> = ({
         </p>
       </div>
 
-      <div className="bg-gray-50 rounded-2xl border border-gray-100 p-6 flex flex-col items-center">
+      <div className="bg-gray-50 rounded-2xl border border-gray-100 p-3.5 sm:p-5 flex flex-col items-center">
         {/* Driver seat indicator */}
-        <div className="flex justify-between w-full max-w-[200px] mb-6 px-2">
+        <div className="flex justify-between w-full max-w-[200px] mb-3 px-2">
           <div className="text-xs text-gray-400 font-medium self-center">Front of vehicle</div>
-          <div className="w-10 h-10 rounded-lg bg-gray-200 border border-gray-300 flex items-center justify-center text-lg shadow-sm" title="Driver Seat">
-            🛞
+          <div className="w-9 h-9 rounded-xl bg-gray-200 border border-gray-300 flex items-center justify-center shadow-xs" title="Driver Seat">
+            <svg className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="9"/>
+              <circle cx="12" cy="12" r="3"/>
+              <line x1="12" y1="3" x2="12" y2="9"/>
+              <line x1="12" y1="15" x2="12" y2="21"/>
+              <line x1="3" y1="12" x2="9" y2="12"/>
+              <line x1="15" y1="12" x2="21" y2="12"/>
+            </svg>
           </div>
         </div>
 
