@@ -12,12 +12,14 @@ import {
 
 export class TripSearchQueryDto {
   @ApiProperty()
+  @IsOptional()
   @IsString()
-  source: string;
+  source?: string;
 
   @ApiProperty()
+  @IsOptional()
   @IsString()
-  destination: string;
+  destination?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

@@ -14,6 +14,7 @@ import {
   Bell,
   User,
   Compass,
+  Home as HomeIcon,
 } from 'lucide-react';
 
 const MobileNav: React.FC = () => {
@@ -33,7 +34,7 @@ const MobileNav: React.FC = () => {
   const navItems = (() => {
     if (!isAuthenticated || !user) {
       return [
-        { href: '/dashboard/passenger', label: 'Search', icon: Search },
+        { href: '/dashboard/passenger', label: 'Home', icon: HomeIcon },
         { href: '/dashboard/bookings', label: 'My Trips', icon: Calendar },
         { href: '/dashboard/wallet', label: 'Wallet', icon: Wallet },
         { href: '/login', label: 'Sign In', icon: User },
@@ -64,7 +65,7 @@ const MobileNav: React.FC = () => {
 
     // Default: Passenger
     return [
-      { href: '/dashboard/passenger', label: 'Search', icon: Search },
+      { href: '/dashboard/passenger', label: 'Home', icon: HomeIcon },
       { href: '/dashboard/bookings', label: 'My Trips', icon: Calendar },
       { href: '/dashboard/wallet', label: 'Wallet', icon: Wallet },
       { href: '/dashboard/notifications', label: 'Alerts', icon: Bell, badge: unreadCount },
@@ -80,55 +81,55 @@ const MobileNav: React.FC = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200/80 z-50 md:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom,0px)]">
-      <div className="flex items-center justify-around h-16 px-1">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0]/80 rounded-t-[24px] z-50 md:hidden shadow-[0_-4px_24px_rgba(15,23,42,0.06)] pb-[env(safe-area-inset-bottom,0px)]">
+      <div className="flex items-center justify-around h-[66px] px-2 max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = isCurrentActive(item.href);
           const Icon = item.icon;
           const badge = (item as any).badge;
+          const showAlertDot = item.label === 'Alerts';
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                'relative flex-1 flex flex-col items-center justify-center py-1.5 transition-all duration-150 active:scale-95 select-none',
-                isActive ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'
-              )}
+              className="relative flex-1 flex flex-col items-center justify-center py-1 transition-all duration-150 active:scale-95 select-none"
             >
-              <div className="relative">
-                <div
-                  className={cn(
-                    'w-10 h-7 flex items-center justify-center rounded-full transition-all duration-200',
-                    isActive ? 'bg-primary-50 text-primary-600' : 'text-gray-500'
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      'w-5 h-5 transition-transform duration-200',
-                      isActive ? 'stroke-[2.5] scale-105' : 'stroke-[1.75]'
-                    )}
-                  />
-                </div>
-                {badge > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 text-[9px] font-extrabold text-white bg-danger-500 rounded-full flex items-center justify-center ring-2 ring-white">
-                    {badge > 9 ? '9+' : badge}
-                  </span>
+              <div className="relative flex items-center justify-center">
+                {isActive ? (
+                  <div className="w-[58px] h-[32px] rounded-full bg-[#E8F0FE] flex items-center justify-center transition-all duration-200 shadow-2xs">
+                    <Icon
+                      className={cn(
+                        'w-[19px] h-[19px] text-[#2563EB] transition-transform duration-200',
+                        item.label === 'Home' ? 'fill-[#2563EB]' : 'stroke-[2.2]'
+                      )}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-[58px] h-[32px] flex items-center justify-center">
+                    <Icon className="w-[20px] h-[20px] text-[#64748B] stroke-[1.8] transition-colors" />
+                  </div>
+                )}
+
+                {/* Vibrant Red Notification Dot (as seen on Alerts tab in production Ola/Uber apps) */}
+                {showAlertDot && (
+                  <span className="absolute top-1 right-3.5 w-2 h-2 bg-[#EF4444] rounded-full ring-2 ring-white" />
+                )}
+                {!showAlertDot && badge > 0 && (
+                  <span className="absolute top-1 right-3.5 w-2 h-2 bg-[#EF4444] rounded-full ring-2 ring-white" />
                 )}
               </div>
 
               <span
                 className={cn(
-                  'text-[10px] mt-0.5 tracking-tight transition-colors',
-                  isActive ? 'font-bold text-primary-600' : 'font-medium text-gray-500'
+                  'text-[11px] leading-tight tracking-tight transition-colors',
+                  isActive
+                    ? 'font-bold text-[#2563EB] mt-0.5'
+                    : 'font-medium text-[#64748B] mt-1'
                 )}
               >
                 {item.label}
               </span>
-
-              {isActive && (
-                <div className="absolute bottom-0 w-8 h-0.5 rounded-full bg-primary-600 animate-fadeIn" />
-              )}
             </Link>
           );
         })}

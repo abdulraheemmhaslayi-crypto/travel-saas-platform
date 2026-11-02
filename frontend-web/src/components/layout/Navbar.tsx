@@ -54,8 +54,10 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/dashboard/passenger" className="flex items-center gap-2 active:scale-95 transition-transform">
-              <MapPin className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600" />
-              <span className="text-lg sm:text-xl font-extrabold text-gray-900 tracking-tight">TravelFlow</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-xs shrink-0">
+                <MapPin className="w-4 h-4 fill-white text-blue-600" />
+              </div>
+              <span className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">TravelFlow</span>
             </Link>
           </div>
 
@@ -142,12 +144,10 @@ const Navbar: React.FC = () => {
           <div className="flex items-center gap-2 md:hidden">
             {isAuthenticated ? (
               <>
-                <Link href={notificationsPath} className="relative p-2 text-gray-600 hover:text-gray-900 active:scale-95 transition-transform">
-                  <Bell className="w-5 h-5" />
+                <Link href={notificationsPath} className="relative p-1.5 text-gray-800 hover:text-gray-900 active:scale-95 transition-transform">
+                  <Bell className="w-5 h-5 text-gray-800 stroke-[1.8]" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 bg-danger-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold ring-2 ring-white">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
+                    <span className="absolute top-1 right-1 bg-rose-500 rounded-full w-2.5 h-2.5 ring-2 ring-white" />
                   )}
                 </Link>
                 <button

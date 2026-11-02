@@ -103,6 +103,7 @@ export default function OSMAutocomplete({
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef<number>(0);
   const isSelectingRef = useRef<boolean>(false);
+  const isUserTypingRef = useRef<boolean>(false);
 
   // ─── Click / Touch Outside Handler (Closes dropdown without interfering with touches) ───
   useEffect(() => {
@@ -129,6 +130,13 @@ export default function OSMAutocomplete({
       return;
     }
 
+    // Only search and open dropdown if the user actually typed in the input field!
+    // Prevents dropdown popping open on mount, GPS detection, or route chip clicks.
+    if (!isUserTypingRef.current) {
+      setShow(false);
+      return;
+    }
+
     const trimmed = (value || '').trim();
 
     if (!trimmed || trimmed.length < 2) {
@@ -143,7 +151,9 @@ export default function OSMAutocomplete({
     const cacheKey = trimmed.toLowerCase();
     if (suggestionsCache.has(cacheKey)) {
       setSuggestions(suggestionsCache.get(cacheKey)!);
-      setShow(true);
+      if (isUserTypingRef.current) {
+        setShow(true);
+      }
       setIsLoading(false);
       return;
     }
@@ -173,7 +183,9 @@ export default function OSMAutocomplete({
           if (Array.isArray(data) && data.length > 0) {
             suggestionsCache.set(cacheKey, data);
             setSuggestions(data);
-            setShow(true);
+            if (isUserTypingRef.current) {
+              setShow(true);
+            }
             setSelectedIndex(-1);
           } else {
             // Fallback global search if country code yielded no matches
@@ -187,7 +199,9 @@ export default function OSMAutocomplete({
               if (currentReqId === requestIdRef.current && Array.isArray(fbData) && fbData.length > 0) {
                 suggestionsCache.set(cacheKey, fbData);
                 setSuggestions(fbData);
-                setShow(true);
+                if (isUserTypingRef.current) {
+                  setShow(true);
+                }
                 setSelectedIndex(-1);
               } else {
                 setSuggestions([]);
@@ -216,6 +230,7 @@ export default function OSMAutocomplete({
   // ─── Select a Suggestion ──────────────────────────────────────────────────
   const handleSelect = (item: Suggestion) => {
     isSelectingRef.current = true;
+    isUserTypingRef.current = false;
     abortControllerRef.current?.abort();
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
@@ -256,6 +271,7 @@ export default function OSMAutocomplete({
   };
 
   const handleClear = () => {
+    isUserTypingRef.current = false;
     if (onClear) {
       onClear();
     } else {
@@ -303,11 +319,12 @@ export default function OSMAutocomplete({
           type="text"
           value={value}
           onChange={(e) => {
+            isUserTypingRef.current = true;
             isSelectingRef.current = false;
             onChange(e.target.value);
           }}
           onFocus={() => {
-            if (suggestions.length > 0 && !isSelectingRef.current) {
+            if (suggestions.length > 0 && isUserTypingRef.current) {
               setShow(true);
             }
           }}
@@ -315,9 +332,9 @@ export default function OSMAutocomplete({
           placeholder={placeholder || (isSource ? 'Pickup city or address' : 'Dropoff city or address')}
           required={required}
           className={cn(
-            'w-full bg-white rounded-xl border border-gray-200/90 text-xs sm:text-sm font-semibold text-gray-900 placeholder:text-gray-400 placeholder:font-normal focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 py-2.5 transition-all shadow-2xs',
-            'pl-3 sm:pl-3.5',
-            onUseCurrentLocation ? 'pr-24' : value ? 'pr-9' : 'pr-3'
+            'w-full h-[46px] bg-white rounded-[12px] border border-[#E2E8F0] text-[14px] font-normal text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 transition-all shadow-[0_2px_8px_rgba(15,23,42,0.03)]',
+            'pl-3.5 sm:pl-4',
+            onUseCurrentLocation ? 'pr-24' : value ? 'pr-10' : 'pr-3.5'
           )}
         />
 
