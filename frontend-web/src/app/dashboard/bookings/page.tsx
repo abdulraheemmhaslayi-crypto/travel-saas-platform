@@ -92,6 +92,9 @@ function BookingsContent() {
     (b) => (b.status ?? '').toUpperCase() === 'COMPLETED'
   ).length;
 
+  const pendingCount = bookings.filter(
+    (b) => (b.status ?? '').toUpperCase() === 'PENDING'
+  ).length;
   // ── Handlers ──────────────────────────────────────────────────────────
   const handleCancelConfirm = async (reason: string) => {
     if (!cancelTarget) return;
@@ -168,38 +171,61 @@ function BookingsContent() {
           </div>
         </div>
       )}
-
-      {/* ── Stats Strip (Unified 4-Column Card) ─────────────────────────── */}
+      {/* -- Stats Strip (Interactive 4-Column Card) ----------------------- */}
       {bookings.length > 0 && (
-        <div className="rounded-2xl bg-white border border-gray-200/90 shadow-2xs p-2.5 sm:p-3.5">
+        <div className="rounded-2xl bg-white border border-gray-200/90 shadow-2xs p-2 sm:p-3">
           <div className="grid grid-cols-4 divide-x divide-gray-100 text-center">
-            <div className="px-1 sm:px-2">
+            <button
+              type="button"
+              onClick={() => setFilters((prev) => ({ ...prev, status: '' }))}
+              className={`px-1 sm:px-2 py-1 rounded-xl transition-all ${
+                filters.status === '' ? 'bg-slate-100 font-bold' : 'hover:bg-slate-50'
+              }`}
+            >
               <p className="text-sm sm:text-lg font-black text-gray-900 leading-tight">
                 {bookings.length}
               </p>
-              <p className="text-[10px] sm:text-xs text-gray-400 font-semibold mt-0.5">Total</p>
-            </div>
+              <p className="text-[10px] sm:text-xs text-gray-500 font-semibold mt-0.5">Total</p>
+            </button>
 
-            <div className="px-1 sm:px-2">
+            <button
+              type="button"
+              onClick={() => setFilters((prev) => ({ ...prev, status: 'CONFIRMED' }))}
+              className={`px-1 sm:px-2 py-1 rounded-xl transition-all ${
+                filters.status === 'CONFIRMED' ? 'bg-emerald-50 font-bold ring-1 ring-emerald-200' : 'hover:bg-slate-50'
+              }`}
+            >
               <p className="text-sm sm:text-lg font-black text-emerald-600 leading-tight">
                 {confirmedCount}
               </p>
-              <p className="text-[10px] sm:text-xs text-gray-400 font-semibold mt-0.5">Upcoming</p>
-            </div>
+              <p className="text-[10px] sm:text-xs text-gray-500 font-semibold mt-0.5">Upcoming</p>
+            </button>
 
-            <div className="px-1 sm:px-2">
+            <button
+              type="button"
+              onClick={() => setFilters((prev) => ({ ...prev, status: 'PENDING' }))}
+              className={`px-1 sm:px-2 py-1 rounded-xl transition-all ${
+                filters.status === 'PENDING' ? 'bg-amber-50 font-bold ring-1 ring-amber-200' : 'hover:bg-slate-50'
+              }`}
+            >
+              <p className="text-sm sm:text-lg font-black text-amber-600 leading-tight">
+                {pendingCount}
+              </p>
+              <p className="text-[10px] sm:text-xs text-gray-500 font-semibold mt-0.5">Pending</p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilters((prev) => ({ ...prev, status: 'COMPLETED' }))}
+              className={`px-1 sm:px-2 py-1 rounded-xl transition-all ${
+                filters.status === 'COMPLETED' ? 'bg-blue-50 font-bold ring-1 ring-blue-200' : 'hover:bg-slate-50'
+              }`}
+            >
               <p className="text-sm sm:text-lg font-black text-blue-600 leading-tight">
                 {completedCount}
               </p>
-              <p className="text-[10px] sm:text-xs text-gray-400 font-semibold mt-0.5">Completed</p>
-            </div>
-
-            <div className="px-1 sm:px-2">
-              <p className="text-xs sm:text-base font-black text-purple-600 leading-tight truncate">
-                ₹{Math.round(totalSpent).toLocaleString('en-IN')}
-              </p>
-              <p className="text-[10px] sm:text-xs text-gray-400 font-semibold mt-0.5">Spent</p>
-            </div>
+              <p className="text-[10px] sm:text-xs text-gray-500 font-semibold mt-0.5">Completed</p>
+            </button>
           </div>
         </div>
       )}
