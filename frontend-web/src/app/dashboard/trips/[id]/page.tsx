@@ -512,10 +512,29 @@ const handleBook = async () => {
               {/* Pricing Breakdown Summary */}
               <div className="pt-2.5 border-t border-gray-100 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500 font-medium">Selected Seats</span>
-                  <span className="font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
-                    {selectedSeats.length > 0 ? selectedSeats.join(', ') : 'None'}
-                  </span>
+                  <span className="text-slate-600 font-semibold">Selected Seats</span>
+                  <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                    {selectedSeats.length > 0 ? (
+                      selectedSeats.map((s) => (
+                        <span
+                          key={s}
+                          className={cn(
+                            "font-extrabold px-2.5 py-0.5 rounded-lg text-xs flex items-center gap-1 border shadow-2xs",
+                            passengerGender === 'female'
+                              ? "bg-pink-50 text-pink-700 border-pink-300"
+                              : "bg-blue-50 text-blue-700 border-blue-300"
+                          )}
+                        >
+                          <span>Seat #{s}</span>
+                          <span className="font-black">
+                            {passengerGender === 'female' ? '♀ Female' : '♂ Male'}
+                          </span>
+                        </span>
+                      ))
+                    ) : (
+                      <span className="font-semibold text-slate-400">None selected</span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -608,8 +627,26 @@ const handleBook = async () => {
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-3 pb-[calc(env(safe-area-inset-bottom,0px)+74px)] lg:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
         <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
           <div className="min-w-0">
-            <span className="text-[10px] text-gray-500 font-semibold block leading-none mb-1 truncate">
-              {selectedSeats.length > 0 ? `${selectedSeats.length} Seat${selectedSeats.length > 1 ? 's' : ''} (#${selectedSeats.join(', #')})` : 'Select Seat(s)'}
+            <span className="text-[10px] font-bold block leading-none mb-1 truncate flex items-center gap-1.5">
+              {selectedSeats.length > 0 ? (
+                <>
+                  <span className="text-slate-700">
+                    {selectedSeats.length} Seat{selectedSeats.length > 1 ? 's' : ''} (#{selectedSeats.join(', #')})
+                  </span>
+                  <span
+                    className={cn(
+                      "font-black text-[9px] px-1.5 py-0.5 rounded border",
+                      passengerGender === 'female'
+                        ? "bg-pink-50 text-pink-700 border-pink-200"
+                        : "bg-blue-50 text-blue-700 border-blue-200"
+                    )}
+                  >
+                    {passengerGender === 'female' ? '♀ Female' : '♂ Male'}
+                  </span>
+                </>
+              ) : (
+                <span className="text-slate-400">Select Seat(s)</span>
+              )}
             </span>
             <span className="text-lg font-black text-blue-600 leading-none">
               {currencySymbol} {selectedSeats.length > 0 ? totalFinalAmount : seatPrice}
@@ -726,9 +763,21 @@ const handleBook = async () => {
 
           {/* Pricing Summary */}
           <div className="bg-slate-50 p-2.5 rounded-xl border border-gray-200 space-y-1.5 text-xs">
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-gray-500">Selected Seats ({selectedSeats.length})</span>
-              <span className="font-bold text-gray-800">{selectedSeats.join(', ')}</span>
+              <div className="flex items-center gap-1.5 font-bold text-gray-800">
+                <span>#{selectedSeats.join(', #')}</span>
+                <span
+                  className={cn(
+                    "text-[10px] font-extrabold px-1.5 py-0.5 rounded border",
+                    passengerGender === 'female'
+                      ? "bg-pink-100 text-pink-700 border-pink-200"
+                      : "bg-blue-100 text-blue-700 border-blue-200"
+                  )}
+                >
+                  {passengerGender === 'female' ? '♀ Female' : '♂ Male'}
+                </span>
+              </div>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Base Fare ({selectedSeats.length} × {currencySymbol}{seatPrice})</span>

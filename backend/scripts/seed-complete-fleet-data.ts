@@ -744,12 +744,13 @@ async function seedCompleteFleetData() {
         for (let s = 1; s <= totalSeats; s++) {
           const isSeatBooked = s <= bookedSeats;
           const seatType = s === 1 ? 'window' : s % 2 === 0 ? 'aisle' : 'window';
+          const seatGender = isSeatBooked ? (s % 2 === 1 ? 'female' : 'male') : null;
 
           await queryRunner.query(
             `INSERT INTO trip_seats (
-              id, "tripId", "seatNumber", "seatType", status, price, "createdAt", "updatedAt"
+              id, "tripId", "seatNumber", "seatType", status, price, gender, "createdAt", "updatedAt"
             ) VALUES (
-              uuid_generate_v4(), $1, $2, $3, $4, $5, NOW(), NOW()
+              uuid_generate_v4(), $1, $2, $3, $4, $5, $6, NOW(), NOW()
             )`,
             [
               tripId,
@@ -757,6 +758,7 @@ async function seedCompleteFleetData() {
               seatType,
               isSeatBooked ? 'booked' : 'available',
               rc.pricePerSeat,
+              seatGender,
             ]
           );
         }
