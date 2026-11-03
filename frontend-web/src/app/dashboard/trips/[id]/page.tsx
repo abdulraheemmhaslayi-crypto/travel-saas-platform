@@ -64,7 +64,7 @@ export default function TripDetailPage() {
   const { showToast } = useAppStore();
 
   const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
-  const [passengerGender, setPassengerGender] = useState<'male' | 'female'>('female');
+  const [passengerGender, setPassengerGender] = useState<'male' | 'female'>('male');
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [bookingId, setBookingId] = useState<string>('');
@@ -314,7 +314,7 @@ const handleBook = async () => {
       </header>
 
       {/* ── Main Content Container ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6 sm:py-5 w-full">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-36 lg:pb-8 sm:py-5 w-full">
         {/* Mobile View Tabs Selector (Seats / Route / Vehicle - 3 Equal Balanced Columns) */}
         <div className="grid grid-cols-3 gap-1.5 bg-white p-1 rounded-2xl border border-gray-200/90 mb-3 shadow-2xs lg:hidden w-full">
           <button

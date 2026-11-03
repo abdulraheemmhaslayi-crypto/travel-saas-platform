@@ -19,7 +19,7 @@ const SeatMap: React.FC<SeatMapProps> = ({
   selectedSeats,
   onSeatSelect,
   maxSelectable = 4,
-  passengerGender = 'female',
+  passengerGender = 'male',
 }) => {
   const totalSeatsCount = seats && seats.length > 0 ? seats.length : (vehicleType === 'Bus' ? 40 : 7);
   
