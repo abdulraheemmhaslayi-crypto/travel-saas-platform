@@ -56,7 +56,7 @@ function getTripVehicleImage(vehicle?: any): string {
 export default function TripDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const tripId = params.id as string;
+  const tripId = (params?.id as string) || '';
   
   const { user, isAuthenticated } = useAuthStore();
   const { currentTrip, getTrip, isLoading: tripLoading } = useTripStore();
