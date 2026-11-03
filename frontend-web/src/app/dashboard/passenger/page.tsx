@@ -648,12 +648,38 @@ export default function PassengerDashboardPage() {
               {/* Greeting */}
               <div>
                 <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
-                  Where to, {user?.firstName || 'Rider'}? 👋
+                  {isAuthenticated && user?.firstName
+                    ? `Where to, ${user.firstName}? 👋`
+                    : 'Where to? 👋'}
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-                  Book a ride to your destination
+                  {isAuthenticated
+                    ? 'Book a ride to your destination'
+                    : 'Search and compare intercity rides across Maharashtra'}
                 </p>
               </div>
+
+              {/* Guest Browsing Callout on Desktop */}
+              {!isAuthenticated && (
+                <div className="bg-white border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-gray-900 truncate">Browsing as Guest</p>
+                      <p className="text-[11px] text-gray-600 truncate">Sign in to book seats, view tickets & track rides live</p>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/login?returnUrl=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/dashboard/passenger')}`}
+                  >
+                    <button className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs shrink-0 transition-colors">
+                      Sign In
+                    </button>
+                  </Link>
+                </div>
+              )}
 
               {/* Pickup & Destination Box */}
               <div className="bg-slate-50/70 rounded-2xl border border-gray-200/80 p-3 sm:p-4 space-y-2.5 relative">
@@ -951,15 +977,22 @@ export default function PassengerDashboardPage() {
                 {/* Compact Payment Row & Estimated Fare */}
                 <div className="flex items-center justify-between gap-2">
                   {/* Payment Pill Button */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod((p) => (p === 'Cash' ? 'Wallet' : 'Cash'))}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200/90 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-gray-800 transition-all active:scale-95 shadow-2xs"
-                  >
-                    <Banknote className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>{paymentMethod === 'Cash' ? 'Cash' : `Wallet (${baseCurrencySymbol} ${walletBalance || 0})`}</span>
-                    <ChevronDown className="w-3 h-3 text-gray-400 shrink-0" />
-                  </button>
+                  {isAuthenticated ? (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod((p) => (p === 'Cash' ? 'Wallet' : 'Cash'))}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200/90 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-gray-800 transition-all active:scale-95 shadow-2xs"
+                    >
+                      <Banknote className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>{paymentMethod === 'Cash' ? 'Cash' : `Wallet (${baseCurrencySymbol} ${walletBalance || 0})`}</span>
+                      <ChevronDown className="w-3 h-3 text-gray-400 shrink-0" />
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200/90 bg-slate-50 text-xs font-semibold text-gray-800 shadow-2xs">
+                      <Banknote className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Pay on Board / Cash</span>
+                    </div>
+                  )}
 
                   {/* Estimated Fare Display */}
                   <div className="text-right">
@@ -980,7 +1013,7 @@ export default function PassengerDashboardPage() {
                   className="w-full h-11 sm:h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
                   <Car className="w-4 h-4" />
-                  <span>Confirm Ticket</span>
+                  <span>{isAuthenticated ? 'Confirm Ticket' : `Sign In to Book • ${baseCurrencySymbol} ${selectedFare > 0 ? selectedFare : 399}`}</span>
                 </button>
               </div>
             </div>

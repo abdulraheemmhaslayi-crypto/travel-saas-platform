@@ -32,13 +32,12 @@ const MobileNav: React.FC = () => {
   }
 
   const navItems = (() => {
+    // Clean, focused 3-item navigation for unauthenticated guests
     if (!isAuthenticated || !user) {
       return [
-        { href: '/dashboard/passenger', label: 'Home', icon: HomeIcon },
-        { href: '/dashboard/bookings', label: 'My Trips', icon: Calendar },
-        { href: '/dashboard/wallet', label: 'Wallet', icon: Wallet },
-        { href: '/dashboard/notifications', label: 'Alerts', icon: Bell },
-        { href: '/login', label: 'Account', icon: User },
+        { href: '/dashboard/passenger', label: 'Search Rides', icon: Search },
+        { href: '/dashboard/passenger/popular-routes', label: 'Routes', icon: Compass },
+        { href: '/login', label: 'Sign In', icon: User },
       ];
     }
 
@@ -112,7 +111,7 @@ const MobileNav: React.FC = () => {
                   </div>
                 )}
 
-                {/* Vibrant Red Notification Dot (as seen on Alerts tab in production Ola/Uber apps) */}
+                {/* Notification indicator */}
                 {showAlertDot && (
                   <span className="absolute top-1 right-3.5 w-2 h-2 bg-[#EF4444] rounded-full ring-2 ring-white" />
                 )}

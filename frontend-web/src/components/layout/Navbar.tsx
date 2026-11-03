@@ -138,13 +138,27 @@ const Navbar: React.FC = () => {
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-3">
-                <Link href="/login">
-                  <Button variant="ghost">Sign In</Button>
+              <div className="flex items-center gap-6">
+                <Link
+                  href="/dashboard/passenger"
+                  className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors"
+                >
+                  Search Rides
                 </Link>
-                <Link href="/register">
-                  <Button>Get Started</Button>
+                <Link
+                  href="/dashboard/passenger/popular-routes"
+                  className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors"
+                >
+                  Popular Routes
                 </Link>
+                <div className="flex items-center gap-3 border-l border-gray-200 pl-4">
+                  <Link href="/login">
+                    <Button variant="ghost" size="sm">Sign In</Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button size="sm">Get Started</Button>
+                  </Link>
+                </div>
               </div>
             )}
           </div>

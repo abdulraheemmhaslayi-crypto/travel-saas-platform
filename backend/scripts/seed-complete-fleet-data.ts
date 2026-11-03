@@ -7,29 +7,12 @@ import * as fs from 'fs';
 import { DataSource } from 'typeorm';
 
 function resolveDataSource(): DataSource {
-  const distPath = path.resolve(__dirname, '../dist/src/database/data-source.js');
-  const distPath2 = path.resolve(__dirname, '../dist/database/data-source.js');
-  const srcPath = path.resolve(__dirname, '../src/database/data-source.ts');
-  const srcJsPath = path.resolve(__dirname, '../src/database/data-source.js');
-
-  if (fs.existsSync(distPath)) {
-    return require(distPath).AppDataSource;
-  }
-  if (fs.existsSync(distPath2)) {
-    return require(distPath2).AppDataSource;
-  }
-  if (fs.existsSync(srcPath) || fs.existsSync(srcJsPath)) {
-    try {
-      return require('../src/database/data-source').AppDataSource;
-    } catch {}
-  }
-
-  // Direct connection fallback using DATABASE_URL or environment variables
+  // Direct robust connection using DATABASE_URL or individual environment variables
   const dbUrl = process.env.DATABASE_URL;
   let dbHost = process.env.DATABASE_HOST || 'localhost';
   let dbPort = Number(process.env.DATABASE_PORT) || 5432;
   let dbUser = process.env.DATABASE_USERNAME || 'postgres';
-  let dbPassword = process.env.DATABASE_PASSWORD || 'postgres';
+  let dbPassword = String(process.env.DATABASE_PASSWORD ?? 'postgres');
   let dbName = process.env.DATABASE_NAME || 'travel_saas';
   let dbSsl: boolean | { rejectUnauthorized: boolean } = process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false;
 
@@ -38,13 +21,15 @@ function resolveDataSource(): DataSource {
       const parsed = new URL(dbUrl);
       dbHost = parsed.hostname;
       dbPort = Number(parsed.port) || 5432;
-      dbUser = decodeURIComponent(parsed.username);
-      dbPassword = decodeURIComponent(parsed.password);
-      dbName = parsed.pathname.replace(/^\//, '');
+      dbUser = decodeURIComponent(parsed.username || 'postgres');
+      dbPassword = String(decodeURIComponent(parsed.password || 'postgres'));
+      dbName = parsed.pathname.replace(/^\//, '') || 'travel_saas';
       if (parsed.searchParams.get('sslmode') === 'require' || parsed.searchParams.get('ssl') === 'true') {
         dbSsl = { rejectUnauthorized: false };
       }
-    } catch {}
+    } catch (e: any) {
+      console.warn('Failed parsing DATABASE_URL in seed script:', e.message);
+    }
   }
 
   return new DataSource({

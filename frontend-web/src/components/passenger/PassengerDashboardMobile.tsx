@@ -128,7 +128,8 @@ export default function PassengerDashboardMobile({
   formatDuration,
   getTripVehicleImage,
 }: PassengerDashboardMobileProps) {
-  const displayName = user?.firstName || 'Rider';
+  const isGuest = !user;
+  const displayName = user?.firstName || '';
 
   return (
     <div className="flex flex-col w-full bg-[#F8FAFC] min-h-[calc(100dvh-3.5rem-4.5rem)] select-none">
@@ -204,13 +205,29 @@ export default function PassengerDashboardMobile({
             {/* Greeting Header (Inter 21px / Weight 700 Bold) */}
             <div>
               <h2 className="text-[21px] font-bold text-[#0F172A] tracking-tight flex items-center gap-1.5 leading-tight">
-                <span>Where to, {displayName}?</span>
+                <span>{user?.firstName ? `Where to, ${user.firstName}?` : 'Where to?'}</span>
                 <span className="text-xl">👋</span>
               </h2>
               <p className="text-[13px] text-[#64748B] font-normal mt-0.5">
-                Book a ride to your destination
+                {user ? 'Book a ride to your destination' : 'Search and compare intercity rides across Maharashtra'}
               </p>
             </div>
+
+            {/* Guest Browsing Callout */}
+            {isGuest && (
+              <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-3 flex items-center justify-between gap-3 shadow-2xs">
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold text-[#0F172A] leading-tight">Browsing as Guest</p>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">Sign in to book seats & track drivers live</p>
+                </div>
+                <Link
+                  href={`/login?returnUrl=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/dashboard/passenger')}`}
+                  className="px-3.5 py-1.5 rounded-[10px] bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-[12px] font-semibold shrink-0 shadow-xs"
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
 
             {/* ── Pickup & Destination Inputs Card (16px Radius) ── */}
             <div className="bg-[#F8FAFC] rounded-[16px] border border-[#E2E8F0] p-3 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
@@ -428,60 +445,104 @@ export default function PassengerDashboardMobile({
             </button>
 
             {/* ── Quick Action Shortcuts (Directly above the bottom tab bar) ── */}
-            <div className="grid grid-cols-4 gap-2 text-center pt-1 pb-1 w-full">
-              {/* 1. Ride Now */}
-              <button
-                type="button"
-                onClick={handleSearchAvailableRides}
-                className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
-              >
-                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-blue-100 transition-colors">
-                  <Car className="w-5 h-5 stroke-[2]" />
-                </div>
-                <span className="text-[11px] font-medium text-[#334155] tracking-tight">
-                  Ride Now
-                </span>
-              </button>
+            {user ? (
+              <div className="grid grid-cols-4 gap-2 text-center pt-1 pb-1 w-full">
+                {/* 1. Ride Now */}
+                <button
+                  type="button"
+                  onClick={handleSearchAvailableRides}
+                  className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
+                >
+                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-blue-100 transition-colors">
+                    <Car className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-[#334155] tracking-tight">
+                    Ride Now
+                  </span>
+                </button>
 
-              {/* 2. My Trips */}
-              <Link
-                href="/dashboard/bookings"
-                className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
-              >
-                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#ECFDF5] text-[#10B981] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-emerald-100 transition-colors">
-                  <Calendar className="w-5 h-5 stroke-[2]" />
-                </div>
-                <span className="text-[11px] font-medium text-[#334155] tracking-tight">
-                  My Trips
-                </span>
-              </Link>
+                {/* 2. My Trips */}
+                <Link
+                  href="/dashboard/bookings"
+                  className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
+                >
+                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#ECFDF5] text-[#10B981] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-emerald-100 transition-colors">
+                    <Calendar className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-[#334155] tracking-tight">
+                    My Trips
+                  </span>
+                </Link>
 
-              {/* 3. Wallet */}
-              <Link
-                href="/dashboard/wallet"
-                className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
-              >
-                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#FFFBEB] text-[#F59E0B] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-amber-100 transition-colors">
-                  <Wallet className="w-5 h-5 stroke-[2]" />
-                </div>
-                <span className="text-[11px] font-medium text-[#334155] tracking-tight">
-                  Wallet
-                </span>
-              </Link>
+                {/* 3. Wallet */}
+                <Link
+                  href="/dashboard/wallet"
+                  className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
+                >
+                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#FFFBEB] text-[#F59E0B] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-amber-100 transition-colors">
+                    <Wallet className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-[#334155] tracking-tight">
+                    Wallet
+                  </span>
+                </Link>
 
-              {/* 4. Support */}
-              <Link
-                href="/dashboard/support"
-                className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
-              >
-                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-purple-100 transition-colors">
-                  <Headphones className="w-5 h-5 stroke-[2]" />
-                </div>
-                <span className="text-[11px] font-medium text-[#334155] tracking-tight">
-                  Support
-                </span>
-              </Link>
-            </div>
+                {/* 4. Support */}
+                <Link
+                  href="/dashboard/support"
+                  className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
+                >
+                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-purple-100 transition-colors">
+                    <Headphones className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-[#334155] tracking-tight">
+                    Support
+                  </span>
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2 text-center pt-1 pb-1 w-full">
+                {/* 1. Search Rides */}
+                <button
+                  type="button"
+                  onClick={handleSearchAvailableRides}
+                  className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
+                >
+                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-blue-100 transition-colors">
+                    <Search className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-[#334155] tracking-tight">
+                    Search Rides
+                  </span>
+                </button>
+
+                {/* 2. Popular Routes */}
+                <Link
+                  href="/dashboard/passenger/popular-routes"
+                  className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
+                >
+                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#F1F5F9] text-[#475569] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-slate-200 transition-colors">
+                    <Landmark className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-[#334155] tracking-tight">
+                    Popular Routes
+                  </span>
+                </Link>
+
+                {/* 3. Sign In */}
+                <Link
+                  href={`/login?returnUrl=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/dashboard/passenger')}`}
+                  className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
+                >
+                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#ECFDF5] text-[#10B981] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-emerald-100 transition-colors">
+                    <Car className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-[#334155] tracking-tight">
+                    Sign In / Join
+                  </span>
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           /* ════════════════════════════════════════════════════════════════
@@ -635,21 +696,28 @@ export default function PassengerDashboardMobile({
               {/* Payment Pill Button & Total Fare */}
               <div className="flex items-center justify-between gap-2">
                 {/* Payment Pill Button */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPaymentMethod((p) => (p === 'Cash' ? 'Wallet' : 'Cash'))
-                  }
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[12px] font-semibold text-[#0F172A] transition-all active:scale-95 shadow-2xs"
-                >
-                  <Banknote className="w-4 h-4 text-[#10B981] shrink-0" />
-                  <span>
-                    {paymentMethod === 'Cash'
-                      ? 'Cash'
-                      : `Wallet · ${baseCurrencySymbol}${walletBalance || 0}`}
-                  </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
-                </button>
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPaymentMethod((p) => (p === 'Cash' ? 'Wallet' : 'Cash'))
+                    }
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[12px] font-semibold text-[#0F172A] transition-all active:scale-95 shadow-2xs"
+                  >
+                    <Banknote className="w-4 h-4 text-[#10B981] shrink-0" />
+                    <span>
+                      {paymentMethod === 'Cash'
+                        ? 'Cash'
+                        : `Wallet · ${baseCurrencySymbol}${walletBalance || 0}`}
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] text-[12px] font-semibold text-[#0F172A] shadow-2xs">
+                    <Banknote className="w-4 h-4 text-[#10B981] shrink-0" />
+                    <span>Pay on Board / Cash</span>
+                  </div>
+                )}
 
                 {/* Total Price Display */}
                 <div className="text-right">
@@ -675,7 +743,7 @@ export default function PassengerDashboardMobile({
                 className="w-full h-[48px] rounded-[16px] bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-[15px] shadow-[0_4px_14px_rgba(37,99,235,0.25)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <Car className="w-4 h-4 stroke-[2]" />
-                <span>Confirm booking</span>
+                <span>{user ? 'Confirm booking' : `Sign In to Book • ${baseCurrencySymbol}${selectedFare > 0 ? selectedFare : 399}`}</span>
               </button>
             </div>
           </div>

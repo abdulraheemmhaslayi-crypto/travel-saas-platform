@@ -15,7 +15,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { isLoading, isInitializing } = useAuth();
+  const { user, isAuthenticated, isLoading, isInitializing } = useAuth();
   const pathname = usePathname();
 
   const isPublicGuestRoute =
@@ -43,9 +43,12 @@ export default function DashboardLayout({
       <Navbar />
 
       <div className="flex flex-1 min-w-0 w-full overflow-x-hidden">
-        <Suspense fallback={<div className="w-64 bg-white border-r border-gray-200 hidden lg:block" />}>
-          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-        </Suspense>
+        {/* Only show persistent dashboard sidebar to logged-in users. Guests get clean full-width search. */}
+        {isAuthenticated && (
+          <Suspense fallback={<div className="w-64 bg-white border-r border-gray-200 hidden lg:block" />}>
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+          </Suspense>
+        )}
 
         <main
           className={cn(
@@ -55,7 +58,8 @@ export default function DashboardLayout({
         >
           <div
             className={cn(
-              'max-w-7xl mx-auto w-full min-w-0',
+              'w-full min-w-0',
+              isAuthenticated ? 'max-w-7xl mx-auto' : 'w-full',
               isMobileAppPage ? 'p-0 sm:px-6 sm:py-8' : 'px-3 sm:px-6 lg:px-8 py-4 sm:py-8'
             )}
           >

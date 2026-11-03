@@ -92,7 +92,7 @@ envsubst '${PORT_TO_LISTEN}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx
 (
   sleep 15
   echo "==> Checking and ensuring fleet database seed..."
-  cd /app/backend && npm run seed:fleet || true
+  cd /app/backend && node scripts/seed-complete-fleet-data.js || true
 ) &
 
 # 5. Start Supervisord (Backend, Frontend, Nginx)

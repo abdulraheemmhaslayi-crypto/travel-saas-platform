@@ -23,7 +23,7 @@
     "migration:run": "npm run typeorm -- migration:run -d src/database/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
     "seed:admins": "ts-node -r tsconfig-paths/register scripts/seed-admins.ts",
-    "seed:fleet": "ts-node -r tsconfig-paths/register scripts/seed-complete-fleet-data.ts"
+    "seed:fleet": "node scripts/seed-complete-fleet-data.js"
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.4",

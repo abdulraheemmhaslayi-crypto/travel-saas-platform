@@ -96,8 +96,10 @@ export default function MapView({
           attributionControl: false,
         }).setView([center.lat, center.lng], zoom);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
           maxZoom: 19,
+          subdomains: 'ab',
+          attribution: '&copy; OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team',
         }).addTo(mapRef.current);
 
         layersRef.current.markers = markers.map((m) => {

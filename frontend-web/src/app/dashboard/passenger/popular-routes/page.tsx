@@ -55,11 +55,11 @@ export default function PopularRoutesPage() {
                 key={route.id}
                 className="rounded-2xl bg-white border border-gray-100 hover:border-primary-200 hover:shadow-lg transition-all duration-200 overflow-hidden group"
               >
-                {/* Gradient header */}
-                <div className={`h-2 ${
+                {/* Solid top accent bar */}
+                <div className={`h-1.5 ${
                   index < 3
-                    ? 'bg-gradient-to-r from-amber-400 via-orange-400 to-red-400'
-                    : 'bg-gradient-to-r from-primary-400 to-blue-400'
+                    ? 'bg-amber-500'
+                    : 'bg-blue-600'
                 }`} />
 
                 <div className="p-4">

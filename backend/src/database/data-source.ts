@@ -8,9 +8,9 @@ const configService = new ConfigService();
 
 let dbHost = configService.get<string>('DATABASE_HOST', 'localhost');
 let dbPort = Number(configService.get<number>('DATABASE_PORT', 5432));
-let dbUser = configService.get<string>('DATABASE_USERNAME');
-let dbPassword = configService.get<string>('DATABASE_PASSWORD');
-let dbName = configService.get<string>('DATABASE_NAME');
+let dbUser = configService.get<string>('DATABASE_USERNAME') || process.env.DATABASE_USERNAME || 'postgres';
+let dbPassword = String(configService.get<string>('DATABASE_PASSWORD') ?? process.env.DATABASE_PASSWORD ?? 'postgres');
+let dbName = configService.get<string>('DATABASE_NAME') || process.env.DATABASE_NAME || 'travel_saas';
 let dbSsl: boolean | { rejectUnauthorized: boolean } = configService.get('DATABASE_SSL') === 'true' ? { rejectUnauthorized: false } : false;
 
 if (process.env.DATABASE_URL) {
