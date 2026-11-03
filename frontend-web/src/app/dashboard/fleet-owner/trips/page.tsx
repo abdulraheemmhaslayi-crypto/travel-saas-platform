@@ -22,7 +22,7 @@ const statusToTab: Record<string, TripTab> = {
   cancelled: 'cancelled',
 };
 
-export default function FleetOwnerTripsPage() {
+function FleetOwnerTripsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [trips, setTrips] = useState<any[]>([]);
@@ -191,5 +191,20 @@ export default function FleetOwnerTripsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+
+export default function FleetOwnerTripsPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <p className="text-gray-500 font-medium animate-pulse">Loading fleet trips...</p>
+        </div>
+      }
+    >
+      <FleetOwnerTripsPageContent />
+    </React.Suspense>
   );
 }

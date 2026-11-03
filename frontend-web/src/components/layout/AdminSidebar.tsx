@@ -49,7 +49,7 @@ interface MenuSection {
   children?: MenuItem[];
 }
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
+const AdminSidebarComponent: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
@@ -483,5 +483,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
     </>
   );
 };
+
+const AdminSidebar: React.FC<AdminSidebarProps> = (props) => (
+  <React.Suspense fallback={<div className="w-64 bg-white border-r border-gray-200 hidden lg:block" />}>
+    <AdminSidebarComponent {...props} />
+  </React.Suspense>
+);
 
 export default AdminSidebar;

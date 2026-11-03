@@ -59,7 +59,7 @@ const TABS = [
   { id: 'SYSTEM', label: 'System' },
 ];
 
-export default function NotificationsPage() {
+function NotificationsContent() {
   const {
     notifications,
     unreadCount,
@@ -321,5 +321,20 @@ export default function NotificationsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+
+export default function NotificationsPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <p className="text-gray-500 font-medium animate-pulse">Loading notifications...</p>
+        </div>
+      }
+    >
+      <NotificationsContent />
+    </React.Suspense>
   );
 }

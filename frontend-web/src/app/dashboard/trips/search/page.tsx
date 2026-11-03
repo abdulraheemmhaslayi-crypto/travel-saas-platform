@@ -11,7 +11,7 @@ import Button from '@/components/ui/Button';
 import { Search, Filter, Compass, Navigation, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
-export default function TripSearchPage() {
+function TripSearchContent() {
   const searchParams = useSearchParams();
   const {
     filters,
@@ -288,5 +288,19 @@ export default function TripSearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TripSearchPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <p className="text-gray-500 font-medium animate-pulse">Loading search...</p>
+        </div>
+      }
+    >
+      <TripSearchContent />
+    </React.Suspense>
   );
 }

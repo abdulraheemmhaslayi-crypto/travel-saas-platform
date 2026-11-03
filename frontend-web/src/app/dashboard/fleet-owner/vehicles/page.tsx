@@ -64,7 +64,7 @@ const transmissionOptions = [
   { value: 'Automatic', label: 'Automatic' },
 ];
 
-export default function FleetOwnerVehiclesPage() {
+function FleetOwnerVehiclesPageContent() {
   const {
     currentFleetId,
     currentFleetName,
@@ -1797,5 +1797,20 @@ export default function FleetOwnerVehiclesPage() {
         </div>
       </Modal>
     </div>
+  );
+}
+
+
+export default function FleetOwnerVehiclesPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <p className="text-gray-500 font-medium animate-pulse">Loading fleet vehicles...</p>
+        </div>
+      }
+    >
+      <FleetOwnerVehiclesPageContent />
+    </React.Suspense>
   );
 }

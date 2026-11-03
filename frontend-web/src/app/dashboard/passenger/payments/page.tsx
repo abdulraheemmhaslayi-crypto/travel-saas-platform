@@ -23,7 +23,7 @@ import {
   Filter,
 } from 'lucide-react';
 
-export default function PaymentsPage() {
+function PaymentsContent() {
   const searchParams = useSearchParams();
   const tab = searchParams?.get('tab') || 'all';
   const { payments, paymentsLoading, getMyPayments } = usePassengerStore();
@@ -215,5 +215,20 @@ export default function PaymentsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+
+export default function PaymentsPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <p className="text-gray-500 font-medium animate-pulse">Loading payments...</p>
+        </div>
+      }
+    >
+      <PaymentsContent />
+    </React.Suspense>
   );
 }

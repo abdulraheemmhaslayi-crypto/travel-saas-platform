@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
-export default function BookingsPage() {
+function BookingsContent() {
   const { bookings, isLoading, getMyBookings, cancelBooking } = useBookingStore();
   const { showToast } = useAppStore();
   const searchParams = useSearchParams();
@@ -257,5 +257,20 @@ export default function BookingsPage() {
         </Modal>
       )}
     </div>
+  );
+}
+
+
+export default function BookingsPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <p className="text-gray-500 font-medium animate-pulse">Loading bookings...</p>
+        </div>
+      }
+    >
+      <BookingsContent />
+    </React.Suspense>
   );
 }

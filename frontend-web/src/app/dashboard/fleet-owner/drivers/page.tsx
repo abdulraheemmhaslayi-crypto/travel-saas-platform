@@ -14,7 +14,7 @@ type DriverTab = 'all' | 'assignments' | 'documents' | 'performance';
 
 const validTabs: DriverTab[] = ['all', 'assignments', 'documents', 'performance'];
 
-export default function FleetOwnerDriversPage() {
+function FleetOwnerDriversPageContent() {
   const { drivers, vehicles, isLoading, error, getDrivers, addDriver, getVehicles } = useFleetStore();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -495,5 +495,20 @@ export default function FleetOwnerDriversPage() {
         </div>
       )}
     </div>
+  );
+}
+
+
+export default function FleetOwnerDriversPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <p className="text-gray-500 font-medium animate-pulse">Loading fleet drivers...</p>
+        </div>
+      }
+    >
+      <FleetOwnerDriversPageContent />
+    </React.Suspense>
   );
 }

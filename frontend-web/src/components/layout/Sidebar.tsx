@@ -69,7 +69,7 @@ interface MenuSection {
   children?: MenuItem[];
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+const SidebarComponent: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
   const { user } = useAuthStore();
 
@@ -814,5 +814,11 @@ const NotificationBadge: React.FC = () => {
     </span>
   );
 };
+
+const Sidebar: React.FC<SidebarProps> = (props) => (
+  <React.Suspense fallback={<div className="w-64 bg-white border-r border-gray-200 hidden lg:block" />}>
+    <SidebarComponent {...props} />
+  </React.Suspense>
+);
 
 export default Sidebar;

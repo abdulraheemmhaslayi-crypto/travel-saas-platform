@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/layout/Navbar';
@@ -43,7 +43,9 @@ export default function DashboardLayout({
       <Navbar />
 
       <div className="flex flex-1 min-w-0 w-full overflow-x-hidden">
-        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <Suspense fallback={<div className="w-64 bg-white border-r border-gray-200 hidden lg:block" />}>
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        </Suspense>
 
         <main
           className={cn(
@@ -57,7 +59,9 @@ export default function DashboardLayout({
               isMobileAppPage ? 'p-0 sm:px-6 sm:py-8' : 'px-3 sm:px-6 lg:px-8 py-4 sm:py-8'
             )}
           >
-            {children}
+            <Suspense fallback={<Loading fullScreen text="Loading content..." />}>
+              {children}
+            </Suspense>
           </div>
         </main>
       </div>

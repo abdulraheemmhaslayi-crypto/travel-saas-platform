@@ -20,7 +20,7 @@ import {
   Users,
 } from 'lucide-react';
 
-export default function DriverTripManagementPage() {
+function DriverTripManagementContent() {
   const searchParams = useSearchParams();
   const actionParam = searchParams.get('action');
   const tabParam = searchParams.get('tab');
@@ -406,5 +406,20 @@ export default function DriverTripManagementPage() {
         )}
       </div>
     </div>
+  );
+}
+
+
+export default function DriverTripManagementPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <p className="text-gray-500 font-medium animate-pulse">Loading trip management...</p>
+        </div>
+      }
+    >
+      <DriverTripManagementContent />
+    </React.Suspense>
   );
 }

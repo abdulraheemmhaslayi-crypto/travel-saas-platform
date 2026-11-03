@@ -13,7 +13,7 @@ import { useAppStore } from '@/store';
 
 type BookingTab = 'all' | 'passengers';
 
-export default function FleetOwnerBookingsPage() {
+function FleetOwnerBookingsPageContent() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useAppStore();
@@ -276,5 +276,20 @@ export default function FleetOwnerBookingsPage() {
         />
       )}
     </div>
+  );
+}
+
+
+export default function FleetOwnerBookingsPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <p className="text-gray-500 font-medium animate-pulse">Loading fleet bookings...</p>
+        </div>
+      }
+    >
+      <FleetOwnerBookingsPageContent />
+    </React.Suspense>
   );
 }
