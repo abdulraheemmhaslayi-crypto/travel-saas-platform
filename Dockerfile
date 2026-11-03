@@ -55,6 +55,7 @@ COPY backend/tsconfig.json ./
 RUN npm ci --only=production && npm cache clean --force
 COPY --from=backend-builder /app/backend/dist ./dist
 COPY backend/scripts ./scripts
+COPY backend/src ./src
 
 # Copy Frontend production assets
 WORKDIR /app/frontend-web

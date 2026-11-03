@@ -1,10 +1,66 @@
 import { config } from 'dotenv';
 config();
 
-import { AppDataSource } from '../src/database/data-source';
 import * as bcrypt from 'bcryptjs';
+import * as path from 'path';
+import * as fs from 'fs';
+import { DataSource } from 'typeorm';
+
+function resolveDataSource(): DataSource {
+  const distPath = path.resolve(__dirname, '../dist/src/database/data-source.js');
+  const distPath2 = path.resolve(__dirname, '../dist/database/data-source.js');
+  const srcPath = path.resolve(__dirname, '../src/database/data-source.ts');
+  const srcJsPath = path.resolve(__dirname, '../src/database/data-source.js');
+
+  if (fs.existsSync(distPath)) {
+    return require(distPath).AppDataSource;
+  }
+  if (fs.existsSync(distPath2)) {
+    return require(distPath2).AppDataSource;
+  }
+  if (fs.existsSync(srcPath) || fs.existsSync(srcJsPath)) {
+    try {
+      return require('../src/database/data-source').AppDataSource;
+    } catch {}
+  }
+
+  // Direct connection fallback using DATABASE_URL or environment variables
+  const dbUrl = process.env.DATABASE_URL;
+  let dbHost = process.env.DATABASE_HOST || 'localhost';
+  let dbPort = Number(process.env.DATABASE_PORT) || 5432;
+  let dbUser = process.env.DATABASE_USERNAME || 'postgres';
+  let dbPassword = process.env.DATABASE_PASSWORD || 'postgres';
+  let dbName = process.env.DATABASE_NAME || 'travel_saas';
+  let dbSsl: boolean | { rejectUnauthorized: boolean } = process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false;
+
+  if (dbUrl) {
+    try {
+      const parsed = new URL(dbUrl);
+      dbHost = parsed.hostname;
+      dbPort = Number(parsed.port) || 5432;
+      dbUser = decodeURIComponent(parsed.username);
+      dbPassword = decodeURIComponent(parsed.password);
+      dbName = parsed.pathname.replace(/^\//, '');
+      if (parsed.searchParams.get('sslmode') === 'require' || parsed.searchParams.get('ssl') === 'true') {
+        dbSsl = { rejectUnauthorized: false };
+      }
+    } catch {}
+  }
+
+  return new DataSource({
+    type: 'postgres',
+    ...(dbUrl ? { url: dbUrl } : {}),
+    host: dbHost,
+    port: dbPort,
+    username: dbUser,
+    password: dbPassword,
+    database: dbName,
+    ssl: dbSsl,
+  });
+}
 
 async function seedCompleteFleetData() {
+  const AppDataSource = resolveDataSource();
   await AppDataSource.initialize();
   console.log('✅ Database connected successfully!');
 
