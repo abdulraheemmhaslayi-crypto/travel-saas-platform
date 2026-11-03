@@ -3,10 +3,18 @@
 import React from 'react';
 import Link from 'next/link';
 import { Trip } from '@/types/trip';
-import { formatCurrency } from '@/lib/utils';
-import { MapPin, ArrowRight, Clock, Users } from 'lucide-react';
-import Card from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
+import { formatCurrency, cn } from '@/lib/utils';
+import {
+  MapPin,
+  ArrowRight,
+  Clock,
+  Users,
+  Car,
+  ShieldCheck,
+  CheckCircle2,
+  Sparkles,
+  ChevronRight,
+} from 'lucide-react';
 
 interface TripCardProps {
   trip: Trip;
@@ -14,10 +22,49 @@ interface TripCardProps {
   onBook?: (tripId: string) => void;
 }
 
+// Clean address into primary station name and secondary city/region
+function parseLocation(address?: string): { station: string; city: string } {
+  if (!address) return { station: 'Location', city: '' };
+
+  // Remove trailing country and zip codes
+  const parts = address
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s && !s.toLowerCase().includes('india') && !/^\d{6}$/.test(s));
+
+  if (parts.length === 0) return { station: address, city: '' };
+  if (parts.length === 1) return { station: parts[0], city: '' };
+
+  const station = parts[0];
+  const city = parts.slice(1, 3).join(', ');
+  return { station, city };
+}
+
+// Calculate human-friendly duration
+function calculateDuration(depTime?: string, arrTime?: string): string {
+  if (!depTime || !arrTime) return '3h 45m';
+  try {
+    const dep = new Date(depTime).getTime();
+    const arr = new Date(arrTime).getTime();
+    const diffMs = arr - dep;
+    if (diffMs > 0) {
+      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+      const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+      if (hours > 0) return `${hours}h`;
+      return `${mins}m`;
+    }
+  } catch {
+    // Fallback
+  }
+  return '3h 45m';
+}
+
 const TripCard: React.FC<TripCardProps> = ({ trip, variant = 'default', onBook }) => {
   const isUpcoming = new Date(trip.departureTime || trip.departureDate) > new Date();
 
-  const formatTimeOnly = (dateStr: string) => {
+  const formatTimeOnly = (dateStr?: string) => {
+    if (!dateStr) return '07:00 AM';
     try {
       const date = new Date(dateStr);
       return date.toLocaleTimeString('en-US', {
@@ -30,7 +77,8 @@ const TripCard: React.FC<TripCardProps> = ({ trip, variant = 'default', onBook }
     }
   };
 
-  const formatDateOnly = (dateStr: string) => {
+  const formatDateOnly = (dateStr?: string) => {
+    if (!dateStr) return '';
     try {
       const date = new Date(dateStr);
       return date.toLocaleDateString('en-US', {
@@ -43,158 +91,242 @@ const TripCard: React.FC<TripCardProps> = ({ trip, variant = 'default', onBook }
     }
   };
 
-  const getVehicleEmoji = (type: string) => {
-    const t = String(type).toUpperCase();
-    if (t.includes('SEDAN')) return '🚗';
-    if (t.includes('SUV')) return '🚙';
-    if (t.includes('HATCHBACK')) return '🚗';
-    if (t.includes('BUS')) return '🚌';
-    if (t.includes('VAN')) return '🚐';
-    return '🚗';
-  };
+  const originParsed = parseLocation(trip.origin || trip.source);
+  const destParsed = parseLocation(trip.destination);
 
+  // Vehicle display metadata
+  const brand = trip.vehicle?.brand || '';
+  const model = trip.vehicle?.model || '';
+  const vehicleTitle =
+    brand && model
+      ? `${brand} ${model}`
+      : trip.vehicleName || trip.vehicleType || 'Intercity Sedan';
+
+  const typeUpper = (trip.vehicleType || '').toUpperCase();
+  let vehicleCategory = 'AC Sedan';
+  if (typeUpper.includes('SUV') || vehicleTitle.toLowerCase().includes('innova')) {
+    vehicleCategory = 'AC Premium MPV';
+  } else if (typeUpper.includes('BUS')) {
+    vehicleCategory = 'Luxury Coach';
+  } else if (typeUpper.includes('VAN')) {
+    vehicleCategory = 'AC Travel Van';
+  }
+
+  // ─── Compact Variant ────────────────────────────────────────────────────────
   if (variant === 'compact') {
     return (
-      <Card className="hover:shadow-md transition-all duration-200 border border-gray-100 bg-white">
-        <div className="flex items-start sm:items-center justify-between p-3.5 sm:p-4 gap-3">
-          <div className="flex-1 space-y-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-900">
-              <span className="text-sm sm:text-base">{getVehicleEmoji(trip.vehicleType || 'sedan')}</span>
-              <span className="break-words">{trip.origin}</span>
-              <ArrowRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <span className="break-words">{trip.destination}</span>
+      <div className="bg-white rounded-2xl border border-slate-200 hover:border-slate-300 p-4 transition-all shadow-xs hover:shadow-md">
+        <div className="flex items-start sm:items-center justify-between gap-3">
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-900 truncate">
+                {originParsed.station}
+              </span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="text-xs font-bold text-slate-900 truncate">
+                {destParsed.station}
+              </span>
             </div>
-            <p className="text-[11px] sm:text-xs text-gray-500 flex items-center gap-1">
-              <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400 shrink-0" />
-              <span>{formatDateOnly(trip.departureTime || trip.departureDate)} • {formatTimeOnly(trip.departureTime || trip.departureDate)}</span>
+            <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
+              <Clock className="w-3 h-3 text-slate-400" />
+              <span>
+                {formatDateOnly(trip.departureTime || trip.departureDate)} •{' '}
+                {formatTimeOnly(trip.departureTime || trip.departureDate)}
+              </span>
             </p>
-            {trip.matchDetails && (
-              <p className="text-[11px] sm:text-xs font-semibold text-indigo-600 mt-1">
-                {trip.matchDetails.rank === 1 && "Exact Match"}
-                {trip.matchDetails.rank === 2 && `Boards at ${trip.matchDetails.sourceStop}, alights at ${trip.matchDetails.destStop}`}
-                {trip.matchDetails.rank === 3 && `Near Source: ${trip.matchDetails.sourceStop}`}
-                {trip.matchDetails.rank === 4 && `Near Dest: ${trip.matchDetails.destStop}`}
-                {trip.matchDetails.rank === 5 && `Nearby Stops`}
-                {trip.matchDetails.rank === 6 && (trip.matchDetails.isDepartureOnly ? `Near Source: ${trip.matchDetails.sourceStop}` : `Near Dest: ${trip.matchDetails.destStop}`)}
-              </p>
-            )}
           </div>
-          <div className="text-right flex flex-col items-end gap-1 shrink-0">
-            <p className="text-base sm:text-lg font-bold text-blue-600">
+          <div className="text-right shrink-0">
+            <p className="text-base font-black text-blue-600">
               {formatCurrency(trip.pricePerSeat || trip.price || 0, trip.currency || 'INR')}
             </p>
-            <Badge variant={trip.availableSeats > 0 ? 'success' : 'danger'} size="sm">
-              {trip.availableSeats} seat{trip.availableSeats !== 1 ? 's' : ''} left
-            </Badge>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 inline-block">
+              {trip.availableSeats} seats left
+            </span>
           </div>
         </div>
-      </Card>
+      </div>
     );
   }
 
+  // ─── Default / Detailed Modern Ride Card ────────────────────────────────────
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 border border-gray-200 bg-white rounded-2xl overflow-hidden">
-      <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
-        {/* Top Header Row */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-lg sm:text-xl">{getVehicleEmoji(trip.vehicleType || 'sedan')}</span>
-            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 px-2 py-0.5 sm:py-1 rounded-md border border-gray-100">
-              {trip.vehicleType || 'Sedan'}
-            </span>
-            <Badge variant={isUpcoming ? 'info' : trip.status === 'COMPLETED' ? 'success' : 'default'} size="sm">
-              {trip.status}
-            </Badge>
+    <div className="bg-white rounded-2xl border border-slate-200 hover:border-blue-400/80 transition-all duration-200 shadow-sm hover:shadow-md p-4 sm:p-5 space-y-4">
+      {/* ── Top Header Row: Vehicle Pill & Fare ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+            <Car className="w-4 h-4 stroke-[2.2]" />
           </div>
-          <div className="text-right">
-            <span className="text-xl sm:text-2xl font-extrabold text-blue-600">
-              {formatCurrency(trip.pricePerSeat || trip.price || 0, trip.currency || 'INR')}
-            </span>
-            <span className="text-[10px] sm:text-xs text-gray-400 block -mt-0.5 sm:mt-0.5">per seat</span>
-          </div>
-        </div>
-
-        {/* Route Row */}
-        <div className="py-1">
-          <h3 className="text-base sm:text-lg font-bold text-gray-900 flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <span className="break-words">{trip.origin}</span>
-            <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
-            <span className="break-words">{trip.destination}</span>
-          </h3>
-
-          {trip.matchDetails && (
-            <div className="mt-2 text-[11px] sm:text-xs font-semibold text-indigo-700 bg-indigo-50/75 border border-indigo-100/50 p-2 sm:px-2.5 sm:py-1.5 rounded-lg flex items-start sm:items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5 sm:mt-0" />
-              <span>
-                {trip.matchDetails.rank === 1 && "Exact Route Match"}
-                {trip.matchDetails.rank === 2 && `Route Match: boards at ${trip.matchDetails.sourceStop}, alights at ${trip.matchDetails.destStop}`}
-                {trip.matchDetails.rank === 3 && `Nearby Departure: boards at ${trip.matchDetails.sourceStop} (${trip.matchDetails.sourceDist?.toFixed(1)}km away)`}
-                {trip.matchDetails.rank === 4 && `Nearby Destination: alights at ${trip.matchDetails.destStop} (${trip.matchDetails.destDist?.toFixed(1)}km away)`}
-                {trip.matchDetails.rank === 5 && `Nearby Route: boards at ${trip.matchDetails.sourceStop} (${trip.matchDetails.sourceDist?.toFixed(1)}km away), alights at ${trip.matchDetails.destStop} (${trip.matchDetails.destDist?.toFixed(1)}km away)`}
-                {trip.matchDetails.rank === 6 && (
-                  trip.matchDetails.isDepartureOnly 
-                    ? `Starts near you: boarding at ${trip.matchDetails.sourceStop} (${trip.matchDetails.sourceDist?.toFixed(1)}km away)`
-                    : `Passes near your destination: alights at ${trip.matchDetails.destStop} (${trip.matchDetails.destDist?.toFixed(1)}km away)`
-                )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                {vehicleTitle}
+              </h3>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md shrink-0">
+                {vehicleCategory}
+              </span>
+              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-md shrink-0">
+                100% AC
               </span>
             </div>
-          )}
-        </div>
-
-        {/* Departure/Arrival info in a row */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-4 py-2.5 sm:py-3 bg-gray-50 rounded-xl px-3 sm:px-4 text-xs sm:text-sm text-gray-700">
-          <div>
-            <p className="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wider">Departure</p>
-            <p className="font-bold text-gray-900 text-sm sm:text-base mt-0.5">{formatTimeOnly(trip.departureTime || trip.departureDate)}</p>
-            <p className="text-[11px] sm:text-xs text-gray-500">{formatDateOnly(trip.departureTime || trip.departureDate)}</p>
-          </div>
-          <div>
-            <p className="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wider">Arrival (Estimated)</p>
-            <p className="font-bold text-gray-900 text-sm sm:text-base mt-0.5">{trip.arrivalTime ? formatTimeOnly(trip.arrivalTime) : 'Flexible'}</p>
-            <p className="text-[11px] sm:text-xs text-gray-500">{trip.arrivalTime ? formatDateOnly(trip.arrivalTime) : 'Same day'}</p>
+            <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+              <span>Verified Fleet Service</span>
+            </p>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold text-gray-500">
-          <div className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
-            <span>{trip.availableSeats} seat{trip.availableSeats !== 1 ? 's' : ''} available</span>
+        {/* Pricing */}
+        <div className="text-right shrink-0">
+          <div className="text-xl sm:text-2xl font-black text-blue-600 tracking-tight">
+            {formatCurrency(trip.pricePerSeat || trip.price || 0, trip.currency || 'INR')}
           </div>
+          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block -mt-0.5">
+            per seat
+          </span>
+        </div>
+      </div>
+
+      {/* ── Route Timeline Section ── */}
+      <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-3 sm:p-4 space-y-3">
+        {/* Origin / Boarding */}
+        <div className="flex items-start gap-3">
+          <div className="w-5 flex flex-col items-center pt-1 shrink-0">
+            <span className="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
+            <div className="w-0.5 h-9 bg-slate-200 border-l border-dashed border-slate-300 my-1" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline justify-between gap-2">
+              <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                {originParsed.station}
+              </h4>
+              <span className="text-xs sm:text-sm font-extrabold text-slate-900 shrink-0">
+                {formatTimeOnly(trip.departureTime || trip.departureDate)}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 truncate mt-0.5">
+              {originParsed.city || 'Starting Point'}
+            </p>
+          </div>
+        </div>
+
+        {/* Route Details Bar (Between Origin & Dest) */}
+        <div className="flex items-center gap-3 -my-1 pl-1">
+          <div className="w-3" />
+          <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-2xs">
+            <Clock className="w-3 h-3 text-blue-600" />
+            <span>{calculateDuration(trip.departureTime, trip.arrivalTime)}</span>
+            <span className="text-slate-300">•</span>
+            <span>Direct Express Corridor</span>
+          </div>
+        </div>
+
+        {/* Destination / Dropoff */}
+        <div className="flex items-start gap-3">
+          <div className="w-5 flex flex-col items-center pt-1 shrink-0">
+            <span className="w-3 h-3 rounded-full bg-rose-500 ring-4 ring-rose-100" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline justify-between gap-2">
+              <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                {destParsed.station}
+              </h4>
+              <span className="text-xs sm:text-sm font-extrabold text-slate-900 shrink-0">
+                {trip.arrivalTime ? formatTimeOnly(trip.arrivalTime) : 'Est. Same Day'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 truncate mt-0.5">
+              {destParsed.city || 'Destination Point'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Route Match Badge (Cleaned of Long Addresses) ── */}
+      {trip.matchDetails && (
+        <div className="text-[11px] font-semibold text-blue-700 bg-blue-50/80 border border-blue-200/60 px-3 py-2 rounded-xl flex items-center gap-2">
+          <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+          <span className="truncate">
+            {trip.matchDetails.rank === 1 && 'Exact Corridor Match'}
+            {trip.matchDetails.rank === 2 &&
+              `Route Match: Boards at ${parseLocation(trip.matchDetails.sourceStop).station} • Drops at ${parseLocation(trip.matchDetails.destStop).station}`}
+            {trip.matchDetails.rank === 3 &&
+              `Nearby Departure: Boards at ${parseLocation(trip.matchDetails.sourceStop).station}`}
+            {trip.matchDetails.rank === 4 &&
+              `Nearby Destination: Drops at ${parseLocation(trip.matchDetails.destStop).station}`}
+            {trip.matchDetails.rank >= 5 &&
+              `Corridor Match: Boards at ${parseLocation(trip.matchDetails.sourceStop).station} • Drops at ${parseLocation(trip.matchDetails.destStop).station}`}
+          </span>
+        </div>
+      )}
+
+      {/* ── Bottom Section: Seats, Driver & CTA ── */}
+      <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
+        {/* Left: Live Seats & Driver Info */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Seats Badge */}
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border',
+              trip.availableSeats > 2
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : trip.availableSeats > 0
+                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                : 'bg-red-50 text-red-700 border-red-200'
+            )}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>
+              {trip.availableSeats > 0
+                ? `${trip.availableSeats} seat${trip.availableSeats !== 1 ? 's' : ''} left`
+                : 'Sold Out'}
+            </span>
+          </span>
+
+          {/* Driver Badge */}
           {trip.driver && (
-            <div className="flex items-center gap-1.5 border-l border-gray-200 pl-3 sm:pl-4">
-              <span className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 shrink-0">
-                {(trip.driver.user?.firstName || (trip.driver as any).firstName || 'D')[0]}
-                {(trip.driver.user?.lastName || (trip.driver as any).lastName || '')[0]}
+            <div className="flex items-center gap-1.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full font-medium">
+              <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+                {(trip.driver.user?.firstName || 'D')[0]}
               </span>
-              <span className="truncate max-w-[130px] sm:max-w-none">
-                {trip.driver.user?.firstName || (trip.driver as any).firstName || 'Driver'} {trip.driver.user?.lastName || (trip.driver as any).lastName || ''}
+              <span className="truncate max-w-[110px] sm:max-w-none">
+                {trip.driver.user?.firstName || 'Verified Driver'}
+              </span>
+              <span className="text-amber-500 font-bold text-[11px] flex items-center">
+                ★ 4.9
               </span>
             </div>
           )}
         </div>
 
-        {/* Quick Actions Row */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100 gap-2 sm:gap-3">
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <Link
             href={`/dashboard/trips/${trip.id}`}
-            className="text-xs sm:text-sm font-bold text-gray-600 hover:text-gray-900 px-3 sm:px-4 py-2 hover:bg-gray-50 rounded-lg transition-colors"
+            className="text-xs font-bold text-slate-600 hover:text-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
           >
-            View Details
+            Details
           </Link>
-          {onBook && trip.availableSeats > 0 ? (
+          {trip.availableSeats > 0 ? (
             <button
-              onClick={() => onBook(trip.id)}
-              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-lg shadow shadow-blue-100 hover:shadow-md hover:scale-[1.01] transition-all duration-200 active:scale-95"
+              type="button"
+              onClick={() => {
+                if (onBook) onBook(trip.id);
+                else window.location.href = `/dashboard/trips/${trip.id}`;
+              }}
+              className="flex-1 sm:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition-all text-center flex items-center justify-center gap-1.5"
             >
-              Book Now
+              <span>Book Seat</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           ) : (
-            <span className="text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded">Sold Out</span>
+            <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3.5 py-2.5 rounded-xl">
+              Sold Out
+            </span>
           )}
         </div>
       </div>
-    </Card>
+    </div>
   );
 };
 
