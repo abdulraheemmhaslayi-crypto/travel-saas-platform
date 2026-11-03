@@ -25,6 +25,43 @@ const parseLocalDate = (dateStr: string | undefined): Date | undefined => {
   return new Date(year, month - 1, day);
 };
 
+const KNOWN_CITIES: { keywords: string[]; lat: number; lng: number; name: string }[] = [
+  { keywords: ['mhasla', 'mhala', 'masla'], lat: 18.1347, lng: 73.1166, name: 'Mhasla Stand, Raigad' },
+  { keywords: ['mumbai', 'bombay', 'dadar', 'cst', 'bandra', 'kurla', 'borivali', 'andheri', 'chembur'], lat: 19.0178, lng: 72.8478, name: 'Dadar T.T. Circle, Mumbai' },
+  { keywords: ['pune', 'poona', 'swargate', 'shivajinagar', 'wakad', 'hinjewadi', 'hadapsar', 'katraj'], lat: 18.5018, lng: 73.8587, name: 'Swargate Bus Terminal, Pune' },
+  { keywords: ['panvel', 'kamothe', 'kharghar'], lat: 18.9894, lng: 73.1175, name: 'Panvel, Navi Mumbai' },
+  { keywords: ['vashi', 'navi mumbai', 'nerul', 'belapur', 'airoli'], lat: 19.0771, lng: 72.9986, name: 'Vashi Plaza, Navi Mumbai' },
+  { keywords: ['mangaon', 'mangoan'], lat: 18.2519, lng: 73.2878, name: 'Mangaon Bus Stand, Raigad' },
+  { keywords: ['mahad'], lat: 18.0827, lng: 73.4219, name: 'Mahad Central Stand, Raigad' },
+  { keywords: ['shrivardhan', 'shriwardhan'], lat: 18.0381, lng: 73.0183, name: 'Shrivardhan, Raigad' },
+  { keywords: ['alibaug', 'alibag'], lat: 18.6414, lng: 72.8722, name: 'Alibaug, Raigad' },
+  { keywords: ['roha'], lat: 18.4358, lng: 73.1189, name: 'Roha, Raigad' },
+  { keywords: ['pen'], lat: 18.7360, lng: 73.0935, name: 'Pen, Raigad' },
+  { keywords: ['chiplun'], lat: 17.5323, lng: 73.5186, name: 'Chiplun, Ratnagiri' },
+  { keywords: ['ratnagiri'], lat: 16.9902, lng: 73.3120, name: 'Ratnagiri' },
+  { keywords: ['khed'], lat: 17.7208, lng: 73.3857, name: 'Khed, Ratnagiri' },
+  { keywords: ['goregaon'], lat: 18.1633, lng: 73.3033, name: 'Goregaon, Raigad' },
+  { keywords: ['indapur'], lat: 18.2917, lng: 73.2500, name: 'Indapur, Raigad' },
+  { keywords: ['thane'], lat: 19.2183, lng: 72.9781, name: 'Thane West' },
+  { keywords: ['lonavala', 'khandala'], lat: 18.7557, lng: 73.4091, name: 'Lonavala' },
+  { keywords: ['kolhapur'], lat: 16.7050, lng: 74.2433, name: 'Kolhapur' },
+  { keywords: ['satara'], lat: 17.6805, lng: 74.0183, name: 'Satara' },
+  { keywords: ['nashik', 'nasik'], lat: 19.9975, lng: 73.7898, name: 'Nashik' },
+];
+
+function resolveCoordinates(query?: string): { lat: number; lng: number; name: string } | null {
+  if (!query || typeof query !== 'string') return null;
+  const clean = query.toLowerCase().trim();
+  for (const city of KNOWN_CITIES) {
+    for (const kw of city.keywords) {
+      if (clean.includes(kw)) {
+        return { lat: city.lat, lng: city.lng, name: city.name };
+      }
+    }
+  }
+  return null;
+}
+
 const formatLocalDate = (date: Date | null | undefined): string => {
   if (!date) return '';
   const yyyy = date.getFullYear();
@@ -83,28 +120,54 @@ const SearchForm: React.FC<SearchFormProps> = ({
     e.preventDefault();
     setErrorMsg(null);
 
-    if (filters.origin && (!filters.originLat || !filters.originLng)) {
-      setErrorMsg('Please select your starting location (From) from the suggestions.');
+    const hasOrigin = Boolean(filters.origin?.trim());
+    const hasDestination = Boolean(filters.destination?.trim());
+
+    if (!hasOrigin && !hasDestination) {
+      setErrorMsg('Please enter a pickup location or destination to search.');
       return;
     }
 
-    if (filters.destination && (!filters.destLat || !filters.destLng)) {
-      setErrorMsg('Please select your destination (To) from the suggestions.');
-      return;
+    let originLat = filters.originLat;
+    let originLng = filters.originLng;
+    if (hasOrigin && (!originLat || !originLng)) {
+      const known = resolveCoordinates(filters.origin);
+      if (known) {
+        originLat = known.lat;
+        originLng = known.lng;
+      }
     }
+
+    let destLat = filters.destLat;
+    let destLng = filters.destLng;
+    if (hasDestination && (!destLat || !destLng)) {
+      const known = resolveCoordinates(filters.destination);
+      if (known) {
+        destLat = known.lat;
+        destLng = known.lng;
+      }
+    }
+
+    const finalFilters: SearchFilters = {
+      ...filters,
+      ...(originLat !== undefined && { originLat }),
+      ...(originLng !== undefined && { originLng }),
+      ...(destLat !== undefined && { destLat }),
+      ...(destLng !== undefined && { destLng }),
+    };
 
     if (onSearch) {
-      onSearch(filters);
+      onSearch(finalFilters);
     } else {
       const params = new URLSearchParams();
-      if (filters.origin) params.set('origin', filters.origin);
-      if (filters.originLat) params.set('originLat', String(filters.originLat));
-      if (filters.originLng) params.set('originLng', String(filters.originLng));
-      if (filters.destination) params.set('destination', filters.destination);
-      if (filters.destLat) params.set('destLat', String(filters.destLat));
-      if (filters.destLng) params.set('destLng', String(filters.destLng));
-      if (filters.date) params.set('date', filters.date);
-      if (filters.seats) params.set('seats', String(filters.seats));
+      if (finalFilters.origin) params.set('origin', finalFilters.origin);
+      if (finalFilters.originLat) params.set('originLat', String(finalFilters.originLat));
+      if (finalFilters.originLng) params.set('originLng', String(finalFilters.originLng));
+      if (finalFilters.destination) params.set('destination', finalFilters.destination);
+      if (finalFilters.destLat) params.set('destLat', String(finalFilters.destLat));
+      if (finalFilters.destLng) params.set('destLng', String(finalFilters.destLng));
+      if (finalFilters.date) params.set('date', finalFilters.date);
+      if (finalFilters.seats) params.set('seats', String(finalFilters.seats));
       router.push(`/dashboard/trips/search?${params.toString()}`);
     }
   };
@@ -131,9 +194,14 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   required
                   isSource
                   onChange={(v) => {
-                    handleChange('origin', v);
-                    handleChange('originLat', undefined);
-                    handleChange('originLng', undefined);
+                    const known = resolveCoordinates(v);
+                    setFilters((prev) => ({
+                      ...prev,
+                      origin: v,
+                      originLat: known ? known.lat : undefined,
+                      originLng: known ? known.lng : undefined,
+                    }));
+                    setErrorMsg(null);
                   }}
                   onPlaceSelect={(address, lat, lng) => {
                     setFilters((prev) => ({
@@ -169,9 +237,14 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   value={filters.destination || ''}
                   required
                   onChange={(v) => {
-                    handleChange('destination', v);
-                    handleChange('destLat', undefined);
-                    handleChange('destLng', undefined);
+                    const known = resolveCoordinates(v);
+                    setFilters((prev) => ({
+                      ...prev,
+                      destination: v,
+                      destLat: known ? known.lat : undefined,
+                      destLng: known ? known.lng : undefined,
+                    }));
+                    setErrorMsg(null);
                   }}
                   onPlaceSelect={(address, lat, lng) => {
                     setFilters((prev) => ({
@@ -287,9 +360,14 @@ const SearchForm: React.FC<SearchFormProps> = ({
             required
             isSource
             onChange={(v) => {
-              handleChange('origin', v);
-              handleChange('originLat', undefined);
-              handleChange('originLng', undefined);
+              const known = resolveCoordinates(v);
+              setFilters((prev) => ({
+                ...prev,
+                origin: v,
+                originLat: known ? known.lat : undefined,
+                originLng: known ? known.lng : undefined,
+              }));
+              setErrorMsg(null);
             }}
             onPlaceSelect={(address, lat, lng) => {
               setFilters((prev) => ({
@@ -324,9 +402,14 @@ const SearchForm: React.FC<SearchFormProps> = ({
             value={filters.destination || ''}
             required
             onChange={(v) => {
-              handleChange('destination', v);
-              handleChange('destLat', undefined);
-              handleChange('destLng', undefined);
+              const known = resolveCoordinates(v);
+              setFilters((prev) => ({
+                ...prev,
+                destination: v,
+                destLat: known ? known.lat : undefined,
+                destLng: known ? known.lng : undefined,
+              }));
+              setErrorMsg(null);
             }}
             onPlaceSelect={(address, lat, lng) => {
               setFilters((prev) => ({

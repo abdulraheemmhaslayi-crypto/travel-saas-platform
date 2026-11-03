@@ -260,9 +260,10 @@ export default function OSMAutocomplete({
       e.preventDefault();
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
     } else if (e.key === 'Enter') {
-      if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-        e.preventDefault();
-        handleSelect(suggestions[selectedIndex]);
+      e.preventDefault();
+      const targetIndex = selectedIndex >= 0 ? selectedIndex : 0;
+      if (suggestions[targetIndex]) {
+        handleSelect(suggestions[targetIndex]);
       }
     } else if (e.key === 'Escape') {
       setShow(false);
