@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, Suspense } from 'react';
 import { useBookingStore } from '@/store/slices/bookingSlice';
 import { useAppStore } from '@/store';
 import { Booking, BookingFilters, isPaymentPending } from '@/types/booking';
@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   Clock,
   RefreshCw,
-  IndianRupee,
   Sparkles,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
@@ -32,7 +31,7 @@ function BookingsContent() {
   const [payTarget, setPayTarget] = useState<Booking | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // ── Sync URL query parameters to filter state ──────────────────────────
+  // Sync URL query parameters to filter state
   useEffect(() => {
     let targetStatus: BookingFilters['status'] = '';
 
@@ -48,12 +47,12 @@ function BookingsContent() {
     }));
   }, [statusParam, viewParam]);
 
-  // ── Initial load ───────────────────────────────────────────────────────
+  // Initial load
   useEffect(() => {
     getMyBookings();
   }, [getMyBookings]);
 
-  // ── Auto-polling when any booking has a pending/processing payment ─────
+  // Auto-polling when any booking has a pending/processing payment
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = useCallback(() => {
@@ -79,7 +78,7 @@ function BookingsContent() {
     return stopPolling;
   }, [bookings, getMyBookings, stopPolling]);
 
-  // ── Stats ──────────────────────────────────────────────────────────────
+  // Stats calculation
   const totalSpent = bookings
     .filter((b) => b.paymentStatus === 'PAID' || (b.paymentStatus as string) === 'REFUNDED')
     .reduce((sum, b) => sum + (Number(b.finalAmount) || Number(b.totalAmount) || 0), 0);
@@ -95,7 +94,8 @@ function BookingsContent() {
   const pendingCount = bookings.filter(
     (b) => (b.status ?? '').toUpperCase() === 'PENDING'
   ).length;
-  // ── Handlers ──────────────────────────────────────────────────────────
+
+  // Handlers
   const handleCancelConfirm = async (reason: string) => {
     if (!cancelTarget) return;
     setIsCancelling(true);
@@ -134,13 +134,13 @@ function BookingsContent() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 w-full min-w-0 pb-28 md:pb-12">
-      {/* ── Page Header (Clean Mobile Greeting) ────────────────────────── */}
+      {/* Header section */}
       <div className="flex items-center justify-between gap-3 pt-1">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             My Bookings
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             {bookings.length > 0
               ? `${bookings.length} journey${bookings.length !== 1 ? 's' : ''} booked`
               : 'Manage and track all your rides'}
@@ -150,16 +150,16 @@ function BookingsContent() {
         <button
           onClick={handleRefreshStatus}
           disabled={isRefreshing || isLoading}
-          className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200/80 transition-colors disabled:opacity-50 active:scale-95 shadow-2xs shrink-0"
+          className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors disabled:opacity-50 active:scale-95 shadow-2xs shrink-0"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>Refresh</span>
         </button>
       </div>
 
-      {/* ── Payment Polling Alert Banner ─────────────────────────────────── */}
+      {/* Payment Polling Alert Banner */}
       {hasPendingPayments && !isLoading && (
-        <div className="flex items-center gap-2.5 p-3 sm:p-3.5 bg-blue-50 border border-blue-200/90 rounded-2xl animate-pulse">
+        <div className="flex items-center gap-2.5 p-3 sm:p-3.5 bg-blue-50 border border-blue-200 rounded-2xl animate-pulse">
           <RefreshCw className="w-4 h-4 text-blue-600 animate-spin shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-blue-900">
@@ -172,7 +172,7 @@ function BookingsContent() {
         </div>
       )}
 
-      {/* -- Stats Overview Strip (Interactive 4-Card Grid on Desktop & Mobile) -- */}
+      {/* Interactive 4-Card Overview Strip */}
       {bookings.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
           {/* Card 1: Total */}
@@ -212,7 +212,7 @@ function BookingsContent() {
               <p className="text-xl sm:text-2xl font-black text-emerald-600 leading-tight mt-0.5">
                 {confirmedCount}
               </p>
-              <span className="text-[10px] text-slate-400 font-medium block truncate">Confirmed Rides</span>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">Confirmed</span>
             </div>
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -234,7 +234,7 @@ function BookingsContent() {
               <p className="text-xl sm:text-2xl font-black text-amber-600 leading-tight mt-0.5">
                 {pendingCount}
               </p>
-              <span className="text-[10px] text-slate-400 font-medium block truncate">Awaiting Action</span>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">Action Needed</span>
             </div>
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
               <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -256,7 +256,7 @@ function BookingsContent() {
               <p className="text-xl sm:text-2xl font-black text-purple-600 leading-tight mt-0.5">
                 {completedCount}
               </p>
-              <span className="text-[10px] text-slate-400 font-medium block truncate">Past Journeys</span>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">Past Trips</span>
             </div>
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
               <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -265,7 +265,7 @@ function BookingsContent() {
         </div>
       )}
 
-      {/* ── Booking List & Cards ────────────────────────────────────────── */}
+      {/* Booking List & Filter Tabs */}
       <BookingList
         bookings={bookings}
         isLoading={isLoading}
@@ -276,7 +276,7 @@ function BookingsContent() {
         onRefreshStatus={handleRefreshStatus}
       />
 
-      {/* ── Cancellation Modal ──────────────────────────────────────────── */}
+      {/* Cancellation Modal */}
       {cancelTarget && (
         <CancellationModal
           booking={cancelTarget}
@@ -287,7 +287,7 @@ function BookingsContent() {
         />
       )}
 
-      {/* ── Payment Modal (Retry / Complete Payment) ────────────────────── */}
+      {/* Payment Modal */}
       {payTarget && (
         <Modal
           isOpen={!!payTarget}
@@ -321,17 +321,16 @@ function BookingsContent() {
   );
 }
 
-
 export default function BookingsPage() {
   return (
-    <React.Suspense
+    <Suspense
       fallback={
         <div className="min-h-[400px] flex items-center justify-center">
-          <p className="text-gray-500 font-medium animate-pulse">Loading bookings...</p>
+          <p className="text-slate-500 font-medium animate-pulse">Loading bookings...</p>
         </div>
       }
     >
       <BookingsContent />
-    </React.Suspense>
+    </Suspense>
   );
 }
