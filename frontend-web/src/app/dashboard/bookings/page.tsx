@@ -171,62 +171,97 @@ function BookingsContent() {
           </div>
         </div>
       )}
-      {/* -- Stats Strip (Interactive 4-Column Card) ----------------------- */}
+
+      {/* -- Stats Overview Strip (Interactive 4-Card Grid on Desktop & Mobile) -- */}
       {bookings.length > 0 && (
-        <div className="rounded-2xl bg-white border border-gray-200/90 shadow-2xs p-2 sm:p-3">
-          <div className="grid grid-cols-4 divide-x divide-gray-100 text-center">
-            <button
-              type="button"
-              onClick={() => setFilters((prev) => ({ ...prev, status: '' }))}
-              className={`px-1 sm:px-2 py-1 rounded-xl transition-all ${
-                filters.status === '' ? 'bg-slate-100 font-bold' : 'hover:bg-slate-50'
-              }`}
-            >
-              <p className="text-sm sm:text-lg font-black text-gray-900 leading-tight">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
+          {/* Card 1: Total */}
+          <button
+            type="button"
+            onClick={() => setFilters((prev) => ({ ...prev, status: '' }))}
+            className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all active:scale-95 flex items-center justify-between gap-2.5 ${
+              filters.status === ''
+                ? 'bg-blue-50/70 border-blue-500 ring-2 ring-blue-500/20 shadow-xs'
+                : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+            }`}
+          >
+            <div className="min-w-0">
+              <span className="text-[11px] font-bold text-slate-500 block">Total</span>
+              <p className="text-xl sm:text-2xl font-black text-slate-900 leading-tight mt-0.5">
                 {bookings.length}
               </p>
-              <p className="text-[10px] sm:text-xs text-gray-500 font-semibold mt-0.5">Total</p>
-            </button>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">All Journeys</span>
+            </div>
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+              <Ticket className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setFilters((prev) => ({ ...prev, status: 'CONFIRMED' }))}
-              className={`px-1 sm:px-2 py-1 rounded-xl transition-all ${
-                filters.status === 'CONFIRMED' ? 'bg-emerald-50 font-bold ring-1 ring-emerald-200' : 'hover:bg-slate-50'
-              }`}
-            >
-              <p className="text-sm sm:text-lg font-black text-emerald-600 leading-tight">
+          {/* Card 2: Upcoming */}
+          <button
+            type="button"
+            onClick={() => setFilters((prev) => ({ ...prev, status: 'CONFIRMED' }))}
+            className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all active:scale-95 flex items-center justify-between gap-2.5 ${
+              filters.status === 'CONFIRMED'
+                ? 'bg-emerald-50/70 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+                : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+            }`}
+          >
+            <div className="min-w-0">
+              <span className="text-[11px] font-bold text-slate-500 block">Upcoming</span>
+              <p className="text-xl sm:text-2xl font-black text-emerald-600 leading-tight mt-0.5">
                 {confirmedCount}
               </p>
-              <p className="text-[10px] sm:text-xs text-gray-500 font-semibold mt-0.5">Upcoming</p>
-            </button>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">Confirmed Rides</span>
+            </div>
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setFilters((prev) => ({ ...prev, status: 'PENDING' }))}
-              className={`px-1 sm:px-2 py-1 rounded-xl transition-all ${
-                filters.status === 'PENDING' ? 'bg-amber-50 font-bold ring-1 ring-amber-200' : 'hover:bg-slate-50'
-              }`}
-            >
-              <p className="text-sm sm:text-lg font-black text-amber-600 leading-tight">
+          {/* Card 3: Pending */}
+          <button
+            type="button"
+            onClick={() => setFilters((prev) => ({ ...prev, status: 'PENDING' }))}
+            className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all active:scale-95 flex items-center justify-between gap-2.5 ${
+              filters.status === 'PENDING'
+                ? 'bg-amber-50/70 border-amber-500 ring-2 ring-amber-500/20 shadow-xs'
+                : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+            }`}
+          >
+            <div className="min-w-0">
+              <span className="text-[11px] font-bold text-slate-500 block">Pending</span>
+              <p className="text-xl sm:text-2xl font-black text-amber-600 leading-tight mt-0.5">
                 {pendingCount}
               </p>
-              <p className="text-[10px] sm:text-xs text-gray-500 font-semibold mt-0.5">Pending</p>
-            </button>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">Awaiting Action</span>
+            </div>
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setFilters((prev) => ({ ...prev, status: 'COMPLETED' }))}
-              className={`px-1 sm:px-2 py-1 rounded-xl transition-all ${
-                filters.status === 'COMPLETED' ? 'bg-blue-50 font-bold ring-1 ring-blue-200' : 'hover:bg-slate-50'
-              }`}
-            >
-              <p className="text-sm sm:text-lg font-black text-blue-600 leading-tight">
+          {/* Card 4: Completed */}
+          <button
+            type="button"
+            onClick={() => setFilters((prev) => ({ ...prev, status: 'COMPLETED' }))}
+            className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all active:scale-95 flex items-center justify-between gap-2.5 ${
+              filters.status === 'COMPLETED'
+                ? 'bg-purple-50/70 border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
+                : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+            }`}
+          >
+            <div className="min-w-0">
+              <span className="text-[11px] font-bold text-slate-500 block">Completed</span>
+              <p className="text-xl sm:text-2xl font-black text-purple-600 leading-tight mt-0.5">
                 {completedCount}
               </p>
-              <p className="text-[10px] sm:text-xs text-gray-500 font-semibold mt-0.5">Completed</p>
-            </button>
-          </div>
+              <span className="text-[10px] text-slate-400 font-medium block truncate">Past Journeys</span>
+            </div>
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </button>
         </div>
       )}
 
