@@ -303,7 +303,7 @@ export class SearchService {
         .addSelect('COUNT(booking.id)', 'count')
         .addSelect('AVG(booking.totalAmount)', 'avgPrice')
         .innerJoin('booking.trip', 'trip')
-        .where('booking.status = :status', { status: 'COMPLETED' })
+        .where('booking.status = :status', { status: 'completed' })
         .andWhere('trip.source IS NOT NULL AND trip.destination IS NOT NULL')
         .groupBy('trip.source, trip.destination')
         .orderBy('count', 'DESC')

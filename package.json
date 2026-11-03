@@ -1,0 +1,13 @@
+{
+  "name": "travel-saas-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Travel SaaS Platform root package",
+  "scripts": {
+    "seed": "npm --prefix backend run seed:fleet",
+    "seed:fleet": "npm --prefix backend run seed:fleet",
+    "seed:admins": "npm --prefix backend run seed:admins",
+    "migration:run": "npm --prefix backend run migration:run"
+  }
+}
+

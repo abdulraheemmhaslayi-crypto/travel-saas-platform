@@ -13,19 +13,56 @@ async function seedCompleteFleetData() {
 
   try {
     // ─────────────────────────────────────────────────────────────────────────
-    // 1. Get or Ensure Fleet Company
+    // 0. Ensure UUID extension and Base System Roles
     // ─────────────────────────────────────────────────────────────────────────
-    let fleetCompany = (await queryRunner.query(
-      `SELECT * FROM fleet_companies LIMIT 1`
-    ))[0];
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`);
 
-    const ownerUser = (await queryRunner.query(
+    const systemRoles = [
+      { id: '11111111-1111-1111-1111-111111111111', name: 'super_admin', displayName: 'Super Admin' },
+      { id: '22222222-2222-2222-2222-222222222222', name: 'admin', displayName: 'Admin' },
+      { id: '33333333-3333-3333-3333-333333333333', name: 'vehicle_owner', displayName: 'Vehicle Owner' },
+      { id: '44444444-4444-4444-4444-444444444444', name: 'driver', displayName: 'Driver' },
+      { id: '55555555-5555-5555-5555-555555555555', name: 'passenger', displayName: 'Passenger' },
+      { id: '66666666-6666-6666-6666-666666666666', name: 'support', displayName: 'Support' },
+    ];
+
+    for (const r of systemRoles) {
+      const exists = (await queryRunner.query(`SELECT id FROM roles WHERE name = $1`, [r.name]))[0];
+      if (!exists) {
+        await queryRunner.query(
+          `INSERT INTO roles (id, name, "displayName", description) VALUES ($1, $2, $3, $4)`,
+          [r.id, r.name, r.displayName, r.displayName]
+        );
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 1. Get or Ensure Fleet Company & Vehicle Owner
+    // ─────────────────────────────────────────────────────────────────────────
+    let ownerUser = (await queryRunner.query(
       `SELECT * FROM users WHERE "userType" = 'vehicle_owner' OR email = 'vehicleowner@gmail.com' LIMIT 1`
     ))[0];
 
     if (!ownerUser) {
-      throw new Error('Vehicle owner user not found!');
+      const ownerRole = (await queryRunner.query(`SELECT id FROM roles WHERE name = 'vehicle_owner' LIMIT 1`))[0];
+      const defaultPassword = await bcrypt.hash('Password@123', 10);
+      const insertedOwner = await queryRunner.query(
+        `INSERT INTO users (
+          id, email, phone, password, "firstName", "lastName", "userType",
+          "roleId", status, "isEmailVerified", "isPhoneVerified", "createdAt", "updatedAt"
+        ) VALUES (
+          uuid_generate_v4(), 'vehicleowner@gmail.com', '+91 98234 56789', $1, 'Abdul', 'FleetOwner', 'vehicle_owner',
+          $2, 'active', true, true, NOW(), NOW()
+        ) RETURNING *`,
+        [defaultPassword, ownerRole ? ownerRole.id : null]
+      );
+      ownerUser = insertedOwner[0];
+      console.log('✅ Created default vehicle owner:', ownerUser.email);
     }
+
+    let fleetCompany = (await queryRunner.query(
+      `SELECT * FROM fleet_companies LIMIT 1`
+    ))[0];
 
     if (!fleetCompany) {
       const fleetRes = await queryRunner.query(

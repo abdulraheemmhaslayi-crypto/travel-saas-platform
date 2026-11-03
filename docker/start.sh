@@ -5,11 +5,46 @@ echo "=========================================================="
 echo " Starting Travel SaaS Platform All-in-One Service "
 echo "=========================================================="
 
-# 1. Start Redis
-echo "==> Starting Redis server..."
-redis-server --daemonize yes --protected-mode no || echo "Redis started or external"
+# 0. Check for DATABASE_URL (provided by Blitz.cloud or external PaaS)
+if [ -n "$DATABASE_URL" ]; then
+    echo "==> DATABASE_URL detected: extracting external database parameters..."
+    eval $(node -e "
+      try {
+        const u = new URL(process.env.DATABASE_URL);
+        console.log('export DATABASE_HOST=' + JSON.stringify(u.hostname) + ';');
+        console.log('export DATABASE_PORT=' + JSON.stringify(u.port || '5432') + ';');
+        console.log('export DATABASE_USERNAME=' + JSON.stringify(decodeURIComponent(u.username)) + ';');
+        console.log('export DATABASE_PASSWORD=' + JSON.stringify(decodeURIComponent(u.password)) + ';');
+        console.log('export DATABASE_NAME=' + JSON.stringify(u.pathname.replace(/^\//, '')) + ';');
+      } catch (e) {
+        console.error('Error parsing DATABASE_URL:', e.message);
+      }
+    ")
+fi
 
-# 2. Setup & Start Local Postgres (if DATABASE_HOST is localhost or not provided or dummy)
+# Check for REDIS_URL
+if [ -n "$REDIS_URL" ]; then
+    echo "==> REDIS_URL detected: extracting Redis parameters..."
+    eval $(node -e "
+      try {
+        const u = new URL(process.env.REDIS_URL);
+        console.log('export REDIS_HOST=' + JSON.stringify(u.hostname) + ';');
+        console.log('export REDIS_PORT=' + JSON.stringify(u.port || '6379') + ';');
+        if (u.password) console.log('export REDIS_PASSWORD=' + JSON.stringify(decodeURIComponent(u.password)) + ';');
+      } catch (e) {}
+    ")
+fi
+
+# 1. Start Redis (if not using remote redis)
+TARGET_REDIS_HOST="${REDIS_HOST:-localhost}"
+if [ "$TARGET_REDIS_HOST" = "localhost" ] || [ "$TARGET_REDIS_HOST" = "127.0.0.1" ]; then
+    echo "==> Starting local Redis server..."
+    redis-server --daemonize yes --protected-mode no || echo "Redis started or external"
+else
+    echo "==> Using External Redis at: $TARGET_REDIS_HOST"
+fi
+
+# 2. Setup & Start Local Postgres (only if DATABASE_HOST is localhost)
 TARGET_DB_HOST="${DATABASE_HOST:-localhost}"
 if [ "$TARGET_DB_HOST" = "localhost" ] || [ "$TARGET_DB_HOST" = "127.0.0.1" ] || [ "$TARGET_DB_HOST" = "your-database-host" ] || [ -z "$TARGET_DB_HOST" ]; then
     echo "==> Configuring Embedded PostgreSQL..."
@@ -53,6 +88,13 @@ echo "==> Configuring Nginx on port: $PORT_TO_LISTEN..."
 export PORT_TO_LISTEN
 envsubst '${PORT_TO_LISTEN}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
-# 4. Start Supervisord (Backend, Frontend, Nginx)
+# 4. Background self-healing seed runner: waits for NestJS TypeORM to initialize tables, then seeds fleet data
+(
+  sleep 15
+  echo "==> Checking and ensuring fleet database seed..."
+  cd /app/backend && npm run seed:fleet || true
+) &
+
+# 5. Start Supervisord (Backend, Frontend, Nginx)
 echo "==> Launching Supervisord..."
 exec /usr/bin/supervisord -c /etc/supervisord.conf

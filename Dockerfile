@@ -51,6 +51,7 @@ RUN mkdir -p /var/lib/postgresql/data /run/postgresql /run/nginx /var/log/superv
 # Copy Backend production assets
 WORKDIR /app/backend
 COPY backend/package*.json ./
+COPY backend/tsconfig.json ./
 RUN npm ci --only=production && npm cache clean --force
 COPY --from=backend-builder /app/backend/dist ./dist
 COPY backend/scripts ./scripts
@@ -65,6 +66,7 @@ COPY --from=frontend-builder /app/frontend-web/next.config.js ./next.config.js
 
 # Copy root scripts and configurations
 WORKDIR /app
+COPY package.json ./
 COPY docker/ ./docker/
 COPY docker/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY docker/supervisord.conf /etc/supervisord.conf
@@ -79,6 +81,7 @@ ENV NODE_ENV=production \
     DATABASE_USERNAME=postgres \
     DATABASE_PASSWORD=postgres \
     DATABASE_NAME=travel_saas \
+    DB_SYNCHRONIZE=true \
     REDIS_HOST=localhost \
     REDIS_PORT=6379 \
     KAFKA_ENABLED=false

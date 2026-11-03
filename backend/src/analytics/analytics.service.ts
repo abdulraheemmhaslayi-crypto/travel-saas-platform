@@ -292,7 +292,7 @@ export class AnalyticsService {
     const query = this.paymentRepository
       .createQueryBuilder("payment")
       .select("COALESCE(SUM(payment.amount), 0)", "total")
-      .where("payment.status = :status", { status: "COMPLETED" })
+      .where("payment.status = :status", { status: "completed" })
       .andWhere("payment.createdAt BETWEEN :startDate AND :endDate", {
         startDate,
         endDate,
@@ -342,7 +342,7 @@ export class AnalyticsService {
       .createQueryBuilder("booking")
       .select("COALESCE(AVG(rating.score), 0)", "avg")
       .leftJoin("booking.rating", "rating")
-      .where("booking.status = :status", { status: "COMPLETED" });
+      .where("booking.status = :status", { status: "completed" });
 
     if (fleetCompanyId) {
       query
@@ -433,7 +433,7 @@ export class AnalyticsService {
       .select(`TO_CHAR(payment.createdAt, '${dateFormat}')`, "date_group")
       .addSelect("COALESCE(SUM(payment.amount), 0)", "revenue")
       .addSelect("COUNT(payment.id)", "transactionCount")
-      .where("payment.status = :status", { status: "COMPLETED" })
+      .where("payment.status = :status", { status: "completed" })
       .andWhere("payment.createdAt BETWEEN :start AND :end", { start, end })
       .groupBy("date_group")
       .orderBy("date_group", "ASC");
@@ -462,7 +462,7 @@ export class AnalyticsService {
       .select("payment.paymentMethod", "method")
       .addSelect("COALESCE(SUM(payment.amount), 0)", "amount")
       .addSelect("COUNT(payment.id)", "count")
-      .where("payment.status = :status", { status: "COMPLETED" })
+      .where("payment.status = :status", { status: "completed" })
       .andWhere("payment.createdAt BETWEEN :start AND :end", { start, end })
       .groupBy("payment.paymentMethod");
 
