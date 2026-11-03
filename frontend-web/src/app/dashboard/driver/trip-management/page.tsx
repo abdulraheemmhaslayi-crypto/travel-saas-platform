@@ -6,6 +6,7 @@ import { useDriverStore } from '@/store/slices/driverSlice';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import Select from '@/components/ui/Select';
 import Loading from '@/components/common/Loading';
 import EmptyState from '@/components/common/EmptyState';
 import apiClient from '@/lib/api';
@@ -217,20 +218,16 @@ function DriverTripManagementContent() {
                   )}
 
                   {vehiclesList.length > 0 && (
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-gray-600 uppercase tracking-wide">Select Assigned Vehicle</label>
-                      <select
-                        value={selectedVehicleId}
-                        onChange={(e) => setSelectedVehicleId(e.target.value)}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      >
-                        {vehiclesList.map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.brand} {v.model} ({v.registrationNumber})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <Select
+                      label="Select Assigned Vehicle"
+                      value={selectedVehicleId}
+                      onChange={(e) => setSelectedVehicleId(e.target.value)}
+                      placeholder="Choose assigned vehicle..."
+                      options={vehiclesList.map((v) => ({
+                        value: v.id,
+                        label: `${v.brand} ${v.model} (${v.registrationNumber})`,
+                      }))}
+                    />
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

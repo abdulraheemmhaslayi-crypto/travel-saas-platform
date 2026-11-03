@@ -6,6 +6,7 @@ import { SearchFilters } from '@/types/trip';
 import { Search, AlertCircle, ArrowUpDown, ArrowLeftRight, Calendar, Users, Sparkles } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
 import SearchInput from '@/components/maps/SearchInput';
 import { cn } from '@/lib/utils';
 
@@ -236,17 +237,19 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   <Users className="w-3.5 h-3.5 text-blue-600" />
                   <span>Passengers</span>
                 </label>
-                <select
-                  value={filters.seats || 1}
+                <Select
+                  value={String(filters.seats || 1)}
                   onChange={(e) => handleChange('seats', Number(e.target.value))}
-                  className="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold text-gray-900 text-xs sm:text-sm cursor-pointer"
-                >
-                  {[1, 2, 3, 4, 5, 6].map((num) => (
-                    <option key={num} value={num}>
-                      {num} {num === 1 ? 'Passenger' : 'Passengers'}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '1', label: '1 Passenger' },
+                    { value: '2', label: '2 Passengers' },
+                    { value: '3', label: '3 Passengers' },
+                    { value: '4', label: '4 Passengers' },
+                    { value: '5', label: '5 Passengers' },
+                    { value: '6', label: '6 Passengers' },
+                  ]}
+                  triggerClassName="h-10 text-xs sm:text-sm font-semibold rounded-xl bg-gray-50 border-gray-200"
+                />
               </div>
             </div>
 
@@ -384,17 +387,19 @@ const SearchForm: React.FC<SearchFormProps> = ({
               <Users className="w-3.5 h-3.5 text-gray-400" />
               <span>Seats</span>
             </label>
-            <select
-              value={filters.seats || 1}
+            <Select
+              value={String(filters.seats || 1)}
               onChange={(e) => handleChange('seats', Number(e.target.value))}
-              className="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white text-xs font-medium text-gray-900 cursor-pointer"
-            >
-              {[1, 2, 3, 4, 5, 6].map((num) => (
-                <option key={num} value={num}>
-                  {num} seat{num !== 1 ? 's' : ''}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '1', label: '1 Seat' },
+                { value: '2', label: '2 Seats' },
+                { value: '3', label: '3 Seats' },
+                { value: '4', label: '4 Seats' },
+                { value: '5', label: '5 Seats' },
+                { value: '6', label: '6 Seats' },
+              ]}
+              triggerClassName="h-10 text-xs font-semibold rounded-xl bg-gray-50 border-gray-200"
+            />
           </div>
         </div>
 

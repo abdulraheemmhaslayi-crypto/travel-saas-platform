@@ -12,6 +12,7 @@ import Loading from '@/components/common/Loading';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import Select from '@/components/ui/Select';
 import {
   Users,
   Car,
@@ -614,17 +615,19 @@ function AdminDashboardContent() {
           <>
             {/* Revenue chart widget */}
             <div className="lg:col-span-2 relative">
-              <div className="absolute right-6 top-6 z-10">
-                <select
+              <div className="absolute right-6 top-6 z-10 w-44">
+                <Select
+                  size="sm"
                   value={selectedPeriod}
                   onChange={(e: any) => setSelectedPeriod(e.target.value)}
-                  className="text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-lg p-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="daily">Today's hourly</option>
-                  <option value="weekly">Weekly trends</option>
-                  <option value="monthly">Monthly Overview</option>
-                  <option value="yearly">Yearly Overview</option>
-                </select>
+                  options={[
+                    { value: 'daily', label: "Today's hourly" },
+                    { value: 'weekly', label: 'Weekly trends' },
+                    { value: 'monthly', label: 'Monthly Overview' },
+                    { value: 'yearly', label: 'Yearly Overview' },
+                  ]}
+                  triggerClassName="h-8 text-xs font-bold py-1"
+                />
               </div>
               <ChartCard
                 title="Revenue Overview"

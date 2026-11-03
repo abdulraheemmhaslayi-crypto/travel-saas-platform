@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import Loading from '@/components/common/Loading';
 import { Bell, Send, Users, AlertTriangle, ArrowLeft, Info, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
@@ -199,34 +200,27 @@ export default function AdminNotificationCenterPage() {
 
                     <div>
                       {recipientType === 'single' ? (
-                        <>
-                          <label className="text-xs font-bold text-slate-700 block mb-1.5">Target User Recipient</label>
-                          <select
-                            value={selectedUserId}
-                            onChange={(e) => setSelectedUserId(e.target.value)}
-                            className="w-full text-xs p-2 border border-gray-200 rounded-lg bg-white font-semibold focus:outline-none"
-                          >
-                            <option value="">-- Choose User --</option>
-                            {users.map((u) => (
-                              <option key={u.id} value={u.id}>
-                                {u.firstName} {u.lastName} ({u.userType} - {u.email})
-                              </option>
-                            ))}
-                          </select>
-                        </>
+                        <Select
+                          label="Target User Recipient"
+                          value={selectedUserId}
+                          onChange={(e) => setSelectedUserId(e.target.value)}
+                          placeholder="-- Choose User --"
+                          options={users.map((u) => ({
+                            value: u.id,
+                            label: `${u.firstName} ${u.lastName} (${u.userType} - ${u.email})`,
+                          }))}
+                        />
                       ) : (
-                        <>
-                          <label className="text-xs font-bold text-slate-700 block mb-1.5">Target Role Group</label>
-                          <select
-                            value={selectedRole}
-                            onChange={(e: any) => setSelectedRole(e.target.value)}
-                            className="w-full text-xs p-2 border border-gray-200 rounded-lg bg-white font-semibold focus:outline-none"
-                          >
-                            <option value="passenger">All Passengers</option>
-                            <option value="driver">All Drivers</option>
-                            <option value="vehicle_owner">All Vehicle Owners</option>
-                          </select>
-                        </>
+                        <Select
+                          label="Target Role Group"
+                          value={selectedRole}
+                          onChange={(e: any) => setSelectedRole(e.target.value)}
+                          options={[
+                            { value: 'passenger', label: 'All Passengers' },
+                            { value: 'driver', label: 'All Drivers' },
+                            { value: 'vehicle_owner', label: 'All Vehicle Owners' },
+                          ]}
+                        />
                       )}
                     </div>
                   </div>
@@ -258,16 +252,16 @@ export default function AdminNotificationCenterPage() {
                   {/* Channels */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1.5">Delivery Channel</label>
-                      <select
+                      <Select
+                        label="Delivery Channel"
                         value={notifyChannel}
                         onChange={(e: any) => setNotifyChannel(e.target.value)}
-                        className="w-full text-xs p-2 border border-gray-200 rounded-lg bg-white focus:outline-none font-semibold"
-                      >
-                        <option value="IN_APP">In-App Notification Only</option>
-                        <option value="PUSH">Push Alert Only</option>
-                        <option value="EMAIL">Email Integration</option>
-                      </select>
+                        options={[
+                          { value: 'IN_APP', label: 'In-App Notification Only' },
+                          { value: 'PUSH', label: 'Push Alert Only' },
+                          { value: 'EMAIL', label: 'Email Integration' },
+                        ]}
+                      />
                     </div>
 
                     <div className="flex items-end">

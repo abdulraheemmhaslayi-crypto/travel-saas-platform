@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, Suspense } from 'react';
+import React, { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTripStore } from '@/store/slices/tripSlice';
 import { usePassengerStore } from '@/store/slices/passengerStore';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import Loading from '@/components/common/Loading';
 import EmptyState from '@/components/common/EmptyState';
 import {
@@ -27,6 +27,10 @@ import {
   ArrowLeft,
   SlidersHorizontal,
   Flame,
+  ChevronDown,
+  Check,
+  Compass,
+  IndianRupee,
 } from 'lucide-react';
 
 interface RouteDetails {
@@ -194,7 +198,30 @@ function PopularRoutesContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'konkan' | 'mumbai' | 'pune' | 'budget'>('all');
   const [sortBy, setSortBy] = useState<'popular' | 'price-asc' | 'distance-asc'>('popular');
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
   const [activeModalRoute, setActiveModalRoute] = useState<RouteDetails | null>(null);
+
+  // Close sort menu on click outside or Escape
+  useEffect(() => {
+    if (!isSortOpen) return;
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setIsSortOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsSortOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSortOpen]);
 
   useEffect(() => {
     getPopularRoutes();
@@ -381,18 +408,89 @@ function PopularRoutesContent() {
             )}
           </div>
 
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <SlidersHorizontal className="w-4 h-4 text-slate-400" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-600 focus:bg-white cursor-pointer"
+          {/* Custom Sort Dropdown */}
+          <div ref={sortRef} className="relative flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsSortOpen((prev) => !prev)}
+              aria-expanded={isSortOpen}
+              aria-haspopup="listbox"
+              className={cn(
+                "h-10 px-3.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 select-none",
+                isSortOpen
+                  ? "bg-blue-50 border-blue-500 text-blue-700 ring-2 ring-blue-500/10 shadow-xs"
+                  : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 shadow-xs active:scale-[0.98]"
+              )}
             >
-              <option value="popular">Most Popular</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="distance-asc">Distance: Shortest</option>
-            </select>
+              <SlidersHorizontal className={cn("w-3.5 h-3.5", isSortOpen ? "text-blue-600" : "text-slate-500")} />
+              <span>
+                {sortBy === 'popular' && 'Most Popular'}
+                {sortBy === 'price-asc' && 'Price: Low to High'}
+                {sortBy === 'distance-asc' && 'Distance: Shortest'}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "w-3.5 h-3.5 transition-transform duration-200",
+                  isSortOpen ? "rotate-180 text-blue-600" : "text-slate-400"
+                )}
+              />
+            </button>
+
+            {/* Custom Popover Dropdown */}
+            {isSortOpen && (
+              <div
+                role="listbox"
+                className="absolute right-0 mt-1.5 w-60 bg-white rounded-2xl border border-slate-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+              >
+                <div className="px-3 py-1.5 border-b border-slate-100 mb-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sort Corridors By</p>
+                </div>
+                <div className="space-y-0.5">
+                  {[
+                    { id: 'popular' as const, label: 'Most Popular', icon: Sparkles, desc: 'Highest rider volume' },
+                    { id: 'price-asc' as const, label: 'Price: Low to High', icon: IndianRupee, desc: 'Cheapest fares first' },
+                    { id: 'distance-asc' as const, label: 'Distance: Shortest', icon: Compass, desc: 'Quickest intercity transit' },
+                  ].map((opt) => {
+                    const isSelected = sortBy === opt.id;
+                    const Icon = opt.icon;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        onClick={() => {
+                          setSortBy(opt.id);
+                          setIsSortOpen(false);
+                        }}
+                        className={cn(
+                          "w-full px-3 py-2 rounded-xl text-left flex items-center justify-between gap-2.5 transition-colors select-none",
+                          isSelected
+                            ? "bg-blue-50 text-blue-700 font-bold"
+                            : "text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium"
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className={cn(
+                              "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
+                              isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"
+                            )}
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs truncate">{opt.label}</div>
+                            <div className="text-[10px] text-slate-400 font-normal truncate">{opt.desc}</div>
+                          </div>
+                        </div>
+                        {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

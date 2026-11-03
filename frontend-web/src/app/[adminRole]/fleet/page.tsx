@@ -12,6 +12,7 @@ import Badge from '@/components/ui/Badge';
 import Loading from '@/components/common/Loading';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import { 
   Plus, 
   Building2, 
@@ -890,17 +891,15 @@ function AdminFleetContent() {
                   required
                   leftIcon={<PhoneIcon className="w-4 h-4 text-slate-400" />}
                 />
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Status</label>
-                  <select
-                    name="status"
-                    defaultValue={editingFleet.status}
-                    className="w-full px-3 py-2.5 border border-slate-200 hover:border-slate-300 focus:border-primary-500 rounded-xl text-sm transition-colors outline-none bg-white font-medium text-slate-700"
-                  >
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
-                  </select>
-                </div>
+                <Select
+                  label="Status"
+                  name="status"
+                  defaultValue={editingFleet.status}
+                  options={[
+                    { value: 'ACTIVE', label: 'Active' },
+                    { value: 'INACTIVE', label: 'Inactive' },
+                  ]}
+                />
                 <div className="flex gap-3 pt-4">
                   <Button variant="secondary" type="button" onClick={() => {
                     setShowManageModal(false);
