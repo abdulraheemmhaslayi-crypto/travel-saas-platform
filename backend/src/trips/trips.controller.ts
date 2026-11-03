@@ -68,9 +68,8 @@ export class TripsController {
   async getMyTrips(@CurrentUser('id') userId: string) {
     return this.tripsService.findByOwner(userId);
   }
-
-  @ApiBearerAuth('JWT-auth')
-  @UseGuards(JwtAuthGuard)
+  @Public()
+  @RateLimit(60, 60)
   @Get(':id')
   @ApiOperation({ summary: 'Get trip by ID' })
   async findOne(@Param('id', ParseUUIDPipe) id: string) {

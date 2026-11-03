@@ -92,7 +92,7 @@ function getTripVehicleImage(vehicle?: any): string {
 
 export default function PassengerDashboardPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const { showToast } = useAppStore();
   const { bookings, getMyBookings } = useBookingStore();
   const {
@@ -250,13 +250,15 @@ export default function PassengerDashboardPage() {
 
   // Initial Data Fetch
   useEffect(() => {
-    getMyBookings({ limit: 5 });
+    if (isAuthenticated) {
+      getMyBookings({ limit: 5 });
+      getUnreadCount();
+      loadWallet();
+    }
     getPopularRoutes();
-    getUnreadCount();
-    loadWallet();
     // Load available trips without pre-filling origin or destination inputs
     searchTrips({});
-  }, [getMyBookings, getPopularRoutes, getUnreadCount, loadWallet, searchTrips]);
+  }, [isAuthenticated, getMyBookings, getPopularRoutes, getUnreadCount, loadWallet, searchTrips]);
 
   // ─── Real Available Trips from Backend ────────────────────────────────────
   const availableRealTrips = useMemo(() => {

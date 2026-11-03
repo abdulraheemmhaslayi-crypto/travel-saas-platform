@@ -37,7 +37,8 @@ const MobileNav: React.FC = () => {
         { href: '/dashboard/passenger', label: 'Home', icon: HomeIcon },
         { href: '/dashboard/bookings', label: 'My Trips', icon: Calendar },
         { href: '/dashboard/wallet', label: 'Wallet', icon: Wallet },
-        { href: '/login', label: 'Sign In', icon: User },
+        { href: '/dashboard/notifications', label: 'Alerts', icon: Bell },
+        { href: '/login', label: 'Account', icon: User },
       ];
     }
 

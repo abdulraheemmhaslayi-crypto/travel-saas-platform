@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 import { useGoogleMaps, googleMapsApiKey } from '@/lib/mapConfig';
 import { loadGooglePlaces } from './googleLoader';
 
@@ -125,6 +126,12 @@ export default function MapView({
             maxZoom: 15,
           });
         }
+
+        setTimeout(() => {
+          if (mapRef.current && typeof mapRef.current.invalidateSize === 'function') {
+            mapRef.current.invalidateSize();
+          }
+        }, 150);
       } catch (err) {
         console.warn('Leaflet init failed', err);
       }
@@ -133,8 +140,21 @@ export default function MapView({
     if (useGoogleMaps) initGoogle();
     else initLeaflet();
 
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && ref.current) {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapRef.current && typeof mapRef.current.invalidateSize === 'function') {
+          mapRef.current.invalidateSize();
+        }
+      });
+      resizeObserver.observe(ref.current);
+    }
+
     return () => {
       mounted = false;
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       try {
         if (!mapRef.current) return;
         if (useGoogleMaps) {
@@ -207,9 +227,15 @@ export default function MapView({
         } else if (center) {
           mapRef.current.setView([center.lat, center.lng], mapRef.current.getZoom());
         }
+
+        setTimeout(() => {
+          if (mapRef.current && typeof mapRef.current.invalidateSize === 'function') {
+            mapRef.current.invalidateSize();
+          }
+        }, 150);
       })();
     }
   }, [markers, route, center]);
 
-  return <div ref={ref} className={className} style={{ width: '100%', height }} />;
+  return <div ref={ref} className={cn('w-full h-full min-h-0', className)} style={{ width: '100%', height }} />;
 }

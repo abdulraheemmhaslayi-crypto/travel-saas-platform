@@ -55,24 +55,39 @@ class ApiClient {
       async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+        const isPublicPage =
+          typeof window !== 'undefined' &&
+          (window.location.pathname === '/dashboard/passenger' ||
+            window.location.pathname.startsWith('/dashboard/trips') ||
+            window.location.pathname === '/' ||
+            window.location.pathname.startsWith('/login') ||
+            window.location.pathname.startsWith('/register'));
+
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
 
-          try {
-            const newToken = await this.refreshAccessToken();
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          const refreshToken = this.getRefreshToken();
+          if (refreshToken) {
+            try {
+              const newToken = await this.refreshAccessToken();
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = 'Bearer ' + newToken;
+              }
+              return this.client(originalRequest);
+            } catch (refreshError) {
+              this.clearTokens();
+              if (typeof window !== 'undefined' && !isPublicPage) {
+                window.location.href = '/login?returnUrl=' + encodeURIComponent(window.location.pathname);
+              }
+              const friendlyMsg = parseApiError(refreshError);
+              const friendlyErr = new Error(friendlyMsg);
+              return Promise.reject(friendlyErr);
             }
-            return this.client(originalRequest);
-          } catch (refreshError) {
+          } else {
             this.clearTokens();
-            if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-              window.location.href = `/login?returnUrl=${encodeURIComponent(window.location.pathname)}`;
+            if (typeof window !== 'undefined' && !isPublicPage) {
+              window.location.href = '/login?returnUrl=' + encodeURIComponent(window.location.pathname);
             }
-            // Rewrite the refresh error too
-            const friendlyMsg = parseApiError(refreshError);
-            const friendlyErr = new Error(friendlyMsg);
-            return Promise.reject(friendlyErr);
           }
         }
 

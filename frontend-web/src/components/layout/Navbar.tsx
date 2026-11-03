@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/slices/authSlice';
 import { useNotificationStore } from '@/store/slices/notificationSlice';
 import { Menu, X, Bell, User, LogOut, MapPin, Shield } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Avatar from '@/components/ui/Avatar';
+import { cn } from '@/lib/utils';
 
 const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -46,9 +48,16 @@ const Navbar: React.FC = () => {
   const profilePath = '/dashboard/profile';
   const isAdmin = String(user?.role || '').toUpperCase() === 'ADMIN' || String(user?.role || '').toUpperCase() === 'SUPER_ADMIN';
   const isSuperAdmin = String(user?.role || '').toUpperCase() === 'SUPER_ADMIN';
+  const pathname = usePathname();
+  const isTripDetailPage = pathname?.startsWith('/dashboard/trips/');
 
   return (
-    <nav className="bg-white/95 backdrop-blur-md border-b border-gray-150 sticky top-0 z-40">
+    <nav
+      className={cn(
+        'bg-white/95 backdrop-blur-md border-b border-gray-150 sticky top-0 z-40',
+        isTripDetailPage && 'hidden lg:block'
+      )}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14 sm:h-16">
           {/* Logo */}

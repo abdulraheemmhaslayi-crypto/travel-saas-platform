@@ -32,6 +32,11 @@ function formatShortAddress(address: string): string {
   return first || address;
 }
 
+function formatVehicleName(name?: string): string {
+  if (!name) return 'Toyota Innova';
+  return name.replace(/\btyota\b/gi, 'Toyota');
+}
+
 // Vehicle Image Selector
 function getTripVehicleImage(vehicle?: any): string {
   if (!vehicle) return '/images/vehicles/comfort.png';
@@ -53,7 +58,7 @@ export default function TripDetailPage() {
   const router = useRouter();
   const tripId = params.id as string;
   
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const { currentTrip, getTrip, isLoading: tripLoading } = useTripStore();
   const { createBooking } = useBookingStore();
   const { showToast } = useAppStore();
@@ -146,10 +151,19 @@ export default function TripDetailPage() {
   const gstTax = Math.round(subtotal * 0.18);
   const totalFinalAmount = subtotal + platformFee + gstTax;
 
-  const handleBook = async () => {
-    if (!user) {
-      showToast('Please login to book a seat', 'error');
-      router.push('/login');
+    const handleProceedToBooking = () => {
+    if (!isAuthenticated || !user) {
+      showToast('Please sign in to proceed with booking your seat', 'info');
+      router.push('/login?returnUrl=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
+    setShowBookingModal(true);
+  };
+
+const handleBook = async () => {
+    if (!isAuthenticated || !user) {
+      showToast('Please sign in to book a seat', 'error');
+      router.push('/login?returnUrl=' + encodeURIComponent(window.location.pathname));
       return;
     }
 
@@ -193,9 +207,9 @@ export default function TripDetailPage() {
         paymentMethod: 'razorpay',
         pickupLocation: pickupPoint || currentTrip?.origin || currentTrip?.source,
         dropLocation: dropPoint || currentTrip?.destination,
-        passengerName: passengerName || `${user.firstName} ${user.lastName}`,
-        passengerEmail: passengerEmail || user.email,
-        passengerPhone: passengerPhone || user.phone,
+        passengerName: passengerName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Passenger',
+        passengerEmail: passengerEmail || user?.email || '',
+        passengerPhone: passengerPhone || user?.phone || '',
         passengerGenders: genders,
       });
 
@@ -262,9 +276,9 @@ export default function TripDetailPage() {
   const vehicleImg = getTripVehicleImage(currentTrip.vehicle);
 
   return (
-    <div className="-mx-4 -mt-8 sm:mx-0 sm:mt-0 min-h-screen pb-44 lg:pb-12 bg-slate-50 overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen pb-36 lg:pb-12 bg-slate-50 w-full overflow-x-hidden select-none">
       {/* ── Top Header Navigation Bar ── */}
-      <header className="bg-white/95 backdrop-blur-md px-3.5 sm:px-6 py-2.5 sm:py-3 border-b border-gray-200/80 sticky top-0 z-30 shadow-xs flex items-center justify-between gap-2.5 w-full">
+      <header className="bg-white/95 backdrop-blur-md px-4 sm:px-6 py-2.5 sm:py-3 border-b border-gray-200/80 sticky top-0 lg:top-16 z-30 shadow-xs flex items-center justify-between gap-3 w-full">
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <button
             type="button"
@@ -300,9 +314,9 @@ export default function TripDetailPage() {
       </header>
 
       {/* ── Main Content Container ── */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 w-full max-w-full">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6 sm:py-5 w-full">
         {/* Mobile View Tabs Selector (Seats / Route / Vehicle - 3 Equal Balanced Columns) */}
-        <div className="grid grid-cols-3 gap-1 bg-white p-1 rounded-2xl border border-gray-200/90 mb-3 shadow-xs lg:hidden w-full">
+        <div className="grid grid-cols-3 gap-1.5 bg-white p-1 rounded-2xl border border-gray-200/90 mb-3 shadow-2xs lg:hidden w-full">
           <button
             type="button"
             onClick={() => setMobileActiveTab('seats')}
@@ -380,7 +394,7 @@ export default function TripDetailPage() {
                   />
                   <div className="min-w-0 flex-1">
                     <h3 className="text-xs sm:text-sm font-extrabold text-gray-900 truncate capitalize">
-                      {currentTrip.vehicle ? `${currentTrip.vehicle.brand} ${currentTrip.vehicle.model}` : currentTrip.vehicleName || 'Toyota Innova'}
+                      {formatVehicleName(currentTrip.vehicle ? `${currentTrip.vehicle.brand} ${currentTrip.vehicle.model}` : currentTrip.vehicleName || 'Toyota Innova')}
                     </h3>
                     <p className="text-[10px] sm:text-[11px] text-gray-500 truncate flex items-center gap-1.5 mt-0.5">
                       <span className="truncate">{currentTrip.driver?.user ? `Capt. ${currentTrip.driver.user.firstName}` : currentTrip.operatorName || 'Verified Fleet'}</span>
@@ -532,7 +546,7 @@ export default function TripDetailPage() {
                 {/* Desktop "Proceed to Book" Button */}
                 <button
                   type="button"
-                  onClick={() => setShowBookingModal(true)}
+                  onClick={handleProceedToBooking}
                   disabled={selectedSeats.length === 0 || isBookingDisabled}
                   className="hidden lg:flex w-full h-11 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 active:scale-[0.98] transition-all items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:pointer-events-none"
                 >
@@ -591,22 +605,22 @@ export default function TripDetailPage() {
       {/* ════════════════════════════════════════════════════════════════════════
          STICKY BOTTOM ACTION BAR ON MOBILE (Fixed above MobileNav)
          ════════════════════════════════════════════════════════════════════════ */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-3 pb-20 lg:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
-        <div className="flex items-center justify-between gap-3">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-3 pb-[calc(env(safe-area-inset-bottom,0px)+74px)] lg:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
           <div className="min-w-0">
-            <span className="text-[10px] text-gray-400 font-semibold block leading-none mb-1 truncate">
+            <span className="text-[10px] text-gray-500 font-semibold block leading-none mb-1 truncate">
               {selectedSeats.length > 0 ? `${selectedSeats.length} Seat${selectedSeats.length > 1 ? 's' : ''} (#${selectedSeats.join(', #')})` : 'Select Seat(s)'}
             </span>
-            <span className="text-base font-black text-blue-600 leading-none">
+            <span className="text-lg font-black text-blue-600 leading-none">
               {currencySymbol} {selectedSeats.length > 0 ? totalFinalAmount : seatPrice}
             </span>
           </div>
 
           <button
             type="button"
-            onClick={() => setShowBookingModal(true)}
+            onClick={handleProceedToBooking}
             disabled={selectedSeats.length === 0 || isBookingDisabled}
-            className="flex-1 max-w-[190px] h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
+            className="flex-1 max-w-[200px] h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
           >
             <span>{selectedSeats.length === 0 ? 'Pick a Seat' : 'Proceed to Book'}</span>
             <ArrowRight className="w-4 h-4" />

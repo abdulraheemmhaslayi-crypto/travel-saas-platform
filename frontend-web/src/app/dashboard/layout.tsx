@@ -16,43 +16,61 @@ export default function DashboardLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isLoading, isInitializing } = useAuth();
+  const pathname = usePathname();
 
-  if (isInitializing) {
+  const isPublicGuestRoute =
+    pathname === '/dashboard/passenger' ||
+    pathname?.startsWith('/dashboard/trips') ||
+    pathname === '/dashboard/passenger/popular-routes' ||
+    pathname === '/dashboard/passenger/nearby-trips';
+
+  const isMobileAppPage =
+    pathname === '/dashboard/passenger' ||
+    pathname?.startsWith('/dashboard/trips/') ||
+    pathname === '/dashboard/trips';
+
+  // Only show fullScreen blocking loading state for private/protected routes
+  if (isInitializing && !isPublicGuestRoute) {
     return <Loading fullScreen text="Resolving account role and initializing..." />;
   }
 
-  if (isLoading) {
+  if (isLoading && !isPublicGuestRoute) {
     return <Loading fullScreen text="Loading dashboard..." />;
   }
 
-  const pathname = usePathname();
-  const isPassengerPage = pathname === '/dashboard/passenger';
+  const dashboardContent = (
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col w-full overflow-x-hidden">
+      <Navbar />
+
+      <div className="flex flex-1 min-w-0 w-full overflow-x-hidden">
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+        <main
+          className={cn(
+            'flex-1 min-w-0 w-full overflow-x-hidden',
+            isMobileAppPage ? 'pb-[72px] lg:pb-8 min-h-0' : 'pb-24 lg:pb-8 min-h-[calc(100vh-4rem)]'
+          )}
+        >
+          <div
+            className={cn(
+              'max-w-7xl mx-auto w-full min-w-0',
+              isMobileAppPage ? 'p-0 sm:px-6 sm:py-8' : 'px-3 sm:px-6 lg:px-8 py-4 sm:py-8'
+            )}
+          >
+            {children}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+
+  if (isPublicGuestRoute) {
+    return dashboardContent;
+  }
 
   return (
     <ProtectedRoute allowedUserTypes={['PASSENGER', 'DRIVER', 'FLEET_OWNER', 'SUPPORT']}>
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col w-full overflow-x-hidden">
-        <Navbar />
-
-        <div className="flex flex-1 min-w-0 w-full overflow-x-hidden">
-          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-
-          <main
-            className={cn(
-              'flex-1 min-w-0 w-full overflow-x-hidden',
-              isPassengerPage ? 'pb-[72px] lg:pb-8 min-h-0' : 'pb-24 lg:pb-8 min-h-[calc(100vh-4rem)]'
-            )}
-          >
-            <div
-              className={cn(
-                'max-w-7xl mx-auto w-full min-w-0',
-                isPassengerPage ? 'p-0 sm:px-6 sm:py-8' : 'px-3 sm:px-6 lg:px-8 py-4 sm:py-8'
-              )}
-            >
-              {children}
-            </div>
-          </main>
-        </div>
-      </div>
+      {dashboardContent}
     </ProtectedRoute>
   );
 }
