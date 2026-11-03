@@ -57,7 +57,7 @@ class ApiClient {
 
         const isPublicPage =
           typeof window !== 'undefined' &&
-          (window.location.pathname === '/dashboard/passenger' ||
+          (window.location.pathname.startsWith('/dashboard/passenger') ||
             window.location.pathname.startsWith('/dashboard/trips') ||
             window.location.pathname === '/' ||
             window.location.pathname.startsWith('/login') ||
