@@ -66,9 +66,9 @@ const MobileNav: React.FC = () => {
     // Default: Passenger
     return [
       { href: '/dashboard/passenger', label: 'Home', icon: HomeIcon },
+      { href: '/dashboard/passenger/popular-routes', label: 'Routes', icon: Compass },
       { href: '/dashboard/bookings', label: 'My Trips', icon: Calendar },
       { href: '/dashboard/wallet', label: 'Wallet', icon: Wallet },
-      { href: '/dashboard/notifications', label: 'Alerts', icon: Bell, badge: unreadCount },
       { href: '/dashboard/profile', label: 'Account', icon: User },
     ];
   })();

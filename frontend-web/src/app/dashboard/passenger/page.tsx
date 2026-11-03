@@ -748,17 +748,13 @@ export default function PassengerDashboardPage() {
                   <h3 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
                     <span>Popular Routes</span>
                   </h3>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (popularRoutes.length > 0) {
-                        handleSelectRecentPlace(popularRoutes[0].source, popularRoutes[0].destination);
-                      }
-                    }}
-                    className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+                  <Link
+                    href="/dashboard/passenger/popular-routes"
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
                   >
-                    See all
-                  </button>
+                    <span>See all</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
 
                 <div className="grid grid-cols-3 gap-1.5 sm:gap-2">

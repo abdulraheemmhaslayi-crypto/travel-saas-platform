@@ -20,6 +20,8 @@ import {
   Loader2,
   MapPin,
   Navigation,
+  Compass,
+  ChevronRight,
 } from 'lucide-react';
 import MapView, { MapMarker } from '@/components/maps/MapView';
 import SearchInput from '@/components/maps/SearchInput';
@@ -336,17 +338,13 @@ export default function PassengerDashboardMobile({
             <div className="space-y-1.5 pt-0.5">
               <div className="flex items-center justify-between">
                 <h3 className="text-[15px] font-semibold text-[#0F172A]">Popular Routes</h3>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (popularRoutes.length > 0) {
-                      handleSelectRecentPlace(popularRoutes[0].source, popularRoutes[0].destination);
-                    }
-                  }}
-                  className="text-[12px] font-semibold text-[#2563EB] hover:text-[#1D4ED8] active:scale-95 transition-transform"
+                <Link
+                  href="/dashboard/passenger/popular-routes"
+                  className="text-[12px] font-semibold text-[#2563EB] hover:text-[#1D4ED8] flex items-center gap-0.5 active:scale-95 transition-transform"
                 >
-                  See All
-                </button>
+                  <span>See All</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
 
               <div className="grid grid-cols-3 gap-2 w-full">
@@ -461,7 +459,20 @@ export default function PassengerDashboardMobile({
                   </span>
                 </button>
 
-                {/* 2. My Trips */}
+                {/* 2. Popular Routes */}
+                <Link
+                  href="/dashboard/passenger/popular-routes"
+                  className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
+                >
+                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-blue-100 transition-colors">
+                    <Compass className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-[#334155] tracking-tight">
+                    Routes
+                  </span>
+                </Link>
+
+                {/* 3. My Trips */}
                 <Link
                   href="/dashboard/bookings"
                   className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
@@ -474,7 +485,7 @@ export default function PassengerDashboardMobile({
                   </span>
                 </Link>
 
-                {/* 3. Wallet */}
+                {/* 4. Wallet */}
                 <Link
                   href="/dashboard/wallet"
                   className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
@@ -484,19 +495,6 @@ export default function PassengerDashboardMobile({
                   </div>
                   <span className="text-[11px] font-medium text-[#334155] tracking-tight">
                     Wallet
-                  </span>
-                </Link>
-
-                {/* 4. Support */}
-                <Link
-                  href="/dashboard/support"
-                  className="min-w-0 flex flex-col items-center group active:scale-95 transition-transform"
-                >
-                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center mb-1 shadow-2xs group-hover:bg-purple-100 transition-colors">
-                    <Headphones className="w-5 h-5 stroke-[2]" />
-                  </div>
-                  <span className="text-[11px] font-medium text-[#334155] tracking-tight">
-                    Support
                   </span>
                 </Link>
               </div>
