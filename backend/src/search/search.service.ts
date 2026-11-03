@@ -301,7 +301,7 @@ export class SearchService {
         .select('trip.source', 'source')
         .addSelect('trip.destination', 'destination')
         .addSelect('COUNT(booking.id)', 'count')
-        .addSelect('AVG(booking.totalPrice)', 'avgPrice')
+        .addSelect('AVG(booking.totalAmount)', 'avgPrice')
         .innerJoin('booking.trip', 'trip')
         .where('booking.status = :status', { status: 'COMPLETED' })
         .andWhere('trip.source IS NOT NULL AND trip.destination IS NOT NULL')

@@ -650,7 +650,7 @@ export class AnalyticsService {
       .createQueryBuilder("booking")
       .select("TO_CHAR(booking.createdAt, 'YYYY-MM-DD')", "date")
       .addSelect("COUNT(booking.id)", "bookings")
-      .addSelect("COALESCE(SUM(booking.totalPrice), 0)", "revenue")
+      .addSelect("COALESCE(SUM(booking.totalAmount), 0)", "revenue")
       .where("booking.createdAt BETWEEN :startDate AND :endDate", {
         startDate,
         endDate,
@@ -681,11 +681,11 @@ export class AnalyticsService {
     const query = this.bookingRepository
       .createQueryBuilder("booking")
       .select(
-        'CONCAT(trip.source, " → ", trip.destination)',
+        'CONCAT(trip.source, \' → \', trip.destination)',
         "routeName",
       )
       .addSelect("COUNT(booking.id)", "bookings")
-      .addSelect("COALESCE(SUM(booking.totalPrice), 0)", "revenue")
+      .addSelect("COALESCE(SUM(booking.totalAmount), 0)", "revenue")
       .innerJoin("booking.trip", "trip")
       
       .where("booking.createdAt BETWEEN :startDate AND :endDate", {
@@ -717,7 +717,7 @@ export class AnalyticsService {
   ): Promise<number> {
     const query = this.bookingRepository
       .createQueryBuilder("booking")
-      .select("COALESCE(AVG(booking.totalPrice), 0)", "avg")
+      .select("COALESCE(AVG(booking.totalAmount), 0)", "avg")
       .where("booking.createdAt BETWEEN :startDate AND :endDate", {
         startDate,
         endDate,
