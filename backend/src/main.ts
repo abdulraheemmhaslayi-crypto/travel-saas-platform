@@ -69,8 +69,8 @@ async function bootstrap() {
 
   // Swagger documentation
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Travel SaaS Platform API')
-    .setDescription('Complete API documentation for Travel SaaS Platform')
+    .setTitle('Kokan Travel API')
+    .setDescription('Complete API documentation for Kokan Travel Platform')
     .setVersion('1.0.0')
     .addBearerAuth(
       {

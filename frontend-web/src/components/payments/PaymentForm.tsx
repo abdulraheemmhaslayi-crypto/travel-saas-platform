@@ -58,7 +58,7 @@ const DirectUpiPaymentForm: React.FC<PaymentFormProps> = ({
   const numericAmount = Number(amount) || 0;
   const { showToast } = useAppStore();
 
-  const upiId = ownerUpiId || 'travelflow.fleet@okaxis';
+  const upiId = ownerUpiId || 'kokantravel.fleet@okaxis';
   const payeeName = ownerName || 'Vehicle Fleet Partner';
 
   const [copied, setCopied] = useState(false);
@@ -306,7 +306,7 @@ const WalletPaymentForm: React.FC<PaymentFormProps> = ({
     <div className="space-y-4">
       <div className="p-4 bg-gray-50 border border-gray-150 rounded-2xl space-y-2">
         <div className="flex justify-between items-center text-xs font-semibold text-gray-500">
-          <span>TravelFlow Wallet Balance</span>
+          <span>Kokan Travel Wallet Balance</span>
           <span
             className={
               wallet && Number(wallet.balance) >= numericAmount
@@ -400,7 +400,7 @@ const RazorpayPaymentForm: React.FC<PaymentFormProps> = ({
         key: keyId,
         amount: Math.round(numericAmount * 100),
         currency,
-        name: 'TravelFlow',
+        name: 'Kokan Travel',
         description: 'Trip Booking',
         order_id: orderId,
         handler: async (response: Record<string, string>) => {

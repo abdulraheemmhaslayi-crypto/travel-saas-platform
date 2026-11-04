@@ -16,9 +16,9 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service - TravelFlow',
-  description: 'Review the Terms of Service for TravelFlow, covering registration, bookings, safety policies, payouts, and cancellations.',
-  keywords: ['terms of service', 'user agreement', 'cancellation policy', 'refunds', 'TravelFlow'],
+  title: 'Terms of Service - Kokan Travel',
+  description: 'Review the Terms of Service for Kokan Travel, covering registration, bookings, safety policies, payouts, and cancellations.',
+  keywords: ['terms of service', 'user agreement', 'cancellation policy', 'refunds', 'Kokan Travel'],
 };
 
 export default function TermsOfServicePage() {
@@ -115,7 +115,7 @@ export default function TermsOfServicePage() {
                 </div>
                 <div className="prose prose-slate max-w-none text-gray-600 space-y-4">
                   <p>
-                    By creating an account, logging into, or using the <strong>TravelFlow</strong> platform and services, you agree to comply with and be legally bound by these Terms of Service ("Terms"). These terms establish a contractual relationship between you and TravelFlow.
+                    By creating an account, logging into, or using the <strong>Kokan Travel</strong> platform and services, you agree to comply with and be legally bound by these Terms of Service ("Terms"). These terms establish a contractual relationship between you and Kokan Travel.
                   </p>
                   <p>
                     If you do not agree to these terms, you are not authorized to use the platform. We reserve the right to revise or amend these Terms at any time, with modifications becoming effective immediately upon posting. Your continued use of the Services after revisions indicates your acceptance of the new terms.
@@ -133,7 +133,7 @@ export default function TermsOfServicePage() {
                 </div>
                 <div className="prose prose-slate max-w-none text-gray-600 space-y-4">
                   <p>
-                    TravelFlow is a multi-sided platform where users register under specific profiles:
+                    Kokan Travel is a multi-sided platform where users register under specific profiles:
                   </p>
                   <ul className="list-disc pl-5 space-y-2">
                     <li>
@@ -172,7 +172,7 @@ export default function TermsOfServicePage() {
                       <strong>Seat Reservations:</strong> Bookings are finalized only upon payment confirmation by payment processor partners.
                     </li>
                     <li>
-                      <strong>Service Limitations:</strong> TravelFlow acts as a matching agent and does not guarantee vehicle availability on every requested route.
+                      <strong>Service Limitations:</strong> Kokan Travel acts as a matching agent and does not guarantee vehicle availability on every requested route.
                     </li>
                   </ul>
                 </div>
@@ -192,10 +192,10 @@ export default function TermsOfServicePage() {
                   </p>
                   <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-sm text-gray-700 leading-relaxed space-y-2">
                     <p>
-                      - <strong>Passenger Cancellations:</strong> If canceled more than 24 hours prior to departure, a full refund (minus minimal payment processing fees) is credited to the user's TravelFlow Wallet. If canceled within 24 hours of departure, cancellation penalties apply.
+                      - <strong>Passenger Cancellations:</strong> If canceled more than 24 hours prior to departure, a full refund (minus minimal payment processing fees) is credited to the user's Kokan Travel Wallet. If canceled within 24 hours of departure, cancellation penalties apply.
                     </p>
                     <p>
-                      - <strong>Driver Cancellations:</strong> If a driver cancels a scheduled trip, affected passengers receive a full 100% refund to their wallets, and TravelFlow staff will prioritize matching them with alternative rides.
+                      - <strong>Driver Cancellations:</strong> If a driver cancels a scheduled trip, affected passengers receive a full 100% refund to their wallets, and Kokan Travel staff will prioritize matching them with alternative rides.
                     </p>
                     <p>
                       - <strong>No-Show:</strong> Failure of the passenger to arrive at the designated pickup spot within 15 minutes of departure time is treated as a passenger cancellation without a refund.
@@ -240,17 +240,17 @@ export default function TermsOfServicePage() {
                 </div>
                 <div className="prose prose-slate max-w-none text-gray-600 space-y-4">
                   <p>
-                    TravelFlow incorporates Razorpay, Stripe, and a digital platform wallet for transactions:
+                    Kokan Travel incorporates Razorpay, Stripe, and a digital platform wallet for transactions:
                   </p>
                   <ul className="list-disc pl-5 space-y-2">
                     <li>
-                      <strong>Wallet Load:</strong> Users can pre-fund their TravelFlow wallets to enable one-click booking checkouts. Wallet balances are non-transferable between accounts.
+                      <strong>Wallet Load:</strong> Users can pre-fund their Kokan Travel wallets to enable one-click booking checkouts. Wallet balances are non-transferable between accounts.
                     </li>
                     <li>
                       <strong>Driver Payouts:</strong> Earnings from executed rides are tracked in real-time. Payout cycles run weekly or according to thresholds, sending funds to verified bank accounts.
                     </li>
                     <li>
-                      <strong>Taxes & Commission:</strong> TravelFlow deducts a platform service commission percentage from each booked trip before issuing driver payouts.
+                      <strong>Taxes & Commission:</strong> Kokan Travel deducts a platform service commission percentage from each booked trip before issuing driver payouts.
                     </li>
                   </ul>
                 </div>
@@ -266,10 +266,10 @@ export default function TermsOfServicePage() {
                 </div>
                 <div className="prose prose-slate max-w-none text-gray-600 space-y-4">
                   <p>
-                    TravelFlow acts as an intermediary platform matching passengers and drivers. We do not inspect every individual journey or supervise driver operations in real-time.
+                    Kokan Travel acts as an intermediary platform matching passengers and drivers. We do not inspect every individual journey or supervise driver operations in real-time.
                   </p>
                   <p>
-                    To the maximum extent permitted by law, TravelFlow shall not be held liable for direct, indirect, incidental, or consequential damages arising from:
+                    To the maximum extent permitted by law, Kokan Travel shall not be held liable for direct, indirect, incidental, or consequential damages arising from:
                   </p>
                   <ul className="list-disc pl-5 space-y-2">
                     <li>The conduct, delays, actions, or omissions of independent drivers or passengers.</li>
@@ -289,13 +289,13 @@ export default function TermsOfServicePage() {
                 </div>
                 <div className="prose prose-slate max-w-none text-gray-600 space-y-4">
                   <p>
-                    These Terms are governed by and construed in accordance with the laws of the State of Delaware (or local state laws where TravelFlow entity is officially registered), without regard to conflict of law principles.
+                    These Terms are governed by and construed in accordance with the laws of the State of Delaware (or local state laws where Kokan Travel entity is officially registered), without regard to conflict of law principles.
                   </p>
                   <p>
                     Any dispute, controversy, or claim arising out of these Terms or use of the Services shall be resolved in first instance through amicable negotiation with our customer support teams. If unresolved, disputes shall be submitted to binding arbitration in accordance with standard arbitration rules.
                   </p>
                   <p>
-                    For questions, legal notices, or queries regarding these Terms, contact our policy officers at <strong>legal@travelflow.com</strong>.
+                    For questions, legal notices, or queries regarding these Terms, contact our policy officers at <strong>legal@kokantravel.com</strong>.
                   </p>
                 </div>
               </section>

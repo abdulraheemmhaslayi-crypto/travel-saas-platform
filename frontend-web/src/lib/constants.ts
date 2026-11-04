@@ -6,8 +6,8 @@ export const WS_BASE_URL =
   process.env.NEXT_PUBLIC_WS_URL ||
   (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
-export const APP_NAME = 'TravelFlow';
-export const APP_DESCRIPTION = 'Your trusted travel companion';
+export const APP_NAME = 'Kokan Travel';
+export const APP_DESCRIPTION = 'Your trusted travel companion across Kokan and beyond';
 
 export const USER_TYPES = {
   PASSENGER: 'PASSENGER',

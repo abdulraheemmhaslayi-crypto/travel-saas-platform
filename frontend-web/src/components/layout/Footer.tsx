@@ -35,7 +35,7 @@ const Footer: React.FC = () => {
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
               <MapPin className="w-8 h-8 text-primary-400" />
-              <span className="text-xl font-bold text-white">TravelFlow</span>
+              <span className="text-xl font-bold text-white">Kokan Travel</span>
             </Link>
             <p className="text-sm text-gray-400 mb-6 max-w-sm">
               Your trusted travel companion. Book trips, track rides, and manage your journeys all in one place.
@@ -43,7 +43,7 @@ const Footer: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <Mail className="w-4 h-4 text-gray-500" />
-                <span>support@travelflow.com</span>
+                <span>support@kokantravel.com</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Phone className="w-4 h-4 text-gray-500" />
@@ -77,7 +77,7 @@ const Footer: React.FC = () => {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500">
-            {currentYear} TravelFlow. All rights reserved.
+            {currentYear} Kokan Travel. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             {[Facebook, Twitter, Instagram, Linkedin].map((Icon, index) => (

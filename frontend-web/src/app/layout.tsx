@@ -17,13 +17,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'TravelFlow - Travel Made Simple',
+  title: 'Kokan Travel - Travel Made Simple',
   description: 'Book trips, track rides, and manage your journeys all in one place.',
   keywords: ['travel', 'booking', 'trips', 'transport', 'rideshare'],
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'TravelFlow',
+    title: 'Kokan Travel',
   },
 };
 

@@ -66,7 +66,7 @@ const Navbar: React.FC = () => {
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-xs shrink-0">
                 <MapPin className="w-4 h-4 fill-white text-blue-600" />
               </div>
-              <span className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">TravelFlow</span>
+              <span className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Kokan Travel</span>
             </Link>
           </div>
 

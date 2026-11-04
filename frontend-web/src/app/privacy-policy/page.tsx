@@ -17,9 +17,9 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - TravelFlow',
-  description: 'Understand how TravelFlow collects, uses, and safeguards your personal data, including location tracking and KYC validation.',
-  keywords: ['privacy policy', 'data protection', 'location tracking', 'KYC', 'TravelFlow'],
+  title: 'Privacy Policy - Kokan Travel',
+  description: 'Understand how Kokan Travel collects, uses, and safeguards your personal data, including location tracking and KYC validation.',
+  keywords: ['privacy policy', 'data protection', 'location tracking', 'KYC', 'Kokan Travel'],
 };
 
 export default function PrivacyPolicyPage() {
@@ -56,7 +56,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p className="text-base sm:text-lg text-gray-300 max-w-2xl mx-auto">
-            Learn how TravelFlow collects, processes, and protects your personal data, and how we handle location tracking and document verification.
+            Learn how Kokan Travel collects, processes, and protects your personal data, and how we handle location tracking and document verification.
           </p>
           <div className="mt-6 text-sm text-gray-400 font-medium">
             Last Updated: June 6, 2026
@@ -116,7 +116,7 @@ export default function PrivacyPolicyPage() {
                 </div>
                 <div className="prose prose-slate max-w-none text-gray-600 space-y-4">
                   <p>
-                    Welcome to <strong>TravelFlow</strong> ("we", "our", or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy governs your use of our SaaS travel platform, website, mobile-responsive screens, and APIs (collectively, the "Services").
+                    Welcome to <strong>Kokan Travel</strong> ("we", "our", or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy governs your use of our SaaS travel platform, website, mobile-responsive screens, and APIs (collectively, the "Services").
                   </p>
                   <p>
                     By registering for an account, accessing, or using our Services, you consent to the practices described in this Privacy Policy. If you do not agree to the terms herein, you should immediately cease the use of our services.
@@ -163,14 +163,14 @@ export default function PrivacyPolicyPage() {
                 </div>
                 <div className="prose prose-slate max-w-none text-gray-600 space-y-4">
                   <p>
-                    To enable essential core features of TravelFlow, such as driver matching, routing updates, emergency broadcasts, and real-time navigation status, we must collect precise or approximate geolocation data:
+                    To enable essential core features of Kokan Travel, such as driver matching, routing updates, emergency broadcasts, and real-time navigation status, we must collect precise or approximate geolocation data:
                   </p>
                   <div className="p-4 rounded-xl bg-red-50/50 border border-red-100 text-sm text-red-800 leading-relaxed space-y-2">
                     <p className="font-semibold flex items-center gap-1.5">
                       <MapPin className="w-4 h-4 text-red-500" /> Geolocation Requirements:
                     </p>
                     <p>
-                      - <strong>For Drivers:</strong> We collect real-time location data when the TravelFlow app or browser interface is open and you are marked "online" or executing a scheduled trip.
+                      - <strong>For Drivers:</strong> We collect real-time location data when the Kokan Travel app or browser interface is open and you are marked "online" or executing a scheduled trip.
                     </p>
                     <p>
                       - <strong>For Passengers:</strong> We collect location coordinates when searching for nearby trips, matching with rides, and tracking your active journey.
@@ -265,11 +265,11 @@ export default function PrivacyPolicyPage() {
                 </div>
                 <div className="prose prose-slate max-w-none text-gray-600 space-y-4">
                   <p>
-                    Security is central to TravelFlow operations. We implement appropriate technical and organizational security measures:
+                    Security is central to Kokan Travel operations. We implement appropriate technical and organizational security measures:
                   </p>
                   <ul className="list-disc pl-5 space-y-2">
                     <li><strong>Encryption:</strong> All data in transit is encrypted using Secure Socket Layer (SSL) protocols, and database fields are encrypted at rest.</li>
-                    <li><strong>Payment Compliance:</strong> TravelFlow does not store raw credit card numbers on its servers. All payments are processed through PCI-DSS compliant third-party gateways (Stripe/Razorpay).</li>
+                    <li><strong>Payment Compliance:</strong> Kokan Travel does not store raw credit card numbers on its servers. All payments are processed through PCI-DSS compliant third-party gateways (Stripe/Razorpay).</li>
                     <li><strong>Access Restrictions:</strong> Only authorized staff with specific administrative privileges can view verified KYC files, audit logs, or system profiles.</li>
                   </ul>
                 </div>
@@ -291,9 +291,9 @@ export default function PrivacyPolicyPage() {
                     You can manage your profile, phone number, and preferences directly from the profile settings. To request full deletion of your user records or files, please contact us:
                   </p>
                   <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 text-sm mt-4 space-y-2">
-                    <p><strong>Email Support:</strong> privacy@travelflow.com</p>
+                    <p><strong>Email Support:</strong> privacy@kokantravel.com</p>
                     <p><strong>Hotline:</strong> +1 (555) 123-4567</p>
-                    <p><strong>Mailing Address:</strong> TravelFlow Security Operations, 100 Innovation Way, Suite 400, Austin, TX 78701</p>
+                    <p><strong>Mailing Address:</strong> Kokan Travel Security Operations, 100 Innovation Way, Suite 400, Austin, TX 78701</p>
                   </div>
                 </div>
               </section>

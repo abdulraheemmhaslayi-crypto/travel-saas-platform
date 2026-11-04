@@ -337,7 +337,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
               type="button"
               onClick={() => {
                 const shareData = {
-                  title: `My Trip on TravelFlow`,
+                  title: `My Trip on Kokan Travel`,
                   text: `Travelling from ${cleanOrigin} to ${cleanDestination} on ${departureDateStr}. Ref: ${booking.id.slice(0, 8).toUpperCase()}.`,
                   url: typeof window !== 'undefined' ? `${window.location.origin}/dashboard/bookings/${booking.id}` : '',
                 };
