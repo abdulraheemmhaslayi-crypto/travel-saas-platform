@@ -220,9 +220,8 @@ export default function MobileRegisterScreen() {
             <div className="flex items-center justify-center gap-2 mb-4 bg-slate-50 py-1.5 px-3 rounded-full border border-slate-100 max-w-[240px] mx-auto">
               <div className="flex items-center gap-1.5">
                 <div
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium transition-all ${
-                    step >= 1 ? 'bg-[#1D68F2] text-white' : 'bg-slate-200 text-slate-500'
-                  }`}
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium transition-all ${step >= 1 ? 'bg-[#1D68F2] text-white' : 'bg-slate-200 text-slate-500'
+                    }`}
                 >
                   {step > 1 ? <Check className="w-3 h-3 stroke-[2]" /> : '1'}
                 </div>
@@ -235,9 +234,8 @@ export default function MobileRegisterScreen() {
 
               <div className="flex items-center gap-1.5">
                 <div
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium transition-all ${
-                    step === 2 ? 'bg-[#1D68F2] text-white' : 'bg-slate-200 text-slate-500'
-                  }`}
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium transition-all ${step === 2 ? 'bg-[#1D68F2] text-white' : 'bg-slate-200 text-slate-500'
+                    }`}
                 >
                   2
                 </div>
@@ -265,11 +263,10 @@ export default function MobileRegisterScreen() {
                             key={role.id}
                             type="button"
                             onClick={() => setValue('userType', role.id as any)}
-                            className={`p-2 rounded-xl border text-center transition-all flex flex-col items-center justify-center group active:scale-95 ${
-                              isSelected
-                                ? 'border-[#1D68F2] bg-blue-50/70 text-[#1D68F2] shadow-2xs'
-                                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                            }`}
+                            className={`p-2 rounded-xl border text-center transition-all flex flex-col items-center justify-center group active:scale-95 ${isSelected
+                              ? 'border-[#1D68F2] bg-blue-50/70 text-[#1D68F2] shadow-2xs'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                              }`}
                           >
                             <Icon className={`w-4 h-4 mb-1 stroke-[1.6] ${isSelected ? 'text-[#1D68F2]' : 'text-slate-500'}`} />
                             <span className="text-[11px] font-medium block leading-tight">
@@ -478,13 +475,12 @@ export default function MobileRegisterScreen() {
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-normal text-slate-500">Password strength:</span>
                       <span
-                        className={`font-medium ${
-                          passedChecksCount <= 1
-                            ? 'text-red-500'
-                            : passedChecksCount <= 3
+                        className={`font-medium ${passedChecksCount <= 1
+                          ? 'text-red-500'
+                          : passedChecksCount <= 3
                             ? 'text-amber-500'
                             : 'text-emerald-600'
-                        }`}
+                          }`}
                       >
                         {passedChecksCount === 0 && 'Enter password'}
                         {passedChecksCount === 1 && 'Weak'}
@@ -498,15 +494,14 @@ export default function MobileRegisterScreen() {
                       {[1, 2, 3, 4].map((level) => (
                         <div
                           key={level}
-                          className={`flex-1 rounded-full transition-all duration-200 ${
-                            passedChecksCount >= level
-                              ? passedChecksCount <= 1
-                                ? 'bg-red-400'
-                                : passedChecksCount <= 3
+                          className={`flex-1 rounded-full transition-all duration-200 ${passedChecksCount >= level
+                            ? passedChecksCount <= 1
+                              ? 'bg-red-400'
+                              : passedChecksCount <= 3
                                 ? 'bg-amber-400'
                                 : 'bg-emerald-500'
-                              : 'bg-slate-200'
-                          }`}
+                            : 'bg-slate-200'
+                            }`}
                         />
                       ))}
                     </div>
