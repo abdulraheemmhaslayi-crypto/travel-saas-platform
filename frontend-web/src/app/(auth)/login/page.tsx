@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import MobileLoginScreen from '@/components/mobile/MobileLoginScreen';
 
 function LoginForm() {
   const router = useRouter();
@@ -261,7 +262,15 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginForm />
+      {/* Mobile-dedicated Screen (visible on mobile viewports < 768px) */}
+      <div className="block md:hidden">
+        <MobileLoginScreen />
+      </div>
+
+      {/* Desktop Screen (visible on desktop viewports >= 768px) */}
+      <div className="hidden md:block">
+        <LoginForm />
+      </div>
     </Suspense>
   );
 }
