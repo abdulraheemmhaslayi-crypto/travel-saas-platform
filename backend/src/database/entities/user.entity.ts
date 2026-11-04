@@ -160,6 +160,15 @@ export class User {
   @Column({ type: 'varchar', length: 50, default: 'INR' })
   currency: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  upiId: string;
+
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  upiAccountName: string;
+
+  @Column({ type: 'text', nullable: true })
+  upiQrCodeUrl: string;
+
   @Column({ type: 'simple-json', nullable: true })
   metadata: Record<string, any>;
 

@@ -119,6 +119,15 @@ export class Vehicle {
   @Column({ type: 'uuid', nullable: true })
   approvedBy: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  upiId: string;
+
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  upiAccountName: string;
+
+  @Column({ type: 'text', nullable: true })
+  upiQrCodeUrl: string;
+
   @Column({ type: 'timestamp', nullable: true })
   approvedAt: Date;
 

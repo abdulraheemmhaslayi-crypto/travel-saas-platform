@@ -5,7 +5,10 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, Between, LessThan, MoreThanOrEqual, In } from "typeorm";
-import { User, UserStatus } from "../database/entities/user.entity";
+import { User, UserStatus, UserType } from "../database/entities/user.entity";
+import { PlatformSettingsService } from "./platform-settings.service";
+import { CommissionConfig } from "../database/entities/platform-setting.entity";
+import { Wallet } from "../database/entities/wallet.entity";
 import { Vehicle, VehicleStatus } from "../database/entities/vehicle.entity";
 import { Trip, TripStatus } from "../database/entities/trip.entity";
 import { Booking, BookingStatus } from "../database/entities/booking.entity";
@@ -54,6 +57,9 @@ export class AdminService {
     private readonly permissionRepository: Repository<Permission>,
     private readonly redisService: RedisService,
     private readonly notificationsService: NotificationsService,
+    private readonly platformSettingsService: PlatformSettingsService,
+    @InjectRepository(Wallet)
+    private readonly walletRepository: Repository<Wallet>,
   ) {}
 
   async getDashboardStats(query: DashboardStatsQueryDto, currentUser: any) {
@@ -624,7 +630,55 @@ export class AdminService {
     role.permissions = permissions;
     return this.roleRepository.save(role);
   }
-}
 
-// Helper imports
-//
+  async getCommissionSettings() {
+    return this.platformSettingsService.getCommissionConfig();
+  }
+
+  async updateCommissionSettings(dto: Partial<CommissionConfig>, adminId: string) {
+    const updated = await this.platformSettingsService.updateCommissionConfig(dto, adminId);
+    await this.auditLogRepository.save({
+      userId: adminId,
+      action: AuditAction.UPDATE,
+      entityType: 'Settings',
+      entityId: 'commission_config',
+      newValues: JSON.stringify(updated),
+      description: 'Updated dynamic platform commission configuration',
+    });
+    return updated;
+  }
+
+  async getFleetWallets() {
+    const owners = await this.userRepository.find({
+      where: [
+        { userType: UserType.VEHICLE_OWNER },
+        { userType: UserType.DRIVER },
+      ],
+      relations: ['wallet', 'vehicles'],
+      order: { createdAt: 'DESC' },
+    });
+
+    const config = await this.platformSettingsService.getCommissionConfig();
+
+    return owners.map((owner) => {
+      const balance = Number(owner.wallet?.balance || 0);
+      const isLowBalance = balance < config.minWalletBalance;
+      return {
+        userId: owner.id,
+        name: `${owner.firstName} ${owner.lastName}`,
+        email: owner.email,
+        phone: owner.phone,
+        userType: owner.userType,
+        upiId: owner.upiId,
+        upiAccountName: owner.upiAccountName,
+        walletBalance: balance,
+        totalCredited: Number(owner.wallet?.totalCredited || 0),
+        totalDebited: Number(owner.wallet?.totalDebited || 0),
+        isLowBalance,
+        status: isLowBalance ? 'LOW_BALANCE' : 'HEALTHY',
+        vehiclesCount: owner.vehicles?.length || 0,
+      };
+    });
+  }
+
+}

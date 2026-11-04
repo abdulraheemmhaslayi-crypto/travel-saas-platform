@@ -8,10 +8,11 @@ import Loading from '@/components/common/Loading';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Card from '@/components/ui/Card';
-import { Calendar, RefreshCw, Ticket, Users, BarChart3 } from 'lucide-react';
+import { Calendar, RefreshCw, Ticket, Users, BarChart3, CheckCircle2 } from 'lucide-react';
+import PendingUpiApprovalsTab from '@/components/fleet/PendingUpiApprovalsTab';
 import { useAppStore } from '@/store';
 
-type BookingTab = 'all' | 'passengers';
+type BookingTab = 'all' | 'passengers' | 'upi-approvals';
 
 function FleetOwnerBookingsPageContent() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -22,7 +23,7 @@ function FleetOwnerBookingsPageContent() {
 
   // Derive current tab from URL ?tab= param
   const tabParam = (searchParams.get('tab') || '').toLowerCase();
-  const currentTab: BookingTab = tabParam === 'passengers' ? 'passengers' : 'all';
+  const currentTab: BookingTab = tabParam === 'passengers' ? 'passengers' : tabParam === 'upi-approvals' || tabParam === 'approvals' ? 'upi-approvals' : 'all';
 
   const setCurrentTab = (tab: BookingTab) => {
     if (tab === 'all') {
@@ -242,6 +243,7 @@ function FleetOwnerBookingsPageContent() {
           {([
             { id: 'all' as const, label: 'Vehicle Bookings', icon: <Ticket className="w-3.5 h-3.5" /> },
             { id: 'passengers' as const, label: 'Passenger Lists', icon: <Users className="w-3.5 h-3.5" /> },
+            { id: 'upi-approvals' as const, label: 'Payment Approvals (Direct UPI)', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
           ]).map((tab) => (
             <button
               key={tab.id}
@@ -260,7 +262,9 @@ function FleetOwnerBookingsPageContent() {
       </div>
 
       {/* Tab Content */}
-      {isLoading ? (
+      {currentTab === 'upi-approvals' ? (
+        <PendingUpiApprovalsTab />
+      ) : isLoading ? (
         <Loading text="Loading bookings..." />
       ) : (
         <DataTable

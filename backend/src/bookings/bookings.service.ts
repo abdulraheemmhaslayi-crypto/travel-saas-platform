@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   ConflictException,
 } from '@nestjs/common';
+import { PlatformSetting, CommissionConfig } from '../database/entities/platform-setting.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, LessThan } from 'typeorm';
 import { Booking, BookingStatus, BookingType, PaymentStatus as BookingPaymentStatus } from '../database/entities/booking.entity';
@@ -29,6 +30,9 @@ import {
   BookingQueryDto,
   CancelBookingDto,
   UpdateBookingStatusDto,
+  SubmitUpiPaymentDto,
+  VerifyUpiPaymentDto,
+  ProcessRefundDto,
 } from './dto/booking.dto';
 
 import { OutboxService } from '../outbox/outbox.service';
@@ -62,6 +66,8 @@ export class BookingsService {
     private readonly sagaService: SagaService,
     private readonly inventoryService: InventoryService,
     private readonly walletService: WalletService,
+    @InjectRepository(PlatformSetting)
+    private readonly platformSettingRepository: Repository<PlatformSetting>,
   ) {}
 
   async create(passengerId: string, createBookingDto: CreateBookingDto) {
@@ -658,4 +664,281 @@ export class BookingsService {
       await this.recalculateTripSeats(tripId);
     }
   }
+
+  async getCommissionConfig(): Promise<CommissionConfig> {
+    try {
+      const cached = await this.redisService.get('platform:commission_config');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+
+    const record = await this.platformSettingRepository.findOne({
+      where: { key: 'commission_config' },
+    });
+    if (record && record.value) {
+      try {
+        await this.redisService.set('platform:commission_config', JSON.stringify(record.value), 3600);
+      } catch {}
+      return record.value as CommissionConfig;
+    }
+
+    return {
+      commissionType: 'PERCENTAGE',
+      commissionValue: 10,
+      deductionTiming: 'INSTANT',
+      minWalletBalance: 500,
+      autoPauseTrips: true,
+      gracePeriodHours: 24,
+      freeCancellationHours: 4,
+      lateCancellationRefundPercent: 50,
+    };
+  }
+
+  calculateCommission(config: CommissionConfig, totalAmount: number, numberOfSeats: number): number {
+    switch (config.commissionType) {
+      case 'FIXED_PER_SEAT':
+        return Math.round(Number(config.commissionValue) * numberOfSeats);
+      case 'FIXED_PER_TRIP':
+        return Math.round(Number(config.commissionValue));
+      case 'PERCENTAGE':
+      default:
+        return Math.round((Number(totalAmount) * Number(config.commissionValue)) / 100);
+    }
+  }
+
+  async submitUpiPayment(bookingId: string, passengerId: string, dto: SubmitUpiPaymentDto) {
+    const booking = await this.bookingRepository.findOne({
+      where: { id: bookingId },
+      relations: ['trip', 'trip.vehicle', 'trip.vehicle.owner'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    if (booking.passengerId !== passengerId) {
+      throw new ForbiddenException('You can only submit payment for your own booking');
+    }
+
+    booking.paymentMethod = 'direct_upi_qr';
+    booking.utrNumber = dto.utrNumber;
+    if (dto.paymentReceiptUrl) {
+      booking.paymentReceiptUrl = dto.paymentReceiptUrl;
+    }
+    booking.paymentStatus = 'processing' as any;
+    await this.bookingRepository.save(booking);
+
+    // Emit Kafka event
+    await this.kafkaService.publish('payment.upi_submitted', {
+      bookingId: booking.id,
+      bookingNumber: booking.bookingNumber,
+      passengerId,
+      amount: booking.finalAmount,
+      utrNumber: dto.utrNumber,
+      tripId: booking.tripId,
+      ownerId: booking.trip?.vehicle?.ownerId,
+    });
+
+    // Notify Vehicle Owner
+    if (booking.trip?.vehicle?.ownerId) {
+      await this.notificationsService.createNotification({
+        userId: booking.trip.vehicle.ownerId,
+        type: 'PAYMENT_SUBMITTED',
+        channel: 'PUSH',
+        title: 'UPI Payment Awaiting Verification',
+        message: `Passenger submitted UTR: ${dto.utrNumber} for ₹${booking.finalAmount} (Booking #${booking.bookingNumber}). Please verify and approve.`,
+        data: { bookingId: booking.id, utrNumber: dto.utrNumber },
+      });
+    }
+
+    return {
+      message: 'Payment reference submitted successfully. Verification pending by Vehicle Owner.',
+      booking,
+    };
+  }
+
+  async verifyUpiPayment(bookingId: string, verifierUserId: string, dto: VerifyUpiPaymentDto) {
+    const booking = await this.bookingRepository.findOne({
+      where: { id: bookingId },
+      relations: ['trip', 'trip.vehicle', 'trip.vehicle.owner', 'passenger'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    const ownerId = booking.trip?.vehicle?.ownerId;
+    const isOwner = ownerId === verifierUserId;
+    if (!isOwner) {
+      const user = await this.userRepository.findOne({
+        where: { id: verifierUserId },
+        relations: ['role'],
+      });
+      const isAdmin = user && ['ADMIN', 'SUPER_ADMIN', 'admin', 'super_admin'].includes(user.role?.name || user.userType || '');
+      if (!isAdmin) {
+        throw new ForbiddenException('Only the vehicle owner, driver, or admin can verify payment.');
+      }
+    }
+
+    if (dto.action === 'APPROVE') {
+      booking.paymentStatus = 'paid' as any;
+      booking.status = BookingStatus.CONFIRMED;
+      booking.paymentVerifiedAt = new Date();
+      booking.paymentVerifiedBy = verifierUserId;
+      await this.bookingRepository.save(booking);
+
+      // Confirm SQL seats
+      const seats = await this.seatRepository.find({
+        where: { bookingId: booking.id },
+      });
+      for (const seat of seats) {
+        seat.status = SeatStatus.BOOKED;
+        seat.reservedUntil = null;
+        await this.seatRepository.save(seat);
+      }
+      await this.recalculateTripSeats(booking.tripId);
+
+      // Deduct Super Admin platform commission from Owner's Wallet
+      if (ownerId) {
+        const commissionSetting = await this.getCommissionConfig();
+        const commissionAmount = this.calculateCommission(
+          commissionSetting,
+          booking.totalAmount,
+          booking.numberOfSeats || booking.seatNumbers?.length || 1,
+        );
+
+        booking.platformFee = commissionAmount;
+        await this.bookingRepository.save(booking);
+
+        if (commissionSetting.deductionTiming === 'INSTANT') {
+          await this.walletService.deductCommission(
+            ownerId,
+            commissionAmount,
+            booking.bookingNumber,
+            booking.id,
+          );
+        }
+      }
+
+      // Emit Kafka Event
+      await this.kafkaService.publish('payment.upi_verified', {
+        bookingId: booking.id,
+        bookingNumber: booking.bookingNumber,
+        passengerId: booking.passengerId,
+        verifiedBy: verifierUserId,
+        action: 'APPROVE',
+      });
+
+      // Send confirmation notification to passenger
+      await this.notificationsService.createNotification({
+        userId: booking.passengerId,
+        type: 'BOOKING_CONFIRMED',
+        channel: 'PUSH',
+        title: 'Payment Verified & Booking Confirmed!',
+        message: `Your payment for Booking #${booking.bookingNumber} was verified. Your seats are confirmed!`,
+        data: { bookingId: booking.id },
+      });
+
+      return {
+        message: 'Payment verified and booking confirmed successfully!',
+        booking,
+      };
+    } else {
+      booking.paymentStatus = 'failed' as any;
+      await this.bookingRepository.save(booking);
+
+      await this.kafkaService.publish('payment.upi_rejected', {
+        bookingId: booking.id,
+        bookingNumber: booking.bookingNumber,
+        passengerId: booking.passengerId,
+        verifiedBy: verifierUserId,
+        rejectionReason: dto.rejectionReason,
+      });
+
+      await this.notificationsService.createNotification({
+        userId: booking.passengerId,
+        type: 'PAYMENT_FAILED',
+        channel: 'PUSH',
+        title: 'Payment Verification Failed',
+        message: `Payment verification was rejected: ${dto.rejectionReason || 'UTR not verified in bank account'}. Please re-submit correct UTR.`,
+        data: { bookingId: booking.id },
+      });
+
+      return {
+        message: 'Payment verification rejected.',
+        booking,
+      };
+    }
+  }
+
+  async processOwnerCancellationRefund(bookingId: string, ownerUserId: string, dto: ProcessRefundDto) {
+    const booking = await this.bookingRepository.findOne({
+      where: { id: bookingId },
+      relations: ['trip', 'trip.vehicle', 'trip.vehicle.owner'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    const ownerId = booking.trip?.vehicle?.ownerId;
+    if (ownerId !== ownerUserId) {
+      const user = await this.userRepository.findOne({
+        where: { id: ownerUserId },
+        relations: ['role'],
+      });
+      const isAdmin = user && ['ADMIN', 'SUPER_ADMIN', 'admin', 'super_admin'].includes(user.role?.name || user.userType || '');
+      if (!isAdmin) {
+        throw new ForbiddenException('Only the vehicle owner or admin can process refund.');
+      }
+    }
+
+    booking.cancellationRefundStatus = 'REFUNDED';
+    booking.cancellationRefundUtr = dto.refundUtr;
+    booking.refundStatus = 'completed';
+    await this.bookingRepository.save(booking);
+
+    // Reverse Super Admin platform fee back to owner wallet
+    if (ownerId && booking.platformFee > 0) {
+      await this.walletService.reverseCommission(
+        ownerId,
+        booking.platformFee,
+        booking.bookingNumber,
+        booking.id,
+      );
+    }
+
+    await this.kafkaService.publish('booking.refund_completed', {
+      bookingId: booking.id,
+      bookingNumber: booking.bookingNumber,
+      passengerId: booking.passengerId,
+      refundAmount: booking.refundAmount,
+      refundUtr: dto.refundUtr,
+    });
+
+    await this.notificationsService.createNotification({
+      userId: booking.passengerId,
+      type: 'REFUND_COMPLETED',
+      channel: 'PUSH',
+      title: 'Refund Sent to your UPI',
+      message: `Your cancellation refund of ₹${booking.refundAmount} has been sent via UPI (UTR: ${dto.refundUtr}).`,
+      data: { bookingId: booking.id, refundUtr: dto.refundUtr },
+    });
+
+    return {
+      message: 'Refund marked as completed successfully and platform commission reversed!',
+      booking,
+    };
+  }
+
+  async getOwnerPendingVerifications(ownerUserId: string) {
+    return this.bookingRepository.find({
+      where: {
+        trip: { vehicle: { ownerId: ownerUserId } },
+        paymentStatus: 'processing' as any,
+      },
+      relations: ['passenger', 'trip', 'trip.vehicle'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
 }

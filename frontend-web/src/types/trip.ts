@@ -117,6 +117,10 @@ export interface Vehicle {
   hasEntertainment?: boolean;
   hasLuggageSpace?: boolean;
   amenities?: Record<string, any>;
+  owner?: UserSummary;
+  upiId?: string;
+  upiAccountName?: string;
+  upiQrCodeUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

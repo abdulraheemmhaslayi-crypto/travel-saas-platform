@@ -12,6 +12,11 @@ import { AuditLog } from '../database/entities/audit-log.entity';
 import { Driver } from '../database/entities/driver.entity';
 import { Role } from '../database/entities/role.entity';
 import { Permission } from '../database/entities/permission.entity';
+import { PlatformSetting } from '../database/entities/platform-setting.entity';
+import { Wallet } from '../database/entities/wallet.entity';
+import { WalletTransaction } from '../database/entities/wallet-transaction.entity';
+import { KafkaModule } from '../kafka/kafka.module';
+import { PlatformSettingsService } from './platform-settings.service';
 import { RedisModule } from '../redis/redis.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
@@ -32,8 +37,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
     RedisModule,
     NotificationsModule,
   ],
-  providers: [AdminService],
+  providers: [AdminService, PlatformSettingsService],
   controllers: [AdminController],
-  exports: [AdminService],
+  exports: [AdminService, PlatformSettingsService],
 })
 export class AdminModule {}

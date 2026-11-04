@@ -271,6 +271,89 @@ export class WalletService {
     }
   }
 
+  async deductCommission(
+    ownerUserId: string,
+    amount: number,
+    bookingNumber: string,
+    bookingId: string,
+  ) {
+    const lockKey = `lock:wallet:${ownerUserId}`;
+    const lock = await this.redisService.acquireLockWithRetry(lockKey, 5, 5, 50);
+    if (!lock) {
+      throw new ConflictException('A wallet transaction is already in progress for this owner account.');
+    }
+
+    try {
+      const transaction = await this.walletRepository.manager.transaction(async (manager) => {
+        let wallet = await manager.findOne(Wallet, {
+          where: { userId: ownerUserId },
+          lock: { mode: 'pessimistic_write' },
+        });
+
+        if (!wallet) {
+          wallet = manager.create(Wallet, {
+            userId: ownerUserId,
+            balance: 0,
+            totalCredited: 0,
+            totalDebited: 0,
+            isActive: true,
+            currency: 'INR',
+          });
+          await manager.save(wallet);
+        }
+
+        wallet.balance = Number(wallet.balance) - amount;
+        wallet.totalDebited = Number(wallet.totalDebited) + amount;
+        await manager.save(wallet);
+
+        const txn = manager.create(WalletTransaction, {
+          walletId: wallet.id,
+          transactionId: `COMM_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+          type: TransactionType.DEBIT,
+          purpose: TransactionPurpose.COMMISSION,
+          status: TransactionStatus.COMPLETED,
+          amount,
+          balanceAfter: wallet.balance,
+          description: `Platform commission for Booking #${bookingNumber}`,
+          referenceId: bookingId,
+          referenceType: 'booking',
+        });
+
+        await manager.save(txn);
+        return { wallet, txn };
+      });
+
+      // Emit Kafka Event for commission deducted
+      await this.kafkaService.publish('commission.deducted', {
+        ownerUserId,
+        amount,
+        bookingNumber,
+        bookingId,
+        newBalance: transaction.wallet.balance,
+      });
+
+      return transaction;
+    } finally {
+      await lock.release();
+    }
+  }
+
+  async reverseCommission(
+    ownerUserId: string,
+    amount: number,
+    bookingNumber: string,
+    bookingId: string,
+  ) {
+    return this.creditToWallet(
+      ownerUserId,
+      amount,
+      `Commission reversal for cancelled Booking #${bookingNumber}`,
+      bookingId,
+      TransactionPurpose.REFUND,
+      'booking',
+    );
+  }
+
   async payBooking(userId: string, bookingId: string) {
     const booking = await this.walletRepository.manager.findOne(Booking, {
       where: { id: bookingId },

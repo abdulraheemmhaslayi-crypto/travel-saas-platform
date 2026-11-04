@@ -74,6 +74,20 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   preferredLanguage?: string;
+  @ApiPropertyOptional({ example: 'owner@okhdfcbank' })
+  @IsOptional()
+  @IsString()
+  upiId?: string;
+
+  @ApiPropertyOptional({ example: 'Ramesh Sharma Enterprises' })
+  @IsOptional()
+  @IsString()
+  upiAccountName?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/qr.png' })
+  @IsOptional()
+  @IsString()
+  upiQrCodeUrl?: string;
 }
 
 export class CreateUserDto {

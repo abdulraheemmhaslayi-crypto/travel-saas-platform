@@ -38,6 +38,7 @@ import {
   PlayCircle,
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
+import DirectUpiSettingsCard from '@/components/fleet/DirectUpiSettingsCard';
 import Button from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
@@ -412,6 +413,15 @@ export default function FleetOwnerDashboardPage() {
             subText="Departing today"
           />
           <KpiCard
+            label="Payment Approvals"
+            value="Direct UPI"
+            icon={<Receipt className="w-5 h-5" />}
+            iconColor="text-blue-700"
+            iconBg="bg-blue-50/50"
+            subText="Review passenger UTRs"
+            href="/dashboard/fleet-owner/bookings?tab=upi-approvals"
+          />
+          <KpiCard
             label="Monthly Revenue"
             value={fmtCurrency(revenue?.thisMonth)}
             icon={<DollarSign className="w-5 h-5" />}
@@ -421,6 +431,9 @@ export default function FleetOwnerDashboardPage() {
             href="/dashboard/fleet-owner/analytics?tab=revenue"
           />
         </div>
+
+        {/* ── Direct UPI & QR Code Settings ─────────────────────────────── */}
+        <DirectUpiSettingsCard />
 
         {/* ── Main 3-column grid ─────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

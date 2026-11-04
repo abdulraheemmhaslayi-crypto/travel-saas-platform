@@ -310,7 +310,7 @@ function BookingsContent() {
               amount={Number(payTarget.finalAmount) || Number(payTarget.totalAmount) || 0}
               currency={payTarget.currency || 'INR'}
               bookingId={payTarget.id}
-              provider="RAZORPAY"
+              provider="DIRECT_UPI"
               onSuccess={handlePaymentSuccess}
               onError={(error) => showToast(error, 'error')}
             />

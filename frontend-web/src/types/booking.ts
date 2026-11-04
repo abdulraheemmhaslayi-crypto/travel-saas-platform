@@ -61,6 +61,13 @@ export interface Booking {
   paymentProvider?: string;
   transactionId?: string;
   providerOrderId?: string;
+  utrNumber?: string;
+  paymentReceiptUrl?: string;
+  paymentVerifiedAt?: string;
+  paymentVerifiedBy?: string;
+  cancellationUpiId?: string;
+  cancellationRefundUtr?: string;
+  cancellationRefundStatus?: 'NONE' | 'PENDING' | 'REFUNDED' | 'REJECTED';
 
   // Timestamps
   createdAt: string;

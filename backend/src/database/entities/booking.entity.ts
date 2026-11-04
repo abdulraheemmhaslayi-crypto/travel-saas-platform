@@ -161,6 +161,30 @@ export class Booking {
   @Column({ type: 'varchar', length: 50, nullable: true })
   refundStatus: string;
 
+  @Column({ type: 'varchar', length: 50, nullable: true, default: 'direct_upi_qr' })
+  paymentMethod: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  utrNumber: string;
+
+  @Column({ type: 'text', nullable: true })
+  paymentReceiptUrl: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  paymentVerifiedAt: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  paymentVerifiedBy: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  cancellationUpiId: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  cancellationRefundUtr: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true, default: 'NONE' })
+  cancellationRefundStatus: string;
+
   @Column({ type: 'simple-json', nullable: true })
   metadata: Record<string, any>;
 

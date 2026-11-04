@@ -13,6 +13,8 @@ import ProtectedRoute from '@/components/common/ProtectedRoute';
 import Modal from '@/components/ui/Modal';
 import Table from '@/components/ui/Table';
 import Select from '@/components/ui/Select';
+import CommissionSettingsTab from '@/components/admin/CommissionSettingsTab';
+import FleetWalletsTab from '@/components/admin/FleetWalletsTab';
 import { cn } from '@/lib/utils';
 import { Edit2, Trash2, Plus, Shield, Key, Settings, Check } from 'lucide-react';
 
@@ -22,7 +24,7 @@ function AdminSettingsContent() {
   const searchParams = useSearchParams();
   const { showToast } = useAppStore();
 
-  const tab = searchParams.get('tab') || 'platform';
+  const tab = searchParams.get('tab') || 'commission';
 
   const setTab = (newTab: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -410,7 +412,9 @@ function AdminSettingsContent() {
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8" aria-label="Tabs">
           {[
-            { id: 'platform', name: 'Platform Settings' },
+            { id: 'commission', name: 'Dynamic Commission & Wallet' },
+            { id: 'fleet-wallets', name: 'Fleet Wallets & Ledger' },
+            { id: 'platform', name: 'Platform Controls' },
             { id: 'roles', name: 'Roles Management' },
             { id: 'permissions', name: 'Permissions' },
             { id: 'role-permissions', name: 'Role-Permissions Map' },
@@ -435,6 +439,10 @@ function AdminSettingsContent() {
       </div>
 
       {/* Tab Contents */}
+      {tab === 'commission' && <CommissionSettingsTab />}
+
+      {tab === 'fleet-wallets' && <FleetWalletsTab />}
+
       {tab === 'platform' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card>

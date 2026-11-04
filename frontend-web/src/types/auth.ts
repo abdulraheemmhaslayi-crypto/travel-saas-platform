@@ -17,6 +17,9 @@ export interface User {
   country?: string;
   emergencyContactPhone?: string;
   emergencyContactName?: string;
+  upiId?: string;
+  upiAccountName?: string;
+  upiQrCodeUrl?: string;
   kycDocumentType?: string;
   kycDocumentNumber?: string;
   kycSubmittedAt?: string;

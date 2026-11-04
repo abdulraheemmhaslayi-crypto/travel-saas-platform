@@ -737,7 +737,39 @@ class ApiClient {
   public async getTicketCategories() {
     return this.client.get('/support/categories');
   }
+
+  // Direct UPI Payment & Verification
+  public async submitUpiPayment(bookingId: string, data: { utrNumber: string; paymentReceiptUrl?: string }) {
+    return this.client.post(`/bookings/${bookingId}/submit-upi`, data);
+  }
+
+  public async verifyUpiPayment(bookingId: string, data: { action: 'APPROVE' | 'REJECT'; rejectionReason?: string }) {
+    return this.client.post(`/bookings/${bookingId}/verify-upi`, data);
+  }
+
+  public async processOwnerRefund(bookingId: string, data: { refundUtr: string }) {
+    return this.client.post(`/bookings/${bookingId}/process-refund`, data);
+  }
+
+  public async getOwnerPendingVerifications() {
+    return this.client.get('/bookings/owner/pending-verifications');
+  }
+
+  // Super Admin Dynamic Commission & Fleet Wallets
+  public async getCommissionSettings() {
+    return this.client.get('/admin/commission-settings');
+  }
+
+  public async updateCommissionSettings(data: any) {
+    return this.client.put('/admin/commission-settings', data);
+  }
+
+  public async getFleetWallets() {
+    return this.client.get('/admin/fleet-wallets');
+  }
+
 }
 
 export const apiClient = new ApiClient();
 export default apiClient;
+

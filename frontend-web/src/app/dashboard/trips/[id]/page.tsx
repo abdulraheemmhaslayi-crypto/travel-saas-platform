@@ -877,18 +877,21 @@ const handleBook = async () => {
         </div>
       </Modal>
 
-      {/* ── Payment Gateway Modal ── */}
+      {/* ── Payment Modal: Direct Vehicle Owner UPI / QR ── */}
       <Modal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        title="Complete Order Payment"
+        title="Pay Vehicle Owner via UPI / QR"
         size="md"
       >
         <PaymentForm
           amount={Number(paymentAmount) || Number(totalFinalAmount)}
           currency={currentTrip.currency || 'INR'}
           bookingId={bookingId}
-          provider="RAZORPAY"
+          ownerUpiId={currentTrip.vehicle?.upiId || (currentTrip.vehicle as any)?.owner?.upiId}
+          ownerName={currentTrip.vehicle?.upiAccountName || (currentTrip.vehicle as any)?.owner?.upiAccountName || currentTrip.operatorName}
+          ownerQrCodeUrl={currentTrip.vehicle?.upiQrCodeUrl || (currentTrip.vehicle as any)?.owner?.upiQrCodeUrl}
+          provider="DIRECT_UPI"
           onSuccess={handlePaymentSuccess}
           onError={(error) => showToast(error, 'error')}
         />

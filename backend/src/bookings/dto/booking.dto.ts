@@ -91,6 +91,11 @@ export class BookingQueryDto {
 }
 
 export class CancelBookingDto {
+  @ApiPropertyOptional({ example: 'user@okhdfcbank' })
+  @IsOptional()
+  @IsString()
+  refundUpiId?: string;
+
   @ApiProperty({ example: 'Change of plans' })
   @IsString()
   @IsNotEmpty()
@@ -101,4 +106,33 @@ export class UpdateBookingStatusDto {
   @ApiProperty({ enum: BookingStatus, example: BookingStatus.CHECKED_IN })
   @IsEnum(BookingStatus)
   status: BookingStatus;
+}
+export class SubmitUpiPaymentDto {
+  @ApiProperty({ example: '123456789012' })
+  @IsString()
+  @IsNotEmpty()
+  utrNumber: string;
+
+  @ApiPropertyOptional({ example: 'https://storage.../receipt.jpg' })
+  @IsOptional()
+  @IsString()
+  paymentReceiptUrl?: string;
+}
+
+export class VerifyUpiPaymentDto {
+  @ApiProperty({ example: 'APPROVE', enum: ['APPROVE', 'REJECT'] })
+  @IsEnum(['APPROVE', 'REJECT'])
+  action: 'APPROVE' | 'REJECT';
+
+  @ApiPropertyOptional({ example: 'Payment not credited to bank account' })
+  @IsOptional()
+  @IsString()
+  rejectionReason?: string;
+}
+
+export class ProcessRefundDto {
+  @ApiProperty({ example: '123456789012' })
+  @IsString()
+  @IsNotEmpty()
+  refundUtr: string;
 }

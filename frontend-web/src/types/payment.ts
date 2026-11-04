@@ -20,7 +20,7 @@ export type PaymentStatus =
   | 'PROCESSING'
   | 'REFUND_PENDING'
   | 'REFUND_COMPLETED';
-export type PaymentProvider = 'STRIPE' | 'RAZORPAY' | 'WALLET';
+export type PaymentProvider = 'DIRECT_UPI' | 'WALLET' | 'RAZORPAY' | 'STRIPE';
 
 export interface StripePaymentIntent {
   clientSecret: string;

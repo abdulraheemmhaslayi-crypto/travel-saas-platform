@@ -26,6 +26,9 @@ import {
   BookingQueryDto,
   CancelBookingDto,
   UpdateBookingStatusDto,
+  SubmitUpiPaymentDto,
+  VerifyUpiPaymentDto,
+  ProcessRefundDto,
 } from './dto/booking.dto';
 
 @ApiTags('Bookings')
@@ -97,6 +100,51 @@ export class BookingsController {
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'status', required: false })
+
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/submit-upi')
+  @ApiOperation({ summary: 'Submit Direct UPI payment UTR by Passenger' })
+  async submitUpi(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: SubmitUpiPaymentDto,
+  ) {
+    return this.bookingsService.submitUpiPayment(id, userId, dto);
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/verify-upi')
+  @ApiOperation({ summary: 'Verify Direct UPI payment by Vehicle Owner/Driver/Admin' })
+  async verifyUpi(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: VerifyUpiPaymentDto,
+  ) {
+    return this.bookingsService.verifyUpiPayment(id, userId, dto);
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/process-refund')
+  @ApiOperation({ summary: 'Process cancellation refund by Vehicle Owner' })
+  async processRefund(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: ProcessRefundDto,
+  ) {
+    return this.bookingsService.processOwnerCancellationRefund(id, userId, dto);
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @Get('owner/pending-verifications')
+  @ApiOperation({ summary: 'Get bookings pending payment verification for vehicle owner' })
+  async getPendingVerifications(@CurrentUser('id') userId: string) {
+    return this.bookingsService.getOwnerPendingVerifications(userId);
+  }
+
   async findAll(@Query() query: BookingQueryDto) {
     return this.bookingsService.findAll(query);
   }

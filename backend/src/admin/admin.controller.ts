@@ -266,4 +266,35 @@ export class AdminController {
   ) {
     return this.adminService.updateRolePermissions(roleId, body.permissionIds);
   }
+
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.SUPER_ADMIN)
+  @Get('commission-settings')
+  @ApiOperation({ summary: 'Get dynamic platform commission settings' })
+  async getCommissionSettings() {
+    return this.adminService.getCommissionSettings();
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.SUPER_ADMIN)
+  @Put('commission-settings')
+  @ApiOperation({ summary: 'Update dynamic platform commission settings (Super Admin)' })
+  async updateCommissionSettings(
+    @Body() dto: any,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.adminService.updateCommissionSettings(dto, adminId);
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.SUPER_ADMIN)
+  @Get('fleet-wallets')
+  @ApiOperation({ summary: 'Get all vehicle owner fleet wallets & ledger' })
+  async getFleetWallets() {
+    return this.adminService.getFleetWallets();
+  }
+
 }
