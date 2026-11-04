@@ -190,17 +190,17 @@ export default function PassengerDashboardMobile({
         <div className="flex flex-col w-full animate-fadeIn">
           {/* ── TOP SCENIC KOKAN LANDSCAPE & BRAND HEADER ──────────────────── */}
           <div className="relative w-full h-[220px] sm:h-[240px] shrink-0 overflow-hidden">
-            {/* Scenic Kokan Beach Landscape Background */}
+            {/* Scenic Kokan Beach Landscape Background (Clean Sky without logo collisions) */}
             <div
               className="absolute inset-0 bg-cover bg-center"
               style={{
-                backgroundImage: `url('/images/kokan-mobile-header.jpg')`,
+                backgroundImage: `url('/images/kokan-dashboard-bg.jpg')`,
                 backgroundPosition: 'center 35%',
               }}
             />
 
-            {/* Subtle top/bottom gradient overlay for crystal clear contrast */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/35 pointer-events-none" />
+            {/* Rich multi-stop gradient overlay for maximum readability & high contrast */}
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-900/35 to-black/55 pointer-events-none" />
 
             {/* Top Bar: Brand Logo & Sign In / User Profile */}
             <div className="relative z-10 flex items-center justify-between px-4 pt-3.5">
@@ -210,10 +210,10 @@ export default function PassengerDashboardMobile({
                   <BusFront className="w-5 h-5 text-[#1D68F2] stroke-[2.2]" />
                 </div>
                 <div>
-                  <h1 className="text-[19px] sm:text-xl font-bold text-white tracking-tight leading-none drop-shadow-md">
+                  <h1 className="text-[19px] sm:text-xl font-bold text-white tracking-tight leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     Kokan Travel
                   </h1>
-                  <p className="text-[11px] text-white/95 font-medium tracking-wide mt-1 drop-shadow-xs">
+                  <p className="text-[11px] text-white/95 font-medium tracking-wide mt-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                     Intercity Rides Across Maharashtra
                   </p>
                 </div>
@@ -223,7 +223,7 @@ export default function PassengerDashboardMobile({
               {user ? (
                 <Link
                   href="/dashboard/profile"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-[#1D68F2] font-semibold text-xs shadow-md active:scale-95 transition-transform shrink-0"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-[#1D68F2] font-semibold text-xs shadow-md active:scale-95 transition-transform shrink-0"
                 >
                   <User className="w-3.5 h-3.5 stroke-[2]" />
                   <span>{user.firstName || 'Profile'}</span>
@@ -241,11 +241,11 @@ export default function PassengerDashboardMobile({
 
             {/* Hero Title & Subtitle: "Where to? 👋" */}
             <div className="relative z-10 px-4 pt-4 pb-8">
-              <h2 className="text-[26px] sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2 drop-shadow-md leading-tight">
+              <h2 className="text-[26px] sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] leading-tight">
                 <span>{user?.firstName ? `Where to, ${user.firstName}?` : 'Where to?'}</span>
                 <span>👋</span>
               </h2>
-              <p className="text-xs sm:text-[13px] text-white/95 font-medium mt-1 drop-shadow-sm max-w-[290px] leading-snug">
+              <p className="text-xs sm:text-[13px] text-white/95 font-medium mt-1 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] max-w-[290px] leading-snug">
                 Search and compare intercity rides across Maharashtra
               </p>
             </div>
