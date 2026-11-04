@@ -35,7 +35,7 @@ const MobileNav: React.FC = () => {
     // Clean, focused 3-item navigation for unauthenticated guests
     if (!isAuthenticated || !user) {
       return [
-        { href: '/dashboard/passenger', label: 'Search Rides', icon: Search },
+        { href: '/dashboard/passenger', label: 'Search', icon: Search },
         { href: '/dashboard/passenger/popular-routes', label: 'Routes', icon: Compass },
         { href: '/login', label: 'Sign In', icon: User },
       ];

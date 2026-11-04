@@ -50,12 +50,13 @@ const Navbar: React.FC = () => {
   const isSuperAdmin = String(user?.role || '').toUpperCase() === 'SUPER_ADMIN';
   const pathname = usePathname();
   const isTripDetailPage = pathname?.startsWith('/dashboard/trips/');
+  const isPassengerMobilePage = pathname === '/dashboard/passenger';
 
   return (
     <nav
       className={cn(
         'bg-white/95 backdrop-blur-md border-b border-gray-150 sticky top-0 z-40',
-        isTripDetailPage && 'hidden lg:block'
+        (isTripDetailPage || isPassengerMobilePage) && 'hidden lg:block'
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

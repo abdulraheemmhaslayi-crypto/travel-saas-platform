@@ -43,6 +43,7 @@ export type OSMAutocompleteProps = {
   onUseCurrentLocation?: () => void;
   isLocating?: boolean;
   onClear?: () => void;
+  showSearchIcon?: boolean;
 };
 
 // In-memory cache to make repeated searches instantaneous
@@ -91,6 +92,7 @@ export default function OSMAutocomplete({
   onUseCurrentLocation,
   isLocating = false,
   onClear,
+  showSearchIcon,
 }: OSMAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [show, setShow] = useState(false);
@@ -315,6 +317,9 @@ export default function OSMAutocomplete({
 
       {/* Input Container */}
       <div className="relative flex items-center">
+        {showSearchIcon && (
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none z-10 stroke-[1.8]" />
+        )}
         <input
           ref={inputRef}
           type="text"
@@ -334,7 +339,7 @@ export default function OSMAutocomplete({
           required={required}
           className={cn(
             'w-full h-[46px] bg-white rounded-[12px] border border-[#E2E8F0] text-[14px] font-normal text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 transition-all shadow-[0_2px_8px_rgba(15,23,42,0.03)]',
-            'pl-3.5 sm:pl-4',
+            showSearchIcon ? 'pl-10' : 'pl-3.5 sm:pl-4',
             onUseCurrentLocation ? 'pr-24' : value ? 'pr-10' : 'pr-3.5'
           )}
         />

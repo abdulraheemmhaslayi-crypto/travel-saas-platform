@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { loadGooglePlaces } from './googleLoader';
 import { googleMapsApiKey } from '@/lib/mapConfig';
-import { Navigation, Loader2, X } from 'lucide-react';
+import { Navigation, Loader2, X, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { OSMAutocompleteProps } from './OSMAutocomplete';
 
@@ -19,6 +19,7 @@ export default function GoogleAutocomplete({
   onUseCurrentLocation,
   isLocating = false,
   onClear,
+  showSearchIcon,
 }: OSMAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const selectedRef = useRef(false);
@@ -85,6 +86,9 @@ export default function GoogleAutocomplete({
       )}
 
       <div className="relative flex items-center">
+        {showSearchIcon && (
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none z-10 stroke-[1.8]" />
+        )}
         <input
           ref={inputRef}
           type="text"
@@ -97,7 +101,7 @@ export default function GoogleAutocomplete({
           required={required}
           className={cn(
             'w-full bg-white rounded-xl border border-gray-200/90 text-xs sm:text-sm font-semibold text-gray-900 placeholder:text-gray-400 placeholder:font-normal focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 py-2.5 transition-all shadow-2xs',
-            'pl-3 sm:pl-3.5',
+            showSearchIcon ? 'pl-10' : 'pl-3 sm:pl-3.5',
             onUseCurrentLocation ? 'pr-24' : value ? 'pr-9' : 'pr-3'
           )}
         />
