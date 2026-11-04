@@ -42,3 +42,4 @@ export class PlatformSetting {
   @UpdateDateColumn()
   updatedAt: Date;
 }
+
