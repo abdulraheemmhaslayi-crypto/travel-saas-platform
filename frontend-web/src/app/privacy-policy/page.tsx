@@ -17,9 +17,30 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - Kokan Travel',
-  description: 'Understand how Kokan Travel collects, uses, and safeguards your personal data, including location tracking and KYC validation.',
+  title: 'Privacy Policy',
+  description:
+    'Understand how Kokan Travel collects, uses, and safeguards your personal data, including location tracking and KYC validation.',
   keywords: ['privacy policy', 'data protection', 'location tracking', 'KYC', 'Kokan Travel'],
+  openGraph: {
+    title: 'Privacy Policy | Kokan Travel',
+    description:
+      'Understand how Kokan Travel collects, uses, and safeguards your personal data, including location tracking and KYC validation.',
+    images: [
+      {
+        url: '/images/kokan-og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Kokan Travel Privacy Policy',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Privacy Policy | Kokan Travel',
+    description:
+      'Understand how Kokan Travel collects, uses, and safeguards your personal data, including location tracking and KYC validation.',
+    images: ['/images/kokan-og-image.jpg'],
+  },
 };
 
 export default function PrivacyPolicyPage() {

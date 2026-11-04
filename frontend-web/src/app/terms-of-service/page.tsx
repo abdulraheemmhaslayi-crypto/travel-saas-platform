@@ -16,9 +16,30 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service - Kokan Travel',
-  description: 'Review the Terms of Service for Kokan Travel, covering registration, bookings, safety policies, payouts, and cancellations.',
+  title: 'Terms of Service',
+  description:
+    'Review the Terms of Service for Kokan Travel, covering registration, bookings, safety policies, payouts, and cancellations.',
   keywords: ['terms of service', 'user agreement', 'cancellation policy', 'refunds', 'Kokan Travel'],
+  openGraph: {
+    title: 'Terms of Service | Kokan Travel',
+    description:
+      'Review the Terms of Service for Kokan Travel, covering registration, bookings, safety policies, payouts, and cancellations.',
+    images: [
+      {
+        url: '/images/kokan-og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Kokan Travel Terms of Service',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Terms of Service | Kokan Travel',
+    description:
+      'Review the Terms of Service for Kokan Travel, covering registration, bookings, safety policies, payouts, and cancellations.',
+    images: ['/images/kokan-og-image.jpg'],
+  },
 };
 
 export default function TermsOfServicePage() {
