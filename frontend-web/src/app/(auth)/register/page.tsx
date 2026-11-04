@@ -26,8 +26,9 @@ import {
 } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import MobileRegisterScreen from '@/components/mobile/MobileRegisterScreen';
 
-export default function RegisterPage() {
+function RegisterFormContent() {
   const router = useRouter();
   const { user, isAuthenticated, isInitializing, register: registerUser, getDashboardPath } = useAuth();
   const { showToast } = useAppStore();
@@ -442,5 +443,21 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <>
+      {/* Mobile-dedicated Screen (visible on mobile viewports < 768px) */}
+      <div className="block md:hidden">
+        <MobileRegisterScreen />
+      </div>
+
+      {/* Desktop Screen (visible on desktop viewports >= 768px) */}
+      <div className="hidden md:block">
+        <RegisterFormContent />
+      </div>
+    </>
   );
 }
