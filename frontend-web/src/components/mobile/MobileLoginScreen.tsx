@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,7 +18,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Check,
-  ShieldCheck,
 } from 'lucide-react';
 
 export default function MobileLoginScreen() {
@@ -83,7 +81,6 @@ export default function MobileLoginScreen() {
   };
 
   const handleGoogleSignIn = () => {
-    // In production or development with NextAuth/OAuth
     showToast('Redirecting to Google Secure Sign-in...', 'info');
     if (typeof window !== 'undefined') {
       window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent(returnUrl)}`;
@@ -101,7 +98,7 @@ export default function MobileLoginScreen() {
   return (
     <div className="min-h-screen bg-[#F0F5FA] relative flex flex-col justify-between overflow-x-hidden select-none font-sans">
       {/* ── TOP HERO LANDSCAPE & BRAND LOGO ───────────────────────────── */}
-      <div className="relative w-full h-[220px] sm:h-[240px] shrink-0 overflow-hidden">
+      <div className="relative w-full h-[225px] sm:h-[245px] shrink-0 overflow-hidden">
         {/* Scenic Kokan Beach Landscape Background */}
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -112,19 +109,19 @@ export default function MobileLoginScreen() {
         />
 
         {/* Subtle top gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/30 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/25 pointer-events-none" />
 
         {/* Back to Home / Search Button */}
         <Link
           href="/"
-          className="absolute top-4 left-4 z-20 flex items-center gap-1.5 text-xs font-bold text-white bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 active:scale-95 transition-transform"
+          className="absolute top-4 left-4 z-20 flex items-center gap-1.5 text-xs font-bold text-white bg-black/35 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 active:scale-95 transition-transform"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Home</span>
         </Link>
 
         {/* Brand Logo in Top Center of Scenery */}
-        <div className="absolute top-7 inset-x-0 flex flex-col items-center justify-center z-10 pointer-events-none">
+        <div className="absolute top-8 inset-x-0 flex flex-col items-center justify-center z-10 pointer-events-none">
           <div className="flex items-center gap-2 drop-shadow-md">
             {/* Palm & Sun Emblem */}
             <div className="w-10 h-10 sm:w-11 sm:h-11 relative shrink-0">
@@ -160,68 +157,73 @@ export default function MobileLoginScreen() {
       </div>
 
       {/* ── MAIN WHITE FLOATING CARD ──────────────────────────────────── */}
-      <div className="relative z-10 -mt-7 sm:-mt-8 flex-1 max-w-md w-full mx-auto px-0 sm:px-4 flex flex-col justify-between">
-        <div className="bg-white rounded-t-[32px] sm:rounded-3xl shadow-[0_-8px_35px_rgba(0,0,0,0.12)] border-t border-gray-100/80 px-5 sm:px-7 pt-4 pb-7 flex-1 flex flex-col justify-between">
+      <div className="relative z-10 -mt-8 sm:-mt-9 flex-1 max-w-md w-full mx-auto px-0 sm:px-4 flex flex-col justify-between">
+        <div className="bg-white rounded-t-[36px] sm:rounded-3xl shadow-[0_-8px_35px_rgba(0,0,0,0.12)] border-t border-gray-100/90 px-6 sm:px-8 pt-7 pb-8 flex-1 flex flex-col justify-between">
           <div>
-            {/* Top Center User Icon Badge */}
-            <div className="w-12 h-12 rounded-2xl bg-[#EEF4FF] border border-[#DCE7FD] flex items-center justify-center text-[#2563EB] mx-auto mb-2 shadow-2xs">
-              <User className="w-6 h-6 stroke-[2]" />
+            {/* ── WELCOME BACK SECTION ─────────────────────────────────── */}
+            <div className="flex flex-col items-center text-center mb-6">
+              {/* Soft Blue User Badge */}
+              <div className="w-[50px] h-[50px] rounded-[18px] bg-[#EEF4FF] border border-[#DCE7FD] flex items-center justify-center text-[#2563EB] mb-3.5 shadow-xs">
+                <User className="w-[22px] h-[22px] stroke-[2.2]" />
+              </div>
+
+              {/* Title */}
+              <h2 className="text-[26px] sm:text-[28px] font-black text-[#0F172A] tracking-tight leading-tight">
+                Welcome Back!
+              </h2>
+
+              {/* Subtitle */}
+              <p className="text-[13px] sm:text-sm text-gray-500 font-medium mt-1.5 leading-snug max-w-xs">
+                Sign in to manage your trips, bookings & wallet
+              </p>
             </div>
 
-            {/* Header Text */}
-            <h2 className="text-[23px] sm:text-[25px] font-extrabold text-[#0F172A] text-center tracking-tight">
-              Welcome Back!
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-500 text-center mt-1 mb-5">
-              Sign in to manage your trips, bookings & wallet
-            </p>
-
             {/* Segmented Switcher (Email / Phone) */}
-            <div className="flex p-1 bg-[#F1F5F9] rounded-2xl mb-4 border border-gray-150/60">
+            <div className="flex p-1 bg-[#F1F5F9] rounded-2xl mb-5 border border-slate-200/50">
               <button
                 type="button"
                 onClick={() => setLoginMethod('email')}
-                className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
+                className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
                   loginMethod === 'email'
                     ? 'bg-[#1D68F2] text-white shadow-xs'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                <Mail className="w-3.5 h-3.5" />
+                <Mail className="w-4 h-4" />
                 <span>Email</span>
               </button>
               <button
                 type="button"
                 onClick={() => setLoginMethod('phone')}
-                className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
+                className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
                   loginMethod === 'phone'
                     ? 'bg-[#1D68F2] text-white shadow-xs'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                <Phone className="w-3.5 h-3.5" />
+                <Phone className="w-4 h-4" />
                 <span>Phone</span>
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {/* Email / Phone Field */}
               <div>
-                <label className="text-xs font-bold text-[#0F172A] block mb-1">
+                <label className="text-xs font-bold text-[#0F172A] block mb-1.5">
                   {loginMethod === 'email' ? 'Email address' : 'Phone number'}
                 </label>
                 <div
-                  className={`relative flex items-center bg-white border rounded-xl px-3.5 py-2.5 transition-all ${
+                  className={`relative flex items-center bg-white border rounded-xl sm:rounded-2xl px-3.5 py-3 transition-all ${
                     errors.email || errors.phone
                       ? 'border-red-400 ring-2 ring-red-100'
-                      : 'border-gray-200 focus-within:border-[#1D68F2] focus-within:ring-2 focus-within:ring-blue-100'
+                      : 'border-gray-250 focus-within:border-[#1D68F2] focus-within:ring-2 focus-within:ring-blue-100'
                   }`}
                 >
                   {loginMethod === 'email' ? (
-                    <Mail className="w-4.5 h-4.5 text-gray-400 mr-2.5 shrink-0" />
+                    <Mail className="w-5 h-5 text-gray-400 mr-2.5 shrink-0" />
                   ) : (
-                    <Phone className="w-4.5 h-4.5 text-gray-400 mr-2.5 shrink-0" />
+                    <Phone className="w-5 h-5 text-gray-400 mr-2.5 shrink-0" />
                   )}
 
                   <input
@@ -239,7 +241,7 @@ export default function MobileLoginScreen() {
                   {/* Green validation checkmark when valid */}
                   {((loginMethod === 'email' && isEmailValid) ||
                     (loginMethod === 'phone' && isPhoneValid)) && (
-                    <Check className="w-4.5 h-4.5 text-emerald-500 shrink-0 stroke-[3]" />
+                    <Check className="w-5 h-5 text-emerald-500 shrink-0 stroke-[2.5]" />
                   )}
                 </div>
                 {loginMethod === 'email' && errors.email && (
@@ -252,17 +254,17 @@ export default function MobileLoginScreen() {
 
               {/* Password Field */}
               <div>
-                <label className="text-xs font-bold text-[#0F172A] block mb-1">
+                <label className="text-xs font-bold text-[#0F172A] block mb-1.5">
                   Password
                 </label>
                 <div
-                  className={`relative flex items-center bg-white border rounded-xl px-3.5 py-2.5 transition-all ${
+                  className={`relative flex items-center bg-white border rounded-xl sm:rounded-2xl px-3.5 py-3 transition-all ${
                     errors.password
                       ? 'border-red-400 ring-2 ring-red-100'
-                      : 'border-gray-200 focus-within:border-[#1D68F2] focus-within:ring-2 focus-within:ring-blue-100'
+                      : 'border-gray-250 focus-within:border-[#1D68F2] focus-within:ring-2 focus-within:ring-blue-100'
                   }`}
                 >
-                  <Lock className="w-4.5 h-4.5 text-gray-400 mr-2.5 shrink-0" />
+                  <Lock className="w-5 h-5 text-gray-400 mr-2.5 shrink-0" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••••••"
@@ -277,9 +279,9 @@ export default function MobileLoginScreen() {
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
-                      <EyeOff className="w-4.5 h-4.5 text-gray-500" />
+                      <EyeOff className="w-5 h-5 text-gray-500" />
                     ) : (
-                      <Eye className="w-4.5 h-4.5 text-gray-400" />
+                      <Eye className="w-5 h-5 text-gray-400" />
                     )}
                   </button>
                 </div>
@@ -289,7 +291,7 @@ export default function MobileLoginScreen() {
               </div>
 
               {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between text-xs pt-1 pb-1">
+              <div className="flex items-center justify-between text-xs pt-0.5 pb-1">
                 <label
                   htmlFor="mobile-remember-me"
                   className="flex items-center gap-2 cursor-pointer select-none"
@@ -316,10 +318,10 @@ export default function MobileLoginScreen() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-11 sm:h-12 bg-gradient-to-r from-[#1D68F2] to-[#2563EB] hover:from-blue-700 hover:to-blue-600 text-white font-bold text-sm sm:text-base rounded-xl shadow-md shadow-blue-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-12 bg-gradient-to-r from-[#1D68F2] to-[#2563EB] hover:from-blue-700 hover:to-blue-600 text-white font-bold text-sm sm:text-base rounded-2xl shadow-md shadow-blue-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <span>{isSubmitting ? 'Signing In...' : 'Sign In'}</span>
-                {!isSubmitting && <ArrowRight className="w-4 h-4" />}
+                {!isSubmitting && <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
               </button>
             </form>
 
@@ -339,9 +341,9 @@ export default function MobileLoginScreen() {
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              className="w-full h-11 sm:h-12 bg-white border border-gray-250 hover:bg-gray-50 active:scale-[0.99] text-gray-800 font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2.5 transition-all shadow-2xs"
+              className="w-full h-12 bg-white border border-gray-200 hover:bg-gray-50 active:scale-[0.99] text-gray-800 font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2.5 transition-all shadow-2xs"
             >
-              <svg className="w-4.5 h-4.5" viewBox="0 0 24 24">
+              <svg className="w-[18px] h-[18px] shrink-0" style={{ width: '18px', height: '18px', minWidth: '18px', minHeight: '18px' }} viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -359,7 +361,7 @@ export default function MobileLoginScreen() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>Continue with Google</span>
+              <span className="text-sm font-bold text-gray-700">Continue with Google</span>
             </button>
 
             {/* Footer Sign-up Link */}
