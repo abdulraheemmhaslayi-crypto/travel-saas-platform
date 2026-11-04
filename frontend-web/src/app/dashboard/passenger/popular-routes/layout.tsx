@@ -30,3 +30,4 @@ export const metadata: Metadata = {
 export default function PopularRoutesLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
+
