@@ -90,15 +90,15 @@ export default function MobileLoginScreen() {
   if (!isInitializing && isAuthenticated && user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p className="text-gray-600 font-medium animate-pulse">Already signed in. Redirecting to dashboard...</p>
+        <p className="text-slate-500 font-normal animate-pulse text-sm">Already signed in. Redirecting to dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F5FA] relative flex flex-col justify-between overflow-x-hidden select-none font-sans">
+    <div className="min-h-screen bg-[#F0F5FA] relative flex flex-col justify-between overflow-x-hidden select-none">
       {/* ── TOP HERO LANDSCAPE & BRAND LOGO ───────────────────────────── */}
-      <div className="relative w-full h-[225px] sm:h-[245px] shrink-0 overflow-hidden">
+      <div className="relative w-full h-[220px] sm:h-[240px] shrink-0 overflow-hidden">
         {/* Scenic Kokan Beach Landscape Background */}
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -114,14 +114,14 @@ export default function MobileLoginScreen() {
         {/* Back to Home / Search Button */}
         <Link
           href="/"
-          className="absolute top-4 left-4 z-20 flex items-center gap-1.5 text-xs font-bold text-white bg-black/35 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 active:scale-95 transition-transform"
+          className="absolute top-4 left-4 z-20 flex items-center gap-1.5 text-xs font-medium text-white bg-black/35 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 active:scale-95 transition-transform"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
+          <ArrowLeft className="w-3.5 h-3.5 stroke-[1.75]" />
           <span>Home</span>
         </Link>
 
         {/* Brand Logo in Top Center of Scenery */}
-        <div className="absolute top-8 inset-x-0 flex flex-col items-center justify-center z-10 pointer-events-none">
+        <div className="absolute top-7 inset-x-0 flex flex-col items-center justify-center z-10 pointer-events-none">
           <div className="flex items-center gap-2 drop-shadow-md">
             {/* Palm & Sun Emblem */}
             <div className="w-10 h-10 sm:w-11 sm:h-11 relative shrink-0">
@@ -144,11 +144,11 @@ export default function MobileLoginScreen() {
 
             {/* Brand Title */}
             <div className="text-left">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none drop-shadow-sm">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight leading-none drop-shadow-sm">
                 <span className="text-[#0B2545]">Kokan </span>
                 <span className="text-[#0284C7]">Tour</span>
               </h1>
-              <p className="text-[9px] sm:text-[10px] font-bold text-[#1E293B] tracking-wider mt-0.5 uppercase drop-shadow-2xs">
+              <p className="text-[9px] sm:text-[10px] font-medium text-[#1E293B] tracking-wider mt-0.5 uppercase drop-shadow-2xs">
                 Travel • Book • Explore
               </p>
             </div>
@@ -158,72 +158,72 @@ export default function MobileLoginScreen() {
 
       {/* ── MAIN WHITE FLOATING CARD ──────────────────────────────────── */}
       <div className="relative z-10 -mt-8 sm:-mt-9 flex-1 max-w-md w-full mx-auto px-0 sm:px-4 flex flex-col justify-between">
-        <div className="bg-white rounded-t-[36px] sm:rounded-3xl shadow-[0_-8px_35px_rgba(0,0,0,0.12)] border-t border-gray-100/90 px-6 sm:px-8 pt-7 pb-8 flex-1 flex flex-col justify-between">
+        <div className="bg-white rounded-t-[32px] sm:rounded-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] border-t border-slate-100 px-5 sm:px-7 pt-6 pb-7 flex-1 flex flex-col justify-between">
           <div>
-            {/* ── WELCOME BACK SECTION ─────────────────────────────────── */}
-            <div className="flex flex-col items-center text-center mb-6">
-              {/* Soft Blue User Badge */}
-              <div className="w-[50px] h-[50px] rounded-[18px] bg-[#EEF4FF] border border-[#DCE7FD] flex items-center justify-center text-[#2563EB] mb-3.5 shadow-xs">
-                <User className="w-[22px] h-[22px] stroke-[2.2]" />
+            {/* ── WELCOME BACK SECTION (CLEAN UBER/OLA STYLE) ───────────── */}
+            <div className="flex flex-col items-center text-center mb-5">
+              {/* Refined Soft-Blue User Badge */}
+              <div className="w-11 h-11 rounded-2xl bg-[#EEF4FF] border border-[#DCE7FD] flex items-center justify-center text-[#2563EB] mb-2.5 shadow-xs">
+                <User className="w-5 h-5 stroke-[1.6]" />
               </div>
 
-              {/* Title */}
-              <h2 className="text-[26px] sm:text-[28px] font-black text-[#0F172A] tracking-tight leading-tight">
+              {/* Title (Clean semibold, refined tracking) */}
+              <h2 className="text-[22px] sm:text-2xl font-semibold text-slate-900 tracking-tight leading-snug">
                 Welcome Back!
               </h2>
 
               {/* Subtitle */}
-              <p className="text-[13px] sm:text-sm text-gray-500 font-medium mt-1.5 leading-snug max-w-xs">
+              <p className="text-xs sm:text-[13px] text-slate-500 font-normal mt-1 leading-normal max-w-xs">
                 Sign in to manage your trips, bookings & wallet
               </p>
             </div>
 
             {/* Segmented Switcher (Email / Phone) */}
-            <div className="flex p-1 bg-[#F1F5F9] rounded-2xl mb-5 border border-slate-200/50">
+            <div className="flex p-1 bg-slate-100 rounded-xl mb-4.5 border border-slate-200/50">
               <button
                 type="button"
                 onClick={() => setLoginMethod('email')}
-                className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
                   loginMethod === 'email'
                     ? 'bg-[#1D68F2] text-white shadow-xs'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Mail className="w-4 h-4" />
+                <Mail className="w-3.5 h-3.5 stroke-[1.6]" />
                 <span>Email</span>
               </button>
               <button
                 type="button"
                 onClick={() => setLoginMethod('phone')}
-                className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
                   loginMethod === 'phone'
                     ? 'bg-[#1D68F2] text-white shadow-xs'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Phone className="w-4 h-4" />
+                <Phone className="w-3.5 h-3.5 stroke-[1.6]" />
                 <span>Phone</span>
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
               {/* Email / Phone Field */}
               <div>
-                <label className="text-xs font-bold text-[#0F172A] block mb-1.5">
+                <label className="text-xs font-medium text-slate-700 block mb-1">
                   {loginMethod === 'email' ? 'Email address' : 'Phone number'}
                 </label>
                 <div
-                  className={`relative flex items-center bg-white border rounded-xl sm:rounded-2xl px-3.5 py-3 transition-all ${
+                  className={`relative flex items-center bg-white border rounded-xl px-3.5 py-2.5 transition-all ${
                     errors.email || errors.phone
                       ? 'border-red-400 ring-2 ring-red-100'
-                      : 'border-gray-250 focus-within:border-[#1D68F2] focus-within:ring-2 focus-within:ring-blue-100'
+                      : 'border-slate-200 focus-within:border-[#1D68F2] focus-within:ring-2 focus-within:ring-blue-100'
                   }`}
                 >
                   {loginMethod === 'email' ? (
-                    <Mail className="w-5 h-5 text-gray-400 mr-2.5 shrink-0" />
+                    <Mail className="w-4 h-4 text-slate-400 mr-2.5 shrink-0 stroke-[1.5]" />
                   ) : (
-                    <Phone className="w-5 h-5 text-gray-400 mr-2.5 shrink-0" />
+                    <Phone className="w-4 h-4 text-slate-400 mr-2.5 shrink-0 stroke-[1.5]" />
                   )}
 
                   <input
@@ -233,65 +233,65 @@ export default function MobileLoginScreen() {
                         ? 'abdul.razzaque@quikro.com'
                         : '+91 98765 43210'
                     }
-                    className="w-full text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-transparent outline-none"
+                    className="w-full text-sm font-normal text-slate-900 placeholder:text-slate-400 bg-transparent outline-none"
                     autoComplete={loginMethod === 'email' ? 'email' : 'tel'}
                     {...register(loginMethod === 'email' ? 'email' : 'phone')}
                   />
 
-                  {/* Green validation checkmark when valid */}
+                  {/* Refined green validation checkmark when valid */}
                   {((loginMethod === 'email' && isEmailValid) ||
                     (loginMethod === 'phone' && isPhoneValid)) && (
-                    <Check className="w-5 h-5 text-emerald-500 shrink-0 stroke-[2.5]" />
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[1.75]" />
                   )}
                 </div>
                 {loginMethod === 'email' && errors.email && (
-                  <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.email.message}</p>
+                  <p className="text-[11px] text-red-500 mt-1 font-normal">{errors.email.message}</p>
                 )}
                 {loginMethod === 'phone' && errors.phone && (
-                  <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.phone.message}</p>
+                  <p className="text-[11px] text-red-500 mt-1 font-normal">{errors.phone.message}</p>
                 )}
               </div>
 
               {/* Password Field */}
               <div>
-                <label className="text-xs font-bold text-[#0F172A] block mb-1.5">
+                <label className="text-xs font-medium text-slate-700 block mb-1">
                   Password
                 </label>
                 <div
-                  className={`relative flex items-center bg-white border rounded-xl sm:rounded-2xl px-3.5 py-3 transition-all ${
+                  className={`relative flex items-center bg-white border rounded-xl px-3.5 py-2.5 transition-all ${
                     errors.password
                       ? 'border-red-400 ring-2 ring-red-100'
-                      : 'border-gray-250 focus-within:border-[#1D68F2] focus-within:ring-2 focus-within:ring-blue-100'
+                      : 'border-slate-200 focus-within:border-[#1D68F2] focus-within:ring-2 focus-within:ring-blue-100'
                   }`}
                 >
-                  <Lock className="w-5 h-5 text-gray-400 mr-2.5 shrink-0" />
+                  <Lock className="w-4 h-4 text-slate-400 mr-2.5 shrink-0 stroke-[1.5]" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••••••"
-                    className="w-full text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-transparent outline-none tracking-wider"
+                    className="w-full text-sm font-normal text-slate-900 placeholder:text-slate-400 bg-transparent outline-none tracking-wider"
                     autoComplete="current-password"
                     {...register('password')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+                    className="p-1 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
-                      <EyeOff className="w-5 h-5 text-gray-500" />
+                      <EyeOff className="w-4 h-4 stroke-[1.5]" />
                     ) : (
-                      <Eye className="w-5 h-5 text-gray-400" />
+                      <Eye className="w-4 h-4 stroke-[1.5]" />
                     )}
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.password.message}</p>
+                  <p className="text-[11px] text-red-500 mt-1 font-normal">{errors.password.message}</p>
                 )}
               </div>
 
               {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between text-xs pt-0.5 pb-1">
+              <div className="flex items-center justify-between text-xs pt-0.5 pb-0.5">
                 <label
                   htmlFor="mobile-remember-me"
                   className="flex items-center gap-2 cursor-pointer select-none"
@@ -301,14 +301,14 @@ export default function MobileLoginScreen() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 rounded-md border-gray-300 text-[#1D68F2] focus:ring-[#1D68F2] cursor-pointer"
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-[#1D68F2] focus:ring-[#1D68F2] cursor-pointer"
                   />
-                  <span className="text-gray-700 font-semibold text-xs">Remember me</span>
+                  <span className="text-slate-600 font-normal text-xs">Remember me</span>
                 </label>
 
                 <Link
                   href="/forgot-password"
-                  className="font-bold text-[#1D68F2] hover:text-blue-700 transition-colors text-xs"
+                  className="font-medium text-[#1D68F2] hover:text-blue-700 transition-colors text-xs"
                 >
                   Forgot password?
                 </Link>
@@ -318,30 +318,30 @@ export default function MobileLoginScreen() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-12 bg-gradient-to-r from-[#1D68F2] to-[#2563EB] hover:from-blue-700 hover:to-blue-600 text-white font-bold text-sm sm:text-base rounded-2xl shadow-md shadow-blue-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-11 sm:h-12 bg-[#1D68F2] hover:bg-blue-700 text-white font-medium text-sm sm:text-[15px] rounded-xl shadow-xs active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <span>{isSubmitting ? 'Signing In...' : 'Sign In'}</span>
-                {!isSubmitting && <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
+                {!isSubmitting && <ArrowRight className="w-4 h-4 stroke-[1.75]" />}
               </button>
             </form>
 
             {/* Divider "or continue with" */}
             <div className="relative my-4 text-center">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-3 text-[11px] font-medium text-gray-400">
+                <span className="bg-white px-3 text-[11px] font-normal text-slate-400">
                   or continue with
                 </span>
               </div>
             </div>
 
-            {/* Continue with Google */}
+            {/* Continue with Google (Exact 18px refined icon) */}
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              className="w-full h-12 bg-white border border-gray-200 hover:bg-gray-50 active:scale-[0.99] text-gray-800 font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2.5 transition-all shadow-2xs"
+              className="w-full h-11 sm:h-12 bg-white border border-slate-200 hover:bg-slate-50 active:scale-[0.99] text-slate-700 font-medium text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2.5 transition-all shadow-2xs"
             >
               <svg className="w-[18px] h-[18px] shrink-0" style={{ width: '18px', height: '18px', minWidth: '18px', minHeight: '18px' }} viewBox="0 0 24 24">
                 <path
@@ -361,16 +361,16 @@ export default function MobileLoginScreen() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span className="text-sm font-bold text-gray-700">Continue with Google</span>
+              <span className="text-sm font-medium text-slate-700">Continue with Google</span>
             </button>
 
             {/* Footer Sign-up Link */}
             <div className="mt-4 text-center">
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-slate-500 font-normal">
                 Don&apos;t have an account?{' '}
                 <Link
                   href="/register"
-                  className="font-bold text-[#1D68F2] hover:text-blue-700 hover:underline transition-colors ml-1"
+                  className="font-medium text-[#1D68F2] hover:text-blue-700 hover:underline transition-colors ml-1"
                 >
                   Create an account
                 </Link>
@@ -380,9 +380,9 @@ export default function MobileLoginScreen() {
         </div>
 
         {/* Bottom Decorative Coastal Foliage / Palm Leaves */}
-        <div className="relative w-full h-12 overflow-hidden pointer-events-none -mt-2">
+        <div className="relative w-full h-10 overflow-hidden pointer-events-none -mt-2">
           <div
-            className="absolute inset-0 bg-cover bg-bottom opacity-90"
+            className="absolute inset-0 bg-cover bg-bottom opacity-85"
             style={{
               backgroundImage: `url('/images/kokan-mobile-footer.png')`,
             }}
