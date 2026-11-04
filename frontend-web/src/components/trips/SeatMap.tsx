@@ -8,6 +8,7 @@ interface SeatMapProps {
   seats?: TripSeat[];
   vehicleType?: string;
   selectedSeats: number[];
+  seatGenders?: Record<number, 'male' | 'female'>;
   onSeatSelect: (seatNumber: number) => void;
   maxSelectable?: number;
   passengerGender?: 'male' | 'female';
@@ -17,6 +18,7 @@ const SeatMap: React.FC<SeatMapProps> = ({
   seats = [],
   vehicleType = 'Sedan',
   selectedSeats,
+  seatGenders,
   onSeatSelect,
   maxSelectable = 4,
   passengerGender = 'male',
@@ -148,6 +150,7 @@ const SeatMap: React.FC<SeatMapProps> = ({
                 const recommended = status === 'available' && isSeatRecommended(seatNumber);
                 const isUnavailable = status !== 'available' && status !== 'selected';
                 const isSelected = status === 'selected';
+                const selectedGender = isSelected ? (seatGenders?.[seatNumber] || passengerGender) : null;
 
                 return (
                   <button
@@ -167,11 +170,11 @@ const SeatMap: React.FC<SeatMapProps> = ({
                         'bg-pink-50/70 text-pink-900 border-pink-400 ring-2 ring-pink-300 ring-offset-1 hover:bg-pink-100 cursor-pointer shadow-xs',
                       // 3. Selected by Current User (Female)
                       isSelected &&
-                        passengerGender === 'female' &&
+                        selectedGender === 'female' &&
                         'bg-pink-600 text-white border-pink-700 shadow-md shadow-pink-200 scale-105 ring-2 ring-pink-400 ring-offset-1 cursor-pointer font-bold',
                       // 4. Selected by Current User (Male)
                       isSelected &&
-                        passengerGender === 'male' &&
+                        selectedGender === 'male' &&
                         'bg-blue-600 text-white border-blue-700 shadow-md shadow-blue-200 scale-105 ring-2 ring-blue-400 ring-offset-1 cursor-pointer font-bold',
                       // 5. Booked / Reserved by Female
                       isUnavailable &&
@@ -188,7 +191,7 @@ const SeatMap: React.FC<SeatMapProps> = ({
                     )}
                     title={
                       isSelected
-                        ? `Seat ${seatNumber} - Selected by you (${passengerGender === 'female' ? 'Female' : 'Male'})`
+                        ? `Seat ${seatNumber} - Selected for ${selectedGender === 'female' ? 'Female (♀)' : 'Male (♂)'} passenger`
                         : isUnavailable
                         ? `Seat ${seatNumber} - Booked ${gender ? `by ${gender === 'female' ? 'Female' : 'Male'} passenger` : ''}`
                         : recommended
@@ -209,7 +212,7 @@ const SeatMap: React.FC<SeatMapProps> = ({
                     {/* Gender Indicator Badges on Seat */}
                     {isSelected && (
                       <span className="text-[10px] font-black leading-none mt-0.5 text-white">
-                        {passengerGender === 'female' ? '♀' : '♂'}
+                        {selectedGender === 'female' ? '♀' : '♂'}
                       </span>
                     )}
 
@@ -265,15 +268,13 @@ const SeatMap: React.FC<SeatMapProps> = ({
 
           {/* Selected by You */}
           <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                'w-5 h-5 rounded-lg text-white shrink-0 flex items-center justify-center text-[10px] font-black shadow-xs',
-                passengerGender === 'female'
-                  ? 'bg-pink-600 border border-pink-700'
-                  : 'bg-blue-600 border border-blue-700'
-              )}
-            >
-              {passengerGender === 'female' ? '♀' : '♂'}
+            <div className="flex -space-x-1 shrink-0">
+              <div className="w-4 h-5 rounded-l-md text-white flex items-center justify-center text-[9px] font-black bg-blue-600 border border-blue-700">
+                ♂
+              </div>
+              <div className="w-4 h-5 rounded-r-md text-white flex items-center justify-center text-[9px] font-black bg-pink-600 border border-pink-700">
+                ♀
+              </div>
             </div>
             <span className="text-[11px]">Selected (You)</span>
           </div>

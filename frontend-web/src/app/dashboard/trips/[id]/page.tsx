@@ -65,6 +65,7 @@ export default function TripDetailPage() {
 
   const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
   const [passengerGender, setPassengerGender] = useState<'male' | 'female'>('male');
+  const [seatGenders, setSeatGenders] = useState<Record<number, 'male' | 'female'>>({});
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [bookingId, setBookingId] = useState<string>('');
@@ -129,11 +130,38 @@ export default function TripDetailPage() {
   }, [currentTrip]);
 
   const handleSeatSelect = (seatNumber: number) => {
-    setSelectedSeats((prev) =>
-      prev.includes(seatNumber)
-        ? prev.filter((s) => s !== seatNumber)
-        : [...prev, seatNumber]
-    );
+    setSelectedSeats((prev) => {
+      if (prev.includes(seatNumber)) {
+        setSeatGenders((gMap) => {
+          const next = { ...gMap };
+          delete next[seatNumber];
+          return next;
+        });
+        return prev.filter((s) => s !== seatNumber);
+      } else {
+        const maxLimit = Math.min(4, currentTrip?.availableSeats || 4);
+        if (prev.length >= maxLimit) {
+          showToast(`Maximum ${maxLimit} seats can be selected`, 'info');
+          return prev;
+        }
+        setSeatGenders((gMap) => ({
+          ...gMap,
+          [seatNumber]: passengerGender,
+        }));
+        return [...prev, seatNumber];
+      }
+    });
+  };
+
+  const toggleSeatGender = (seatNumber: number) => {
+    setSeatGenders((prev) => {
+      const current = prev[seatNumber] || passengerGender;
+      const nextGender = current === 'female' ? 'male' : 'female';
+      return {
+        ...prev,
+        [seatNumber]: nextGender,
+      };
+    });
   };
 
   const isBookingDisabled = 
@@ -191,13 +219,18 @@ const handleBook = async () => {
       if (unavailableSelected.length > 0) {
         showToast(`Seat ${unavailableSelected.join(', ')} has already been booked. Please select other seats.`, 'error');
         setSelectedSeats((prev) => prev.filter(s => !unavailableSelected.includes(s)));
+        setSeatGenders((gMap) => {
+          const next = { ...gMap };
+          unavailableSelected.forEach((s) => delete next[s]);
+          return next;
+        });
         setShowBookingModal(false);
         return;
       }
 
       const genders: Record<string, string> = {};
       selectedSeats.forEach((seatNum) => {
-        genders[seatNum.toString()] = passengerGender;
+        genders[seatNum.toString()] = seatGenders[seatNum] || passengerGender;
       });
 
       const booking = await createBooking({
@@ -462,36 +495,41 @@ const handleBook = async () => {
                 </div>
               )}
 
-              {/* Gender Preference Toggle (100% Mobile Safe) */}
+              {/* Gender Preference Toggle for Seat Selection */}
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                  Passenger Gender
-                </label>
-                <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-xl border border-gray-200 w-full">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+                    Gender For Seat Selection
+                  </label>
+                  <span className="text-[10px] font-semibold text-slate-400">
+                    Active: {passengerGender === 'female' ? '♀ Female' : '♂ Male'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 bg-gray-100/80 p-1 rounded-xl border border-gray-200 w-full">
                   <button
                     type="button"
                     onClick={() => setPassengerGender('male')}
                     className={cn(
-                      'py-1.5 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 truncate',
+                      'py-1.5 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 truncate active:scale-95',
                       passengerGender === 'male'
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'text-gray-500 hover:text-gray-900'
+                        ? 'bg-blue-600 text-white shadow-xs ring-1 ring-blue-700/20'
+                        : 'text-gray-600 hover:text-gray-900 bg-transparent'
                     )}
                   >
-                    <span className="text-xs font-bold">♂</span>
+                    <span className="text-sm font-bold">♂</span>
                     <span>Male</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setPassengerGender('female')}
                     className={cn(
-                      'py-1.5 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 truncate',
+                      'py-1.5 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 truncate active:scale-95',
                       passengerGender === 'female'
-                        ? 'bg-pink-600 text-white shadow-xs'
-                        : 'text-gray-500 hover:text-gray-900'
+                        ? 'bg-pink-600 text-white shadow-xs ring-1 ring-pink-700/20'
+                        : 'text-gray-600 hover:text-gray-900 bg-transparent'
                     )}
                   >
-                    <span className="text-xs font-bold">♀</span>
+                    <span className="text-sm font-bold">♀</span>
                     <span>Female</span>
                   </button>
                 </div>
@@ -503,6 +541,7 @@ const handleBook = async () => {
                   seats={currentTrip.seats}
                   vehicleType={currentTrip.vehicleType || currentTrip.vehicle?.type}
                   selectedSeats={selectedSeats}
+                  seatGenders={seatGenders}
                   onSeatSelect={handleSeatSelect}
                   maxSelectable={Math.min(4, currentTrip.availableSeats)}
                   passengerGender={passengerGender}
@@ -515,22 +554,36 @@ const handleBook = async () => {
                   <span className="text-slate-600 font-semibold">Selected Seats</span>
                   <div className="flex items-center gap-1.5 flex-wrap justify-end">
                     {selectedSeats.length > 0 ? (
-                      selectedSeats.map((s) => (
-                        <span
-                          key={s}
-                          className={cn(
-                            "font-extrabold px-2.5 py-0.5 rounded-lg text-xs flex items-center gap-1 border shadow-2xs",
-                            passengerGender === 'female'
-                              ? "bg-pink-50 text-pink-700 border-pink-300"
-                              : "bg-blue-50 text-blue-700 border-blue-300"
-                          )}
-                        >
-                          <span>Seat #{s}</span>
-                          <span className="font-black">
-                            {passengerGender === 'female' ? '♀ Female' : '♂ Male'}
+                      selectedSeats.map((s) => {
+                        const sGender = seatGenders[s] || passengerGender;
+                        return (
+                          <span
+                            key={s}
+                            className={cn(
+                              "font-extrabold px-2 py-0.5 rounded-lg text-xs flex items-center gap-1.5 border shadow-2xs transition-all",
+                              sGender === 'female'
+                                ? "bg-pink-50 text-pink-700 border-pink-300"
+                                : "bg-blue-50 text-blue-700 border-blue-300"
+                            )}
+                          >
+                            <span>Seat #{s}</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleSeatGender(s)}
+                              title="Click to toggle Male/Female for this seat"
+                              className={cn(
+                                "font-black text-[10px] px-1.5 py-0.5 rounded transition-transform active:scale-90 flex items-center gap-0.5 cursor-pointer",
+                                sGender === 'female'
+                                  ? "bg-pink-200/80 hover:bg-pink-300 text-pink-900"
+                                  : "bg-blue-200/80 hover:bg-blue-300 text-blue-900"
+                              )}
+                            >
+                              <span>{sGender === 'female' ? '♀ Female' : '♂ Male'}</span>
+                              <span className="text-[9px] opacity-70 ml-0.5">⇄</span>
+                            </button>
                           </span>
-                        </span>
-                      ))
+                        );
+                      })
                     ) : (
                       <span className="font-semibold text-slate-400">None selected</span>
                     )}
@@ -627,27 +680,33 @@ const handleBook = async () => {
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-3 pb-[calc(env(safe-area-inset-bottom,0px)+74px)] lg:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
         <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
           <div className="min-w-0">
-            <span className="text-[10px] font-bold block leading-none mb-1 truncate flex items-center gap-1.5">
+            <div className="text-[10px] font-bold block leading-none mb-1 flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
               {selectedSeats.length > 0 ? (
                 <>
-                  <span className="text-slate-700">
-                    {selectedSeats.length} Seat{selectedSeats.length > 1 ? 's' : ''} (#{selectedSeats.join(', #')})
+                  <span className="text-slate-700 font-extrabold shrink-0">
+                    {selectedSeats.length} Seat{selectedSeats.length > 1 ? 's' : ''}:
                   </span>
-                  <span
-                    className={cn(
-                      "font-black text-[9px] px-1.5 py-0.5 rounded border",
-                      passengerGender === 'female'
-                        ? "bg-pink-50 text-pink-700 border-pink-200"
-                        : "bg-blue-50 text-blue-700 border-blue-200"
-                    )}
-                  >
-                    {passengerGender === 'female' ? '♀ Female' : '♂ Male'}
-                  </span>
+                  {selectedSeats.map((s) => {
+                    const g = seatGenders[s] || passengerGender;
+                    return (
+                      <span
+                        key={s}
+                        className={cn(
+                          "font-black text-[9px] px-1.5 py-0.5 rounded border shrink-0 flex items-center gap-0.5",
+                          g === 'female'
+                            ? "bg-pink-50 text-pink-700 border-pink-200"
+                            : "bg-blue-50 text-blue-700 border-blue-200"
+                        )}
+                      >
+                        #{s} {g === 'female' ? '♀' : '♂'}
+                      </span>
+                    );
+                  })}
                 </>
               ) : (
                 <span className="text-slate-400">Select Seat(s)</span>
               )}
-            </span>
+            </div>
             <span className="text-lg font-black text-blue-600 leading-none">
               {currencySymbol} {selectedSeats.length > 0 ? totalFinalAmount : seatPrice}
             </span>
@@ -763,20 +822,26 @@ const handleBook = async () => {
 
           {/* Pricing Summary */}
           <div className="bg-slate-50 p-2.5 rounded-xl border border-gray-200 space-y-1.5 text-xs">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">Selected Seats ({selectedSeats.length})</span>
-              <div className="flex items-center gap-1.5 font-bold text-gray-800">
-                <span>#{selectedSeats.join(', #')}</span>
-                <span
-                  className={cn(
-                    "text-[10px] font-extrabold px-1.5 py-0.5 rounded border",
-                    passengerGender === 'female'
-                      ? "bg-pink-100 text-pink-700 border-pink-200"
-                      : "bg-blue-100 text-blue-700 border-blue-200"
-                  )}
-                >
-                  {passengerGender === 'female' ? '♀ Female' : '♂ Male'}
-                </span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-gray-500 font-medium">Selected Seats ({selectedSeats.length})</span>
+              <div className="flex items-center gap-1.5 font-bold text-gray-800 flex-wrap justify-end">
+                {selectedSeats.map((s) => {
+                  const g = seatGenders[s] || passengerGender;
+                  return (
+                    <span
+                      key={s}
+                      className={cn(
+                        "text-[10px] font-extrabold px-1.5 py-0.5 rounded border flex items-center gap-1",
+                        g === 'female'
+                          ? "bg-pink-100 text-pink-700 border-pink-200"
+                          : "bg-blue-100 text-blue-700 border-blue-200"
+                      )}
+                    >
+                      <span>Seat #{s}</span>
+                      <span>{g === 'female' ? '♀ Female' : '♂ Male'}</span>
+                    </span>
+                  );
+                })}
               </div>
             </div>
             <div className="flex justify-between">
