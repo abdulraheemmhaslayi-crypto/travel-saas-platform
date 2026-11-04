@@ -26,6 +26,7 @@ export default function DashboardLayout({
 
   const isMobileAppPage =
     pathname === '/dashboard/passenger' ||
+    pathname === '/dashboard/passenger/popular-routes' ||
     pathname?.startsWith('/dashboard/trips/') ||
     pathname === '/dashboard/trips';
 
