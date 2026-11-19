@@ -13,6 +13,7 @@ import { usePassengerStore } from '@/store/slices/passengerStore';
 import { formatCurrency, cn } from '@/lib/utils';
 import MapView, { MapMarker } from '@/components/maps/MapView';
 import SearchInput from '@/components/maps/SearchInput';
+import DatePicker from '@/components/ui/DatePicker';
 import Avatar from '@/components/ui/Avatar';
 import PassengerDashboardMobile from '@/components/passenger/PassengerDashboardMobile';
 import {
@@ -30,6 +31,7 @@ import {
   ChevronDown,
   Clock,
   Car,
+  Calendar,
   Search,
   Check,
   CreditCard,
@@ -74,6 +76,23 @@ function formatDuration(mins: number): string {
   return remainingMins > 0 ? `${hrs}h ${remainingMins}m` : `${hrs} hrs`;
 }
 
+function parseLocalDate(dateStr: string | undefined): Date | undefined {
+  if (!dateStr) return undefined;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return undefined;
+  const [year, month, day] = parts.map(Number);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return undefined;
+  return new Date(year, month - 1, day);
+}
+
+function formatLocalDate(date: Date | null | undefined): string {
+  if (!date) return '';
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 // Helper to choose car image based on vehicle model/type
 function getTripVehicleImage(vehicle?: any): string {
   if (!vehicle) return '/images/vehicles/comfort.png';
@@ -114,6 +133,14 @@ export default function PassengerDashboardPage() {
   const [destination, setDestination] = useState('');
   const [destLat, setDestLat] = useState<number | undefined>();
   const [destLng, setDestLng] = useState<number | undefined>();
+
+  const [date, setDate] = useState<string>('');
+  const todayStr = useMemo(() => formatLocalDate(new Date()), []);
+  const tomorrowStr = useMemo(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return formatLocalDate(tomorrow);
+  }, []);
 
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
 
@@ -187,6 +214,7 @@ export default function PassengerDashboardPage() {
               destination,
               destLat: destLat || coords.lat + 0.94,
               destLng: destLng || coords.lng - 0.29,
+              ...(date ? { date } : {}),
             });
           }
         } catch {
@@ -215,7 +243,7 @@ export default function PassengerDashboardPage() {
       },
       { timeout: 10000, enableHighAccuracy: true, maximumAge: 30000 }
     );
-  }, [destination, destLat, destLng, searchTrips, showToast]);
+  }, [destination, destLat, destLng, date, searchTrips, showToast]);
 
   // ─── Handle Pickup Place Select ──────────────────────────────────────────
   const handlePickupSelect = (address: string, lat: number, lng: number) => {
@@ -232,6 +260,7 @@ export default function PassengerDashboardPage() {
         destination,
         destLat: destLat || lat + 0.94,
         destLng: destLng || lng - 0.29,
+        ...(date ? { date } : {}),
       });
       setViewMode('available-rides');
     }
@@ -316,6 +345,7 @@ export default function PassengerDashboardPage() {
         destination: tempO,
         destLat: tempLat,
         destLng: tempLng,
+        ...(date ? { date } : {}),
       });
     }
   };
@@ -333,6 +363,7 @@ export default function PassengerDashboardPage() {
         destination: address,
         destLat: lat,
         destLng: lng,
+        ...(date ? { date } : {}),
       });
       setViewMode('available-rides');
     }
@@ -356,6 +387,7 @@ export default function PassengerDashboardPage() {
       destination: dst,
       destLat: dLat || (pickupPoint.lat + 0.94),
       destLng: dLng || (pickupPoint.lng - 0.29),
+      ...(date ? { date } : {}),
     });
     setViewMode('available-rides');
   };
@@ -373,6 +405,7 @@ export default function PassengerDashboardPage() {
       destination,
       destLat: destLat || pickupPoint.lat + 0.94,
       destLng: destLng || pickupPoint.lng - 0.29,
+      ...(date ? { date } : {}),
     });
     setViewMode('available-rides');
   };
@@ -499,6 +532,8 @@ export default function PassengerDashboardPage() {
           setOriginLng={setOriginLng}
           setDestLat={setDestLat}
           setDestLng={setDestLng}
+          date={date}
+          setDate={setDate}
           userCoords={userCoords}
           pickupPoint={pickupPoint}
           dropPoint={dropPoint}
@@ -738,6 +773,59 @@ export default function PassengerDashboardPage() {
                       setDestLat(undefined);
                       setDestLng(undefined);
                     }}
+                  />
+                </div>
+
+                {/* ── Departure Date Section (Matching trips/search) ── */}
+                <div className="pt-2 border-t border-gray-200/70">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[11px] sm:text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Departure Date</span>
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setDate(date === todayStr ? '' : todayStr)}
+                        className={cn(
+                          'px-2 py-0.5 rounded-md text-[10px] font-bold transition-all active:scale-95',
+                          date === todayStr
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                        )}
+                      >
+                        Today
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDate(date === tomorrowStr ? '' : tomorrowStr)}
+                        className={cn(
+                          'px-2 py-0.5 rounded-md text-[10px] font-bold transition-all active:scale-95',
+                          date === tomorrowStr
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                        )}
+                      >
+                        Tmrw
+                      </button>
+                      {date && (
+                        <button
+                          type="button"
+                          onClick={() => setDate('')}
+                          className="px-1.5 py-0.5 rounded-md text-[10px] font-semibold text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                          title="Clear date"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <DatePicker
+                    value={parseLocalDate(date)}
+                    onChange={(d) => setDate(formatLocalDate(d))}
+                    placeholder="Select Departure Date"
+                    minDate={new Date()}
+                    className="w-full text-xs sm:text-sm h-10"
                   />
                 </div>
               </div>

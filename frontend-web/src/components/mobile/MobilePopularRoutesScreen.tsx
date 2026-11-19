@@ -7,6 +7,8 @@ import { useAuthStore } from '@/store/slices/authSlice';
 import { useNotificationStore } from '@/store/slices/notificationSlice';
 import { useAppStore } from '@/store';
 import SearchInput from '@/components/maps/SearchInput';
+import DatePicker from '@/components/ui/DatePicker';
+import { cn } from '@/lib/utils';
 import {
   MapPin,
   ArrowRight,
@@ -15,6 +17,7 @@ import {
   Sparkles,
   Clock,
   Car,
+  Calendar,
   ShieldCheck,
   ArrowLeftRight,
   ArrowUpDown,
@@ -29,6 +32,23 @@ import {
   Crosshair,
   Info,
 } from 'lucide-react';
+
+const parseLocalDate = (dateStr: string | undefined): Date | undefined => {
+  if (!dateStr) return undefined;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return undefined;
+  const [year, month, day] = parts.map(Number);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return undefined;
+  return new Date(year, month - 1, day);
+};
+
+const formatLocalDate = (date: Date | null | undefined): string => {
+  if (!date) return '';
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
 
 export interface RouteDetails {
   id: string;
@@ -79,9 +99,17 @@ export default function MobilePopularRoutesScreen({
 
   const [pickupLocation, setPickupLocation] = useState('');
   const [destinationLocation, setDestinationLocation] = useState('');
+  const [departureDate, setDepartureDate] = useState('');
   const [isLocating, setIsLocating] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
+
+  const todayStr = useMemo(() => formatLocalDate(new Date()), []);
+  const tomorrowStr = useMemo(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return formatLocalDate(tomorrow);
+  }, []);
 
   // User initials for circular badge (e.g., 'AR' for Arman)
   const userInitials = useMemo(() => {
@@ -161,10 +189,11 @@ export default function MobilePopularRoutesScreen({
     }
     const originShort = pickupLocation.split(',')[0].trim();
     const destShort = destinationLocation.split(',')[0].trim();
+    const dateParam = departureDate ? `&date=${encodeURIComponent(departureDate)}` : '';
     router.push(
       `/dashboard/trips/search?origin=${encodeURIComponent(originShort)}&destination=${encodeURIComponent(
         destShort
-      )}`
+      )}${dateParam}`
     );
   };
 
@@ -372,6 +401,59 @@ export default function MobilePopularRoutesScreen({
             onChange={(v) => setDestinationLocation(v)}
             onPlaceSelect={(addr) => setDestinationLocation(addr)}
             onClear={() => setDestinationLocation('')}
+          />
+        </div>
+
+        {/* ── Departure Date Section (Matching trips/search) ─────────── */}
+        <div className="space-y-1.5 pt-2 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-[#1D68F2]" />
+              <span>Departure Date</span>
+            </label>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setDepartureDate(departureDate === todayStr ? '' : todayStr)}
+                className={cn(
+                  'px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all active:scale-95',
+                  departureDate === todayStr
+                    ? 'bg-[#1D68F2] text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                )}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                onClick={() => setDepartureDate(departureDate === tomorrowStr ? '' : tomorrowStr)}
+                className={cn(
+                  'px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all active:scale-95',
+                  departureDate === tomorrowStr
+                    ? 'bg-[#1D68F2] text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                )}
+              >
+                Tmrw
+              </button>
+              {departureDate && (
+                <button
+                  type="button"
+                  onClick={() => setDepartureDate('')}
+                  className="px-1.5 py-0.5 rounded-lg text-[10px] font-semibold text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                  title="Clear date"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+          <DatePicker
+            value={parseLocalDate(departureDate)}
+            onChange={(d) => setDepartureDate(formatLocalDate(d))}
+            placeholder="Select Departure Date"
+            minDate={new Date()}
+            className="w-full text-xs sm:text-sm h-11"
           />
         </div>
 
