@@ -18,9 +18,10 @@ import { cn } from '@/lib/utils';
 interface TripDetailsProps {
   trip: Trip;
   onBook?: () => void;
+  hideHeaderCard?: boolean;
 }
 
-const TripDetails: React.FC<TripDetailsProps> = ({ trip, onBook }) => {
+const TripDetails: React.FC<TripDetailsProps> = ({ trip, onBook, hideHeaderCard = false }) => {
   const departureDate = new Date(trip.departureDate);
   const isUpcoming = departureDate > new Date();
   const occupancyRate = trip.totalSeats > 0 ? ((trip.totalSeats - trip.availableSeats) / trip.totalSeats) * 100 : 0;
@@ -108,72 +109,74 @@ const TripDetails: React.FC<TripDetailsProps> = ({ trip, onBook }) => {
         </Card>
       )}
 
-      {/* Main Header / Meta Details */}
-      <Card className="border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
-        <div className="p-6">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <Badge variant={trip.status === 'SCHEDULED' ? 'info' : trip.status === 'COMPLETED' ? 'success' : trip.status === 'CANCELLED' ? 'danger' : 'warning'}>
-                  {trip.status}
-                </Badge>
-                {trip.vehicleType && (
-                  <Badge variant="outline" className="capitalize">{trip.vehicleType}</Badge>
-                )}
-                {trip.tripType && (
-                  <Badge variant="outline" className="uppercase text-[10px] tracking-wider">{trip.tripType.replace('_', ' ')}</Badge>
-                )}
-                {occupancyRate >= 80 && trip.status === 'SCHEDULED' && (
-                  <Badge variant="warning" size="sm">Filling Fast</Badge>
-                )}
-              </div>
-
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">
-                {trip.origin} <ArrowRight className="inline-block mx-1 w-5 h-5 text-gray-400" /> {trip.destination}
-              </h1>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-600">
-                <div className="flex items-center gap-2.5">
-                  <Calendar className="w-4.5 h-4.5 text-gray-400" />
-                  <div>
-                    <p className="font-semibold text-gray-800">Departure</p>
-                    <p className="text-xs text-gray-500">{formatDateTime(trip.departureDate)}</p>
-                  </div>
+      {/* Main Header / Meta Details (hidden if parent page provides hero header) */}
+      {!hideHeaderCard && (
+        <Card className="border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+          <div className="p-6">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+              <div className="flex-1">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <Badge variant={trip.status === 'SCHEDULED' ? 'info' : trip.status === 'COMPLETED' ? 'success' : trip.status === 'CANCELLED' ? 'danger' : 'warning'}>
+                    {trip.status}
+                  </Badge>
+                  {trip.vehicleType && (
+                    <Badge variant="outline" className="capitalize">{trip.vehicleType}</Badge>
+                  )}
+                  {trip.tripType && (
+                    <Badge variant="outline" className="uppercase text-[10px] tracking-wider">{trip.tripType.replace('_', ' ')}</Badge>
+                  )}
+                  {occupancyRate >= 80 && trip.status === 'SCHEDULED' && (
+                    <Badge variant="warning" size="sm">Filling Fast</Badge>
+                  )}
                 </div>
-                {trip.arrivalDate && (
+
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">
+                  {trip.origin} <ArrowRight className="inline-block mx-1 w-5 h-5 text-gray-400" /> {trip.destination}
+                </h1>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-600">
                   <div className="flex items-center gap-2.5">
-                    <Clock className="w-4.5 h-4.5 text-gray-400" />
+                    <Calendar className="w-4.5 h-4.5 text-gray-400" />
                     <div>
-                      <p className="font-semibold text-gray-800">Estimated Arrival</p>
-                      <p className="text-xs text-gray-500">{formatDateTime(trip.arrivalDate)}</p>
+                      <p className="font-semibold text-gray-800">Departure</p>
+                      <p className="text-xs text-gray-500">{formatDateTime(trip.departureDate)}</p>
                     </div>
                   </div>
-                )}
+                  {trip.arrivalDate && (
+                    <div className="flex items-center gap-2.5">
+                      <Clock className="w-4.5 h-4.5 text-gray-400" />
+                      <div>
+                        <p className="font-semibold text-gray-800">Estimated Arrival</p>
+                        <p className="text-xs text-gray-500">{formatDateTime(trip.arrivalDate)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="text-left lg:text-right border-t lg:border-t-0 border-gray-100 pt-4 lg:pt-0 flex flex-row lg:flex-col justify-between items-center lg:items-end gap-2">
-              <div>
-                <p className="text-3xl font-black text-primary-600">
-                  {formatCurrency(trip.pricePerSeat ?? trip.price, trip.currency)}
-                </p>
-                <p className="text-xs text-gray-500 font-medium">per seat</p>
-                {trip.basePrice !== undefined && trip.basePrice > 0 && (
-                  <p className="text-xs text-gray-400 mt-1">Base Fare: {formatCurrency(trip.basePrice, trip.currency)}</p>
-                )}
+              <div className="text-left lg:text-right border-t lg:border-t-0 border-gray-100 pt-4 lg:pt-0 flex flex-row lg:flex-col justify-between items-center lg:items-end gap-2">
+                <div>
+                  <p className="text-3xl font-black text-primary-600">
+                    {formatCurrency(trip.pricePerSeat ?? trip.price, trip.currency)}
+                  </p>
+                  <p className="text-xs text-gray-500 font-medium">per seat</p>
+                  {trip.basePrice !== undefined && trip.basePrice > 0 && (
+                    <p className="text-xs text-gray-400 mt-1">Base Fare: {formatCurrency(trip.basePrice, trip.currency)}</p>
+                  )}
+                </div>
+                <Button 
+                  onClick={onBook} 
+                  disabled={bookingState.disabled} 
+                  variant={bookingState.variant}
+                  className="px-6 py-2.5 font-bold shadow-sm"
+                >
+                  {bookingState.text}
+                </Button>
               </div>
-              <Button 
-                onClick={onBook} 
-                disabled={bookingState.disabled} 
-                variant={bookingState.variant}
-                className="px-6 py-2.5 font-bold shadow-sm"
-              >
-                {bookingState.text}
-              </Button>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {/* Route Stops Timeline */}
       <Card className="border border-gray-200 shadow-sm rounded-2xl">

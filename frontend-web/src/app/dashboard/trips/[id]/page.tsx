@@ -309,37 +309,35 @@ const handleBook = async () => {
   const vehicleImg = getTripVehicleImage(currentTrip.vehicle);
 
   return (
-    <div className="min-h-screen pb-36 lg:pb-12 bg-slate-50 w-full overflow-x-hidden select-none">
-      {/* ── Top Header Navigation Bar ── */}
-      <header className="bg-white/95 backdrop-blur-md px-4 sm:px-6 py-2.5 sm:py-3 border-b border-gray-200/80 sticky top-0 lg:top-16 z-30 shadow-xs flex items-center justify-between gap-3 w-full">
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+    <div className="w-full pb-36 lg:pb-8">
+      {/* ── Mobile Sticky Top App Bar (< lg) ── */}
+      <header className="block lg:hidden bg-white/95 backdrop-blur-md px-3.5 py-2.5 border-b border-gray-200/90 sticky top-0 z-30 shadow-xs w-full">
+        <div className="flex items-center justify-between gap-2.5">
           <button
             type="button"
             onClick={() => router.push('/dashboard/passenger')}
-            className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-700 active:scale-90 transition-transform border border-gray-200/80 bg-white shrink-0 shadow-xs"
+            className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-700 active:scale-90 transition-transform border border-gray-200/80 bg-white shrink-0 shadow-2xs"
             aria-label="Back to ride search"
           >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+            <ArrowLeft className="w-4 h-4 text-gray-700" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <h1 className="text-xs sm:text-base font-extrabold text-gray-900 tracking-tight truncate flex items-center gap-1.5">
-              <span>{formatShortAddress(currentTrip.origin || currentTrip.source || '')}</span>
+            <h1 className="text-xs font-extrabold text-gray-900 tracking-tight truncate flex items-center gap-1">
+              <span className="truncate">{formatShortAddress(currentTrip.origin || currentTrip.source || '')}</span>
               <ArrowRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <span>{formatShortAddress(currentTrip.destination || '')}</span>
+              <span className="truncate">{formatShortAddress(currentTrip.destination || '')}</span>
             </h1>
-            <p className="text-[10px] sm:text-xs text-gray-500 font-semibold truncate flex items-center gap-1.5 mt-0.5">
+            <p className="text-[10px] text-gray-500 font-semibold truncate flex items-center gap-1 mt-0.5">
               <span>{formatDateTime(currentTrip.departureDate || currentTrip.departureTime || '')}</span>
               <span className="opacity-40">•</span>
-              <span className="text-blue-600 font-bold">{currencySymbol} {seatPrice} / seat</span>
+              <span className="text-blue-600 font-bold">{currencySymbol} {seatPrice}/seat</span>
             </p>
           </div>
-        </div>
 
-        <div className="shrink-0">
           <Badge 
             variant={currentTrip.status === 'SCHEDULED' ? 'info' : currentTrip.status === 'COMPLETED' ? 'success' : 'warning'}
-            className="capitalize text-[10px] sm:text-xs font-bold px-2 py-0.5"
+            className="capitalize text-[10px] font-bold px-2 py-0.5 shrink-0"
           >
             {currentTrip.status}
           </Badge>
@@ -347,7 +345,75 @@ const handleBook = async () => {
       </header>
 
       {/* ── Main Content Container ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-36 lg:pb-8 sm:py-5 w-full">
+      <div className="w-full px-3.5 sm:px-0 pt-2.5 lg:pt-0">
+        {/* ── Desktop Hero Header Card (>= lg) ── */}
+        <div className="hidden lg:block bg-white rounded-2xl border border-gray-200/90 p-5 sm:p-6 shadow-xs mb-6">
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/passenger')}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-blue-600 transition-colors py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Ride Search</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                <span>Verified Express Corridor</span>
+              </span>
+              <Badge
+                variant={currentTrip.status === 'SCHEDULED' ? 'info' : currentTrip.status === 'COMPLETED' ? 'success' : 'warning'}
+                className="capitalize text-xs font-bold px-3 py-1"
+              >
+                {currentTrip.status}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+                <span className="truncate">{currentTrip.origin || currentTrip.source}</span>
+                <ArrowRight className="w-5 h-5 text-slate-400 shrink-0" />
+                <span className="truncate">{currentTrip.destination}</span>
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium mt-2">
+                <span className="flex items-center gap-1.5 text-slate-800 font-bold">
+                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                  {formatDateTime(currentTrip.departureDate || currentTrip.departureTime || '')}
+                </span>
+                <span className="text-slate-300">•</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  {currentTrip.estimatedDuration ? `${Math.floor(currentTrip.estimatedDuration / 60)}h ${currentTrip.estimatedDuration % 60}m duration` : 'Standard Transit'}
+                </span>
+                {currentTrip.distanceKm ? (
+                  <>
+                    <span className="text-slate-300">•</span>
+                    <span className="flex items-center gap-1">
+                      <Navigation className="w-3.5 h-3.5 text-slate-400" />
+                      {currentTrip.distanceKm} km route
+                    </span>
+                  </>
+                ) : null}
+                <span className="text-slate-300">•</span>
+                <span className="flex items-center gap-1 text-emerald-600 font-bold">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  100% AC Verified Fleet
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-baseline gap-1.5 bg-blue-50/70 border border-blue-200/80 px-4 py-2.5 rounded-2xl shrink-0 self-start md:self-auto">
+              <span className="text-xs font-bold text-slate-500">From</span>
+              <span className="text-2xl font-black text-blue-600">{currencySymbol} {seatPrice}</span>
+              <span className="text-xs font-semibold text-slate-500">/ seat</span>
+            </div>
+          </div>
+        </div>
+
         {/* Mobile View Tabs Selector (Seats / Route / Vehicle - 3 Equal Balanced Columns) */}
         <div className="grid grid-cols-3 gap-1.5 bg-white p-1 rounded-2xl border border-gray-200/90 mb-3 shadow-2xs lg:hidden w-full">
           <button
@@ -405,6 +471,7 @@ const handleBook = async () => {
             <TripDetails
               trip={currentTrip}
               onBook={() => setShowBookingModal(true)}
+              hideHeaderCard={true}
             />
           </div>
 
@@ -672,7 +739,7 @@ const handleBook = async () => {
             </div>
           </div>
         )}
-      </main>
+      </div>
 
       {/* ════════════════════════════════════════════════════════════════════════
          STICKY BOTTOM ACTION BAR ON MOBILE (Fixed above MobileNav)
