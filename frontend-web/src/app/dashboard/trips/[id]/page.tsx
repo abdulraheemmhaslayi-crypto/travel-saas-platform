@@ -310,7 +310,7 @@ const handleBook = async () => {
 
   return (
     <div className="w-full pb-36 lg:pb-8">
-      {/* ── Mobile Sticky Top App Bar (< lg) ── */}
+      {/* Mobile Sticky Top App Bar */}
       <header className="block lg:hidden bg-white/95 backdrop-blur-md px-3.5 py-2.5 border-b border-gray-200/90 sticky top-0 z-30 shadow-xs w-full">
         <div className="flex items-center justify-between gap-2.5">
           <button
@@ -344,9 +344,9 @@ const handleBook = async () => {
         </div>
       </header>
 
-      {/* ── Main Content Container ── */}
+      {/* Main Content Container */}
       <div className="w-full px-3.5 sm:px-0 pt-2.5 lg:pt-0">
-        {/* ── Desktop Hero Header Card (>= lg) ── */}
+        {/* Desktop Hero Header Card */}
         <div className="hidden lg:block bg-white rounded-2xl border border-gray-200/90 p-5 sm:p-6 shadow-xs mb-6">
           <div className="flex items-center justify-between gap-4 mb-3">
             <button
