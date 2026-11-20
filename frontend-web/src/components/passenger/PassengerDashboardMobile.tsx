@@ -691,11 +691,12 @@ export default function PassengerDashboardMobile({
           </div>
 
           {/* ── Native Bottom Sheet: Available Rides List ──────────────────── */}
-          <div className="relative z-10 -mt-5 bg-white rounded-t-[32px] sm:rounded-t-[36px] shadow-[0_-10px_35px_rgba(20,20,60,0.08)] border-t border-slate-150/90 px-4 pt-3 pb-4 flex-1 flex flex-col justify-between max-w-md w-full mx-auto">
-            {/* Sheet Handle */}
-            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-3 shrink-0" />
-
+          <div className="relative z-10 -mt-5 bg-white rounded-t-[32px] sm:rounded-t-[36px] shadow-[0_-10px_35px_rgba(20,20,60,0.08)] border-t border-slate-150/90 px-4 pt-2.5 pb-4 flex-1 flex flex-col justify-between max-w-md w-full mx-auto">
+            {/* Top Content: Handle + Header + Filters + Rides List (No unwanted top gap) */}
             <div className="flex flex-col space-y-3">
+              {/* Sheet Handle */}
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-1 shrink-0" />
+
               {/* Header: Title + Lavender Edit Button */}
               <div className="flex items-center justify-between shrink-0">
                 <div>
