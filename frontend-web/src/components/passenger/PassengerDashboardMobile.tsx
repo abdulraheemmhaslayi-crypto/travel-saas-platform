@@ -264,7 +264,7 @@ export default function PassengerDashboardMobile({
            SCREEN 1: Mobile Native Kokan Tour & Travel Experience
            ════════════════════════════════════════════════════════════════════ */
         <div className="flex flex-col w-full animate-fadeIn px-4 pt-3 max-w-md mx-auto space-y-3.5 relative z-10">
-          
+
           {/* ── Top Header Bar: Kokan Tour Official Branding + Sign In / Profile ── */}
           <header className="flex items-center justify-between gap-3 pt-1">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -313,7 +313,7 @@ export default function PassengerDashboardMobile({
 
           {/* ── Hero Banner Card (Solid #4F46E5 Brand Color - No Gradient) ────── */}
           <div className="relative rounded-[26px] bg-[#4F46E5] p-5 text-white shadow-lg shadow-indigo-500/20 space-y-3">
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <span className="px-3 py-1 rounded-full bg-white/20 text-[10px] font-extrabold uppercase tracking-wider text-white border border-white/25 flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-amber-300 fill-amber-300" />
                 <span>Kokan Express Fleet</span>
@@ -322,7 +322,7 @@ export default function PassengerDashboardMobile({
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
                 <span>Fixed Fares</span>
               </span>
-            </div>
+            </div> */}
 
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug">
@@ -334,7 +334,7 @@ export default function PassengerDashboardMobile({
             </div>
 
             {/* Quick Feature Badges */}
-            <div className="flex items-center gap-2 pt-1 text-[10px] font-bold text-indigo-100 flex-wrap">
+            {/* <div className="flex items-center gap-2 pt-1 text-[10px] font-bold text-indigo-100 flex-wrap">
               <span className="flex items-center gap-1 bg-white/15 px-2.5 py-0.5 rounded-lg">
                 <Snowflake className="w-3 h-3 text-cyan-200" /> AC Guaranteed
               </span>
@@ -344,7 +344,7 @@ export default function PassengerDashboardMobile({
               <span className="flex items-center gap-1 bg-white/15 px-2.5 py-0.5 rounded-lg">
                 <CheckCircle2 className="w-3 h-3 text-emerald-200" /> Doorstep Pickup
               </span>
-            </div>
+            </div> */}
           </div>
 
           {/* ── Main Search & Route Card (Clean Neo-App Card) ───────────────── */}
@@ -598,8 +598,8 @@ export default function PassengerDashboardMobile({
                       isPeach
                         ? 'bg-[#FFF6F0] border border-[#FFE6D5]'
                         : isCyan
-                        ? 'bg-[#F0F7FF] border border-[#DCEBFF]'
-                        : 'bg-[#F6F4FF] border border-[#EBE4FF]'
+                          ? 'bg-[#F0F7FF] border border-[#DCEBFF]'
+                          : 'bg-[#F6F4FF] border border-[#EBE4FF]'
                     )}
                   >
                     <div>
@@ -609,8 +609,8 @@ export default function PassengerDashboardMobile({
                           isPeach
                             ? 'bg-[#FFE2D0] text-[#EA580C]'
                             : isCyan
-                            ? 'bg-[#D7EAFF] text-[#2563EB]'
-                            : 'bg-[#E4DDFF] text-[#6366F1]'
+                              ? 'bg-[#D7EAFF] text-[#2563EB]'
+                              : 'bg-[#E4DDFF] text-[#6366F1]'
                         )}
                       >
                         <Icon className="w-3.5 h-3.5 stroke-[2.2]" />
@@ -630,8 +630,8 @@ export default function PassengerDashboardMobile({
                           isPeach
                             ? 'text-[#EA580C]'
                             : isCyan
-                            ? 'text-[#2563EB]'
-                            : 'text-[#6366F1]'
+                              ? 'text-[#2563EB]'
+                              : 'text-[#6366F1]'
                         )}
                       >
                         {route.price}
@@ -687,9 +687,8 @@ export default function PassengerDashboardMobile({
               title="Locate my position"
             >
               <Crosshair
-                className={`w-5 h-5 text-slate-800 stroke-[2] ${
-                  isLocating ? 'animate-spin text-[#4F46E5]' : ''
-                }`}
+                className={`w-5 h-5 text-slate-800 stroke-[2] ${isLocating ? 'animate-spin text-[#4F46E5]' : ''
+                  }`}
               />
             </button>
           </div>
@@ -711,10 +710,9 @@ export default function PassengerDashboardMobile({
                     {isSearching
                       ? 'Searching fleet departures...'
                       : filteredTrips.length > 0
-                      ? `${filteredTrips.length} available trip${
-                          filteredTrips.length > 1 ? 's' : ''
+                        ? `${filteredTrips.length} available trip${filteredTrips.length > 1 ? 's' : ''
                         }`
-                      : 'No direct trips on this route'}
+                        : 'No direct trips on this route'}
                   </p>
                 </div>
 
@@ -874,9 +872,9 @@ export default function PassengerDashboardMobile({
                               <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
                                 {trip.departureTime
                                   ? new Date(trip.departureTime).toLocaleTimeString('en-US', {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })
                                   : 'Flexible Departure'}
                                 {' • '}
                                 <span className="text-emerald-600 font-bold">
@@ -938,8 +936,8 @@ export default function PassengerDashboardMobile({
                       {selectedFare > 0
                         ? selectedFare
                         : availableRealTrips[0]?.pricePerSeat ||
-                          availableRealTrips[0]?.price ||
-                          399}
+                        availableRealTrips[0]?.price ||
+                        399}
                     </span>
                   </div>
                 </div>
@@ -953,12 +951,10 @@ export default function PassengerDashboardMobile({
                   <Car className="w-5 h-5 text-white stroke-[2.2] shrink-0" />
                   <span>
                     {user
-                      ? `Confirm Booking • ${baseCurrencySymbol}${
-                          selectedFare > 0 ? selectedFare : 399
-                        }`
-                      : `Sign In to Book a Ride ${baseCurrencySymbol}${
-                          selectedFare > 0 ? selectedFare : 399
-                        }`}
+                      ? `Confirm Booking • ${baseCurrencySymbol}${selectedFare > 0 ? selectedFare : 399
+                      }`
+                      : `Sign In to Book a Ride ${baseCurrencySymbol}${selectedFare > 0 ? selectedFare : 399
+                      }`}
                   </span>
                   <ArrowRight className="w-4.5 h-4.5 text-white stroke-[2.5] ml-1 shrink-0" />
                 </button>
