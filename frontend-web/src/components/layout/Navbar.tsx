@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/slices/authSlice';
 import { useNotificationStore } from '@/store/slices/notificationSlice';
-import { Menu, X, Bell, User, LogOut, MapPin, Shield } from 'lucide-react';
+import { Menu, X, Bell, User, LogOut, MapPin, Shield, ChevronLeft } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Avatar from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
@@ -48,10 +48,12 @@ const Navbar: React.FC = () => {
   const profilePath = '/dashboard/profile';
   const isAdmin = String(user?.role || '').toUpperCase() === 'ADMIN' || String(user?.role || '').toUpperCase() === 'SUPER_ADMIN';
   const isSuperAdmin = String(user?.role || '').toUpperCase() === 'SUPER_ADMIN';
+  const router = useRouter();
   const pathname = usePathname();
   const isTripDetailPage = pathname?.startsWith('/dashboard/trips/');
   const isPassengerMobilePage = pathname === '/dashboard/passenger';
   const isPopularRoutesMobilePage = pathname === '/dashboard/passenger/popular-routes';
+  const isRootPage = pathname === '/' || pathname === '/dashboard/passenger';
 
   return (
     <nav
@@ -62,8 +64,26 @@ const Navbar: React.FC = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14 sm:h-16">
-          {/* Logo */}
-          <div className="flex items-center">
+          {/* Logo & Mobile Back Button */}
+          <div className="flex items-center gap-2">
+            {!isRootPage && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined' && window.history.length > 1) {
+                    router.back();
+                  } else {
+                    router.push('/dashboard/passenger');
+                  }
+                }}
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center active:scale-90 transition-all md:hidden shrink-0 shadow-2xs border border-slate-200/80"
+                aria-label="Go back"
+                title="Go back"
+              >
+                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+              </button>
+            )}
+
             <Link href="/dashboard/passenger" className="flex items-center gap-2 active:scale-95 transition-transform">
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-xs shrink-0">
                 <MapPin className="w-4 h-4 fill-white text-blue-600" />

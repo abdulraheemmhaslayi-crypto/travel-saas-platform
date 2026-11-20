@@ -577,7 +577,7 @@ export default function PassengerDashboardMobile({
             <button
               type="button"
               onClick={() => setViewMode('home')}
-              className="absolute top-3.5 left-3.5 z-20 w-11 h-11 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all"
+              className="absolute top-3.5 left-3.5 z-[1001] w-11 h-11 rounded-2xl bg-white shadow-lg border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all cursor-pointer pointer-events-auto"
               aria-label="Back to search"
               title="Back to search"
             >

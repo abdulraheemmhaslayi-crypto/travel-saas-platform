@@ -31,6 +31,7 @@ import {
   Bell,
   Crosshair,
   Info,
+  ChevronLeft,
 } from 'lucide-react';
 
 const parseLocalDate = (dateStr: string | undefined): Date | undefined => {
@@ -225,15 +226,30 @@ export default function MobilePopularRoutesScreen({
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/65 via-slate-900/40 to-black/60 pointer-events-none" />
 
-        {/* Top Bar: Brand Badge & Notification + User Profile */}
-        <div className="relative z-10 flex items-center justify-between px-4 pt-3.5">
-          <div className="flex items-center gap-2.5">
+        {/* Top Bar: Back Button, Brand Badge & Notification + User Profile */}
+        <div className="relative z-10 flex items-center justify-between px-3.5 pt-3.5">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.history.length > 1) {
+                  router.back();
+                } else {
+                  router.push('/dashboard/passenger');
+                }
+              }}
+              className="w-10 h-10 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center text-slate-800 active:scale-90 transition-all shrink-0"
+              aria-label="Back"
+              title="Back"
+            >
+              <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+            </button>
             <div className="w-10 h-10 rounded-2xl bg-white shadow-md flex items-center justify-center shrink-0">
               <BusFront className="w-5 h-5 text-[#1D68F2] stroke-[2.2]" />
             </div>
             <div>
-              <h1 className="text-[19px] font-bold text-white tracking-tight leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                Kokan Travel
+              <h1 className="text-[18px] sm:text-[19px] font-bold text-white tracking-tight leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                Popular Routes
               </h1>
               <p className="text-[11px] text-white/95 font-medium tracking-wide mt-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 Intercity Rides Across Maharashtra
