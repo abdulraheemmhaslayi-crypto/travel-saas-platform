@@ -97,11 +97,11 @@ const MobileNav: React.FC = () => {
             >
               <div className="relative flex items-center justify-center">
                 {isActive ? (
-                  <div className="w-[58px] h-[32px] rounded-full bg-[#E8F0FE] flex items-center justify-center transition-all duration-200 shadow-2xs">
+                  <div className="w-[58px] h-[32px] rounded-full bg-[#EEF2FF] flex items-center justify-center transition-all duration-200 shadow-2xs">
                     <Icon
                       className={cn(
-                        'w-[19px] h-[19px] text-[#2563EB] transition-transform duration-200',
-                        item.label === 'Home' ? 'fill-[#2563EB]' : 'stroke-[2.2]'
+                        'w-[19px] h-[19px] text-[#4F46E5] transition-transform duration-200',
+                        item.label === 'Home' ? 'fill-[#4F46E5]' : 'stroke-[2.2]'
                       )}
                     />
                   </div>
@@ -124,7 +124,7 @@ const MobileNav: React.FC = () => {
                 className={cn(
                   'text-[11px] leading-tight tracking-tight transition-colors',
                   isActive
-                    ? 'font-bold text-[#2563EB] mt-0.5'
+                    ? 'font-bold text-[#4F46E5] mt-0.5'
                     : 'font-medium text-[#64748B] mt-1'
                 )}
               >

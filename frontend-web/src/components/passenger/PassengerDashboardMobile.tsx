@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpDown,
+  ArrowLeftRight,
   Crosshair,
   Search,
   Landmark,
@@ -15,6 +16,8 @@ import {
   Calendar,
   Wallet,
   ChevronDown,
+  ChevronLeft,
+  CreditCard,
   Banknote,
   Loader2,
   MapPin,
@@ -24,6 +27,7 @@ import {
   Users,
   BusFront,
   User,
+  Pencil,
 } from 'lucide-react';
 import MapView, { MapMarker } from '@/components/maps/MapView';
 import SearchInput from '@/components/maps/SearchInput';
@@ -556,72 +560,65 @@ export default function PassengerDashboardMobile({
            SCREEN 2: Available Rides & Interactive Route Map
            ════════════════════════════════════════════════════════════════════ */
         <div className="flex flex-col w-full animate-fadeIn">
-          {/* ── Curved Map Section with Route Markers & Route Polyline ──────── */}
-          <div className="w-full px-3 pt-2 flex flex-col h-[210px] sm:h-[230px] shrink-0 relative">
-            <div
-              className="w-full h-full relative rounded-[24px] overflow-hidden bg-slate-100 border border-[#E2E8F0] shadow-xs z-0 isolate transform-gpu transition-all duration-300 flex flex-col"
-              style={{
-                WebkitMaskImage: '-webkit-radial-gradient(white, black)',
-                borderRadius: '24px',
-              }}
-            >
-              <div className="absolute inset-0 w-full h-full">
-                <MapView
-                  center={mapCenter}
-                  markers={mapMarkers}
-                  route={mapRoute}
-                  zoom={mapZoom}
-                  height="100%"
-                  className="w-full h-full"
-                />
-              </div>
-
-              {/* Floating Back Button on Map */}
-              <button
-                type="button"
-                onClick={() => setViewMode('home')}
-                className="absolute top-3 left-3 z-20 w-10 h-10 rounded-full bg-white shadow-md border border-[#E2E8F0] flex items-center justify-center text-[#0F172A] hover:bg-slate-50 active:scale-90 transition-all"
-                aria-label="Back to search"
-                title="Back to search"
-              >
-                <ArrowLeft className="w-4 h-4 text-[#0F172A] stroke-[2.2]" />
-              </button>
-
-              {/* Floating ETA Bubble on Map */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1 rounded-full bg-[#0F172A]/90 backdrop-blur-sm text-white font-semibold text-xs shadow-md flex items-center gap-1.5 animate-fadeIn pointer-events-none">
-                <span>{formatDuration(estimatedMins)}</span>
-                <span className="opacity-60">•</span>
-                <span>{Math.round(distanceKm)} km</span>
-              </div>
-
-              {/* Floating Location GPS Button */}
-              <button
-                type="button"
-                onClick={detectLocation}
-                className="absolute bottom-3 right-3 z-20 w-10 h-10 rounded-full bg-white shadow-md border border-[#E2E8F0] flex items-center justify-center text-[#2563EB] hover:bg-slate-50 active:scale-90 transition-all group"
-                title="Locate my position"
-                aria-label="Locate my position"
-              >
-                <Navigation
-                  className={`w-4 h-4 text-[#2563EB] fill-[#2563EB] transform rotate-45 ${
-                    isLocating ? 'animate-spin' : ''
-                  }`}
-                />
-              </button>
+          {/* ── Edge-to-Edge Map Section with Route Polyline & Markers ─────── */}
+          <div className="w-full h-[250px] sm:h-[270px] shrink-0 relative overflow-hidden bg-slate-100">
+            <div className="absolute inset-0 w-full h-full">
+              <MapView
+                center={mapCenter}
+                markers={mapMarkers}
+                route={mapRoute}
+                zoom={mapZoom}
+                height="100%"
+                className="w-full h-full"
+              />
             </div>
+
+            {/* Floating Back Button on Map (Rounded-2xl white card with soft shadow) */}
+            <button
+              type="button"
+              onClick={() => setViewMode('home')}
+              className="absolute top-3.5 left-3.5 z-20 w-11 h-11 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all"
+              aria-label="Back to search"
+              title="Back to search"
+            >
+              <ChevronLeft className="w-5 h-5 text-slate-800 stroke-[2.5]" />
+            </button>
+
+            {/* Floating Route ETA Pill over the route */}
+            <div className="absolute top-3.5 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-sm text-white font-semibold text-xs shadow-md flex items-center gap-1.5 animate-fadeIn pointer-events-none">
+              <span>{formatDuration(estimatedMins)}</span>
+              <span className="opacity-60">•</span>
+              <span>{Math.round(distanceKm)} km</span>
+            </div>
+
+            {/* Floating Location GPS Button (Rounded-2xl white card matching mockup) */}
+            <button
+              type="button"
+              onClick={detectLocation}
+              disabled={isLocating}
+              className="absolute bottom-9 right-3.5 z-20 w-11 h-11 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all group"
+              title="Locate my position"
+              aria-label="Locate my position"
+            >
+              <Crosshair
+                className={`w-5 h-5 text-slate-800 stroke-[2] ${
+                  isLocating ? 'animate-spin text-[#1D68F2]' : ''
+                }`}
+              />
+            </button>
           </div>
 
           {/* ── Native Bottom Sheet: Available Rides List ──────────────────── */}
-          <div className="relative z-10 -mt-4 bg-white rounded-t-[28px] shadow-[0_-4px_24px_rgba(15,23,42,0.08)] border-t border-[#E2E8F0] px-4 pt-3 pb-3 flex-1 flex flex-col justify-between">
+          <div className="relative z-10 -mt-6 bg-white rounded-t-[32px] sm:rounded-t-[36px] shadow-[0_-8px_30px_rgba(15,23,42,0.08)] border-t border-slate-100 px-4 pt-3 pb-3 flex-1 flex flex-col justify-between">
             {/* Sheet Handle */}
-            <div className="w-10 h-1 bg-[#CBD5E1] rounded-full mx-auto mb-2 shrink-0" />
+            <div className="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-3 shrink-0" />
 
             <div className="flex flex-col space-y-2.5">
-              {/* Header: Available rides + Edit button */}
+              {/* Header: Available Rides + Lavender Edit button */}
               <div className="flex items-center justify-between shrink-0">
                 <div>
-                  <h2 className="text-[18px] font-bold text-[#0F172A] tracking-tight">
-                    Available rides
+                  <h2 className="text-[20px] font-extrabold text-[#0B1527] tracking-tight">
+                    Available Rides
                   </h2>
                   <p className="text-[12px] text-[#64748B] mt-0.5 font-normal">
                     {isSearching
@@ -634,13 +631,14 @@ export default function PassengerDashboardMobile({
                   </p>
                 </div>
 
-                {/* Edit Route Button */}
+                {/* Edit Route Button (Soft purple/indigo pill with pencil icon) */}
                 <button
                   type="button"
                   onClick={() => setViewMode('home')}
-                  className="px-3.5 py-1.5 rounded-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[12px] font-semibold text-[#0F172A] transition-all active:scale-95 shadow-2xs"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#EEF2FF] hover:bg-[#E0E7FF] text-[13px] font-bold text-slate-800 transition-all active:scale-95 shadow-2xs flex items-center gap-1.5 border border-indigo-100/60"
                 >
-                  Edit
+                  <Pencil className="w-3.5 h-3.5 text-slate-700 stroke-[2.2]" />
+                  <span>Edit</span>
                 </button>
               </div>
 
@@ -648,28 +646,71 @@ export default function PassengerDashboardMobile({
               <div className="space-y-2 max-h-[38vh] overflow-y-auto pr-0.5">
                 {isSearching ? (
                   <div className="py-8 flex flex-col items-center justify-center text-[#64748B] gap-2">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#2563EB]" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[#4E54F7]" />
                     <p className="text-xs font-semibold text-[#334155]">
                       Searching active scheduled rides...
                     </p>
                   </div>
                 ) : availableRealTrips.length === 0 ? (
-                  <div className="py-6 px-4 text-center space-y-2.5 bg-[#F8FAFC] rounded-[18px] border border-dashed border-[#E2E8F0]">
-                    <div className="w-10 h-10 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mx-auto">
-                      <Car className="w-5 h-5" />
+                  <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-6 sm:p-7 flex flex-col items-center justify-center text-center my-1.5">
+                    {/* SVG Illustration: Modern Sedan with Location Pin Drop matching mockup */}
+                    <div className="relative w-36 h-28 flex items-center justify-center mb-1">
+                      <svg viewBox="0 0 160 120" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        {/* Soft backdrop clouds & road glow */}
+                        <ellipse cx="80" cy="90" rx="60" ry="12" fill="#EEF2FF" />
+                        <path d="M42 76 C55 60 105 60 118 76" stroke="#E0E7FF" strokeWidth="22" strokeLinecap="round" opacity="0.5" />
+                        
+                        {/* Soft Road Shadow under tires */}
+                        <ellipse cx="80" cy="86" rx="46" ry="6" fill="#CBD5E1" fillOpacity="0.5" />
+
+                        {/* Modern Sedan Car (Front-3/4 angle) */}
+                        <g transform="translate(36, 44)">
+                          {/* Wheels */}
+                          <rect x="12" y="32" width="10" height="9" rx="3" fill="#1E293B" />
+                          <rect x="66" y="32" width="10" height="9" rx="3" fill="#1E293B" />
+                          
+                          {/* Dark Underbody */}
+                          <rect x="10" y="28" width="68" height="6" rx="2" fill="#334155" />
+
+                          {/* Windshield & Cabin Glass */}
+                          <path d="M22 17 L33 4 L55 4 L66 17 Z" fill="#6366F1" fillOpacity="0.25" stroke="#4F46E5" strokeWidth="1.5" />
+                          <path d="M34 5 L54 5 L63 16 L25 16 Z" fill="#93C5FD" fillOpacity="0.4" />
+
+                          {/* Main Car Body in Pure White / Soft Indigo outline */}
+                          <path d="M6 17 C6 14 15 14 22 17 L66 17 C73 14 82 14 82 17 L84 27 C84 30 82 32 76 32 L12 32 C6 32 4 30 4 27 Z" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="1.8" />
+
+                          {/* Headlights (Glowing Cyan) */}
+                          <rect x="8" y="20" width="8" height="4" rx="1.5" fill="#38BDF8" />
+                          <rect x="72" y="20" width="8" height="4" rx="1.5" fill="#38BDF8" />
+
+                          {/* Chrome Front Grill */}
+                          <rect x="25" y="21" width="38" height="5" rx="1.5" fill="#F1F5F9" stroke="#CBD5E1" strokeWidth="1" />
+                        </g>
+
+                        {/* Floating Location Marker Pin (Over the car) */}
+                        <g transform="translate(67, 10)">
+                          <path d="M13 0 C5.82 0 0 5.82 0 13 C0 22.75 13 34 13 34 C13 34 26 22.75 26 13 C26 5.82 20.18 0 13 0 Z" fill="#4E54F7" />
+                          <circle cx="13" cy="12" r="4.5" fill="#FFFFFF" />
+                        </g>
+                      </svg>
                     </div>
-                    <div>
-                      <h4 className="text-[14px] font-semibold text-[#0F172A]">No Direct Rides Found</h4>
-                      <p className="text-[11px] text-[#64748B] mt-0.5 max-w-xs mx-auto">
-                        No fleet trips found for this route right now. Try changing pickup or destination.
-                      </p>
-                    </div>
+
+                    <h3 className="text-[17px] sm:text-[18px] font-bold text-[#0F172A] mt-2 tracking-tight">
+                      No Direct Rides Found
+                    </h3>
+                    <p className="text-[12px] text-[#64748B] mt-1.5 max-w-[270px] mx-auto leading-relaxed">
+                      No direct trips available for this route right now.<br />
+                      Try changing pickup or dropoff location.
+                    </p>
+
+                    {/* Change Route Pill Button with icon */}
                     <button
                       type="button"
                       onClick={() => setViewMode('home')}
-                      className="px-4 py-1.5 rounded-[10px] bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[12px] font-semibold text-[#2563EB] shadow-2xs active:scale-95 transition-all"
+                      className="mt-4 px-5 py-2.5 rounded-full bg-white border border-[#4F46E5]/30 hover:bg-[#EEF2FF]/60 text-[#4F46E5] text-xs font-bold shadow-2xs active:scale-95 transition-all flex items-center gap-2"
                     >
-                      Change Route
+                      <ArrowLeftRight className="w-3.5 h-3.5 stroke-[2.4] text-[#4F46E5]" />
+                      <span>Change Route</span>
                     </button>
                   </div>
                 ) : (
@@ -683,7 +724,7 @@ export default function PassengerDashboardMobile({
                       );
                       const vName = formatVehicleName(
                         trip.vehicle
-                          ? `${trip.vehicle.brand} ${trip.vehicle.model}`
+                           ? `${trip.vehicle.brand} ${trip.vehicle.model}`
                           : trip.vehicleName || 'Toyota Innova'
                       );
 
@@ -691,10 +732,10 @@ export default function PassengerDashboardMobile({
                         <div
                           key={trip.id}
                           onClick={() => setSelectedTripId(trip.id)}
-                          className={`p-3 rounded-[18px] border-2 transition-all cursor-pointer flex items-center justify-between gap-2.5 active:scale-[0.99] ${
+                          className={`p-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2.5 active:scale-[0.99] ${
                             isSelected
-                              ? 'border-[#2563EB] bg-[#EFF6FF]/60 shadow-xs'
-                              : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1] hover:bg-[#F8FAFC] shadow-2xs'
+                              ? 'border-[#4E54F7] bg-[#EEF2FF]/70 shadow-xs ring-1 ring-[#4E54F7]/30'
+                              : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 shadow-2xs'
                           }`}
                         >
                           {/* Left: Radio + Vehicle Image + Details */}
@@ -702,12 +743,12 @@ export default function PassengerDashboardMobile({
                             <div
                               className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                                 isSelected
-                                  ? 'border-[#2563EB] bg-white'
-                                  : 'border-[#CBD5E1] bg-white'
+                                  ? 'border-[#4E54F7] bg-white'
+                                  : 'border-slate-300 bg-white'
                               }`}
                             >
                               {isSelected && (
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#2563EB]" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#4E54F7]" />
                               )}
                             </div>
 
@@ -718,17 +759,17 @@ export default function PassengerDashboardMobile({
                             />
 
                             <div className="min-w-0 flex-1">
-                              <h4 className="text-[13px] font-semibold text-[#0F172A] truncate capitalize leading-tight">
+                              <h4 className="text-[13px] font-bold text-slate-900 truncate capitalize leading-tight">
                                 {vName}
                               </h4>
-                              <p className="text-[11px] text-[#64748B] font-normal mt-0.5 truncate">
+                              <p className="text-[11px] text-slate-500 font-normal mt-0.5 truncate">
                                 {trip.driver?.user?.firstName
                                   ? `Capt. ${trip.driver.user.firstName}`
                                   : trip.operatorName || 'Verified fleet'}{' '}
                                 · {trip.availableSeats || 1} seats
                               </p>
                               {trip.departureTime && (
-                                <p className="text-[11px] text-[#2563EB] font-medium mt-0.5">
+                                <p className="text-[11px] text-[#4E54F7] font-semibold mt-0.5">
                                   Dep:{' '}
                                   {new Date(trip.departureTime).toLocaleTimeString([], {
                                     hour: '2-digit',
@@ -741,13 +782,13 @@ export default function PassengerDashboardMobile({
 
                           {/* Right: Fare & Duration */}
                           <div className="text-right shrink-0 min-w-[70px] pl-1">
-                            <p className="text-[16px] font-bold text-[#0F172A] whitespace-nowrap">
+                            <p className="text-[16px] font-extrabold text-slate-900 whitespace-nowrap">
                               {baseCurrencySymbol} {priceVal > 0 ? priceVal : 399}
                             </p>
-                            <span className="text-[10px] text-[#64748B] block whitespace-nowrap font-normal">
+                            <span className="text-[10px] text-slate-400 block whitespace-nowrap font-normal">
                               per seat
                             </span>
-                            <p className="text-[10px] text-[#64748B] font-medium mt-0.5 whitespace-nowrap">
+                            <p className="text-[10px] text-slate-500 font-medium mt-0.5 whitespace-nowrap">
                               {formatDuration(estimatedMins)}
                             </p>
                           </div>
@@ -759,36 +800,37 @@ export default function PassengerDashboardMobile({
               </div>
 
               {/* ── Payment Row & Action Button ────────────────────────────── */}
-              <div className="pt-2 border-t border-[#E2E8F0] space-y-2 shrink-0">
-                <div className="flex items-center justify-between gap-2">
+              <div className="pt-3 border-t border-slate-100 space-y-2.5 shrink-0">
+                <div className="flex items-center justify-between gap-3">
                   {user ? (
                     <button
                       type="button"
                       onClick={() =>
                         setPaymentMethod((p) => (p === 'Cash' ? 'Wallet' : 'Cash'))
                       }
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[12px] font-semibold text-[#0F172A] transition-all active:scale-95 shadow-2xs"
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 transition-all active:scale-95 shadow-2xs"
                     >
-                      <Banknote className="w-4 h-4 text-[#10B981] shrink-0" />
+                      <CreditCard className="w-4 h-4 text-emerald-600 stroke-[2] shrink-0" />
                       <span>
                         {paymentMethod === 'Cash'
-                          ? 'Cash'
+                          ? 'Pay on Board / Cash'
                           : `Wallet · ${baseCurrencySymbol}${walletBalance || 0}`}
                       </span>
-                      <ChevronDown className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-0.5" />
                     </button>
                   ) : (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] text-[12px] font-semibold text-[#0F172A] shadow-2xs">
-                      <Banknote className="w-4 h-4 text-[#10B981] shrink-0" />
+                    <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200/90 bg-white text-xs font-semibold text-slate-800 shadow-2xs">
+                      <CreditCard className="w-4 h-4 text-emerald-600 stroke-[2] shrink-0" />
                       <span>Pay on Board / Cash</span>
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-0.5" />
                     </div>
                   )}
 
                   <div className="text-right">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#64748B] block leading-none mb-0.5">
-                      TOTAL
+                    <span className="text-[11px] text-[#64748B] font-medium block leading-none mb-1">
+                      Total Fare
                     </span>
-                    <span className="font-bold text-[#2563EB] text-[18px] leading-none whitespace-nowrap">
+                    <span className="font-black text-[#1D4ED8] text-[22px] sm:text-[24px] leading-none whitespace-nowrap tracking-tight">
                       {baseCurrencySymbol}{' '}
                       {selectedFare > 0
                         ? selectedFare
@@ -799,20 +841,23 @@ export default function PassengerDashboardMobile({
                   </div>
                 </div>
 
+                {/* Primary Royal Blue/Indigo Gradient Button matching mockup */}
                 <button
                   type="button"
                   onClick={handleConfirmBooking}
-                  disabled={isSearching || availableRealTrips.length === 0}
-                  className="w-full h-[48px] rounded-[16px] bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-[15px] shadow-[0_4px_14px_rgba(37,99,235,0.25)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  className="w-full h-[52px] rounded-2xl bg-gradient-to-r from-[#4E54F7] via-[#4338CA] to-[#3B5AFE] hover:opacity-95 text-white font-bold text-sm sm:text-base shadow-lg shadow-indigo-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
                 >
-                  <Car className="w-4 h-4 stroke-[2]" />
-                  <span>
+                  <Car className="w-5 h-5 text-white stroke-[2.2] shrink-0" />
+                  <span className="tracking-wide">
                     {user
-                      ? 'Confirm booking'
-                      : `Sign In to Book • ${baseCurrencySymbol}${
+                      ? `Confirm Booking  ${baseCurrencySymbol}${
+                          selectedFare > 0 ? selectedFare : 399
+                        }`
+                      : `Sign In to Book a Ride  ${baseCurrencySymbol}${
                           selectedFare > 0 ? selectedFare : 399
                         }`}
                   </span>
+                  <ArrowRight className="w-4.5 h-4.5 text-white stroke-[2.5] shrink-0 ml-1" />
                 </button>
               </div>
             </div>

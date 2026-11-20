@@ -478,31 +478,31 @@ export default function PassengerDashboardPage() {
         popup: `🟢 Pickup: ${origin}`,
         iconHtml: `
           <div style="display:flex;flex-direction:column;align-items:center;">
-            <div style="background-color:#16a34a;color:white;padding:3px 7px;border-radius:6px;font-size:10px;font-weight:bold;margin-bottom:2px;box-shadow:0 2px 4px rgba(0,0,0,0.25);white-space:nowrap;">
+            <div style="background-color:#059669;color:white;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:800;margin-bottom:3px;box-shadow:0 3px 6px rgba(0,0,0,0.25);white-space:nowrap;letter-spacing:-0.2px;">
               Pickup
             </div>
-            <div style="width:14px;height:14px;border-radius:9999px;background-color:#16a34a;border:2.5px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);"></div>
+            <div style="width:14px;height:14px;border-radius:9999px;background-color:#059669;border:2.5px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.35);"></div>
           </div>
         `,
-        iconSize: [44, 38],
-        iconAnchor: [22, 38],
+        iconSize: [54, 42],
+        iconAnchor: [27, 42],
       });
 
-      // Screen 2: Red Destination pin
+      // Screen 2: Red Destination pin matching mockup
       list.push({
         id: 'dest-pin',
         position: dropPoint,
         popup: `🔴 Dropoff: ${destination}`,
         iconHtml: `
           <div style="display:flex;flex-direction:column;align-items:center;">
-            <div style="background-color:#dc2626;color:white;padding:3px 7px;border-radius:6px;font-size:10px;font-weight:bold;margin-bottom:2px;box-shadow:0 2px 4px rgba(0,0,0,0.25);white-space:nowrap;">
+            <div style="background-color:#DC2626;color:white;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:800;margin-bottom:3px;box-shadow:0 3px 6px rgba(0,0,0,0.25);white-space:nowrap;letter-spacing:-0.2px;">
               Dropoff
             </div>
-            <div style="width:14px;height:14px;border-radius:9999px;background-color:#dc2626;border:2.5px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);"></div>
+            <div style="width:14px;height:14px;border-radius:9999px;background-color:#DC2626;border:2.5px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.35);"></div>
           </div>
         `,
-        iconSize: [48, 38],
-        iconAnchor: [24, 38],
+        iconSize: [56, 42],
+        iconAnchor: [28, 42],
       });
     }
 
