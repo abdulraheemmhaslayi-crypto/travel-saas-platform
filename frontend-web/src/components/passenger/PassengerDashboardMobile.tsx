@@ -306,7 +306,7 @@ export default function PassengerDashboardMobile({
                   </div>
                   <Link
                     href={loginUrl}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#1D68F2] hover:bg-blue-700 text-white text-xs font-semibold shrink-0 shadow-xs active:scale-95 transition-transform"
+                    className="px-3.5 py-1.5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-semibold shrink-0 shadow-xs active:scale-95 transition-transform"
                   >
                     Sign In
                   </Link>
@@ -324,9 +324,9 @@ export default function PassengerDashboardMobile({
                     type="button"
                     onClick={detectLocation}
                     disabled={isLocating}
-                    className="text-xs font-bold text-[#1D68F2] hover:text-blue-700 flex items-center gap-1 active:scale-95 transition-transform disabled:opacity-50"
+                    className="text-xs font-bold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1 active:scale-95 transition-transform disabled:opacity-50"
                   >
-                    <Crosshair className={`w-3.5 h-3.5 text-[#1D68F2] ${isLocating ? 'animate-spin' : ''}`} />
+                    <Crosshair className={`w-3.5 h-3.5 text-[#4F46E5] ${isLocating ? 'animate-spin' : ''}`} />
                     <span>Use Current</span>
                   </button>
                 </div>
@@ -357,10 +357,10 @@ export default function PassengerDashboardMobile({
                     type="button"
                     onClick={detectLocation}
                     disabled={isLocating}
-                    className="h-[46px] px-3.5 rounded-xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-[#1D68F2] text-xs font-bold flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all shrink-0"
+                    className="h-[46px] px-3.5 rounded-xl border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 text-[#4F46E5] text-xs font-bold flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all shrink-0"
                     title="Detect GPS location"
                   >
-                    <MapPin className={`w-3.5 h-3.5 text-[#1D68F2] ${isLocating ? 'animate-spin' : ''}`} />
+                    <MapPin className={`w-3.5 h-3.5 text-[#4F46E5] ${isLocating ? 'animate-spin' : ''}`} />
                     <span>GPS</span>
                   </button>
                 </div>
@@ -374,7 +374,7 @@ export default function PassengerDashboardMobile({
                 <button
                   type="button"
                   onClick={handleSwap}
-                  className="w-8 h-8 rounded-full bg-white border border-blue-200 shadow-xs flex items-center justify-center text-[#1D68F2] hover:bg-blue-50 active:scale-90 transition-transform relative z-10"
+                  className="w-8 h-8 rounded-full bg-white border border-indigo-200 shadow-xs flex items-center justify-center text-[#4F46E5] hover:bg-indigo-50 active:scale-90 transition-transform relative z-10"
                   title="Swap locations"
                   aria-label="Swap locations"
                 >
@@ -412,7 +412,7 @@ export default function PassengerDashboardMobile({
               <div className="space-y-1.5 pt-2 border-t border-slate-100">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-[#1D68F2]" />
+                    <Calendar className="w-3.5 h-3.5 text-[#4F46E5]" />
                     <span>Departure Date</span>
                   </label>
                   <div className="flex items-center gap-1">
@@ -422,7 +422,7 @@ export default function PassengerDashboardMobile({
                       className={cn(
                         'px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all active:scale-95',
                         date === todayStr
-                          ? 'bg-[#1D68F2] text-white shadow-xs'
+                          ? 'bg-[#4F46E5] text-white shadow-xs'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       )}
                     >
@@ -434,7 +434,7 @@ export default function PassengerDashboardMobile({
                       className={cn(
                         'px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all active:scale-95',
                         date === tomorrowStr
-                          ? 'bg-[#1D68F2] text-white shadow-xs'
+                          ? 'bg-[#4F46E5] text-white shadow-xs'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       )}
                     >
@@ -470,7 +470,7 @@ export default function PassengerDashboardMobile({
                 type="button"
                 onClick={handleSearchAvailableRides}
                 disabled={isSearching}
-                className="w-full h-12 rounded-xl bg-[#1D68F2] hover:bg-blue-700 text-white font-bold text-sm shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-4"
+                className="w-full h-12 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-sm shadow-md shadow-indigo-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-4"
               >
                 {isSearching ? (
                   <>
@@ -493,7 +493,7 @@ export default function PassengerDashboardMobile({
                 <h3 className="text-[15px] font-bold text-slate-900 tracking-tight">Popular Routes</h3>
                 <Link
                   href="/dashboard/passenger/popular-routes"
-                  className="text-xs font-bold text-[#1D68F2] hover:text-blue-700 flex items-center gap-0.5 active:scale-95 transition-transform"
+                  className="text-xs font-bold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-0.5 active:scale-95 transition-transform"
                 >
                   <span>See All</span>
                   <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />
@@ -520,7 +520,7 @@ export default function PassengerDashboardMobile({
                       }
                       className={`p-2.5 rounded-2xl text-left active:scale-95 transition-all shadow-xs flex flex-col justify-between ${
                         route.isHighlighted
-                          ? 'bg-[#EFF6FF] border border-[#BFDBFE]'
+                          ? 'bg-[#EEF2FF] border border-[#C7D2FE]'
                           : 'bg-white border border-slate-200'
                       }`}
                     >
@@ -528,7 +528,7 @@ export default function PassengerDashboardMobile({
                         <div
                           className={`w-7 h-7 rounded-xl flex items-center justify-center mb-1.5 ${
                             route.isHighlighted
-                              ? 'bg-[#DBEAFE] text-[#1D68F2]'
+                              ? 'bg-[#E0E7FF] text-[#4F46E5]'
                               : 'bg-slate-100 text-slate-600'
                           }`}
                         >
@@ -543,7 +543,7 @@ export default function PassengerDashboardMobile({
                       </div>
                       <p
                         className={`text-[11px] mt-1.5 font-medium leading-none ${
-                          route.isHighlighted ? 'text-[#1D68F2] font-bold' : 'text-slate-500'
+                          route.isHighlighted ? 'text-[#4F46E5] font-bold' : 'text-slate-500'
                         }`}
                       >
                         {route.price}
@@ -602,7 +602,7 @@ export default function PassengerDashboardMobile({
             >
               <Crosshair
                 className={`w-5 h-5 text-slate-800 stroke-[2] ${
-                  isLocating ? 'animate-spin text-[#1D68F2]' : ''
+                  isLocating ? 'animate-spin text-[#4F46E5]' : ''
                 }`}
               />
             </button>
@@ -646,7 +646,7 @@ export default function PassengerDashboardMobile({
               <div className="space-y-2 max-h-[38vh] overflow-y-auto pr-0.5">
                 {isSearching ? (
                   <div className="py-8 flex flex-col items-center justify-center text-[#64748B] gap-2">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#4E54F7]" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[#4F46E5]" />
                     <p className="text-xs font-semibold text-[#334155]">
                       Searching active scheduled rides...
                     </p>
@@ -689,7 +689,7 @@ export default function PassengerDashboardMobile({
 
                         {/* Floating Location Marker Pin (Over the car) */}
                         <g transform="translate(67, 10)">
-                          <path d="M13 0 C5.82 0 0 5.82 0 13 C0 22.75 13 34 13 34 C13 34 26 22.75 26 13 C26 5.82 20.18 0 13 0 Z" fill="#4E54F7" />
+                          <path d="M13 0 C5.82 0 0 5.82 0 13 C0 22.75 13 34 13 34 C13 34 26 22.75 26 13 C26 5.82 20.18 0 13 0 Z" fill="#4F46E5" />
                           <circle cx="13" cy="12" r="4.5" fill="#FFFFFF" />
                         </g>
                       </svg>
@@ -734,7 +734,7 @@ export default function PassengerDashboardMobile({
                           onClick={() => setSelectedTripId(trip.id)}
                           className={`p-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2.5 active:scale-[0.99] ${
                             isSelected
-                              ? 'border-[#4E54F7] bg-[#EEF2FF]/70 shadow-xs ring-1 ring-[#4E54F7]/30'
+                              ? 'border-[#4F46E5] bg-[#EEF2FF]/70 shadow-xs ring-1 ring-[#4F46E5]/30'
                               : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 shadow-2xs'
                           }`}
                         >
@@ -743,12 +743,12 @@ export default function PassengerDashboardMobile({
                             <div
                               className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                                 isSelected
-                                  ? 'border-[#4E54F7] bg-white'
+                                  ? 'border-[#4F46E5] bg-white'
                                   : 'border-slate-300 bg-white'
                               }`}
                             >
                               {isSelected && (
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#4E54F7]" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#4F46E5]" />
                               )}
                             </div>
 
@@ -769,7 +769,7 @@ export default function PassengerDashboardMobile({
                                 · {trip.availableSeats || 1} seats
                               </p>
                               {trip.departureTime && (
-                                <p className="text-[11px] text-[#4E54F7] font-semibold mt-0.5">
+                                <p className="text-[11px] text-[#4F46E5] font-semibold mt-0.5">
                                   Dep:{' '}
                                   {new Date(trip.departureTime).toLocaleTimeString([], {
                                     hour: '2-digit',
@@ -830,7 +830,7 @@ export default function PassengerDashboardMobile({
                     <span className="text-[11px] text-[#64748B] font-medium block leading-none mb-1">
                       Total Fare
                     </span>
-                    <span className="font-black text-[#1D4ED8] text-[22px] sm:text-[24px] leading-none whitespace-nowrap tracking-tight">
+                    <span className="font-black text-[#4F46E5] text-[22px] sm:text-[24px] leading-none whitespace-nowrap tracking-tight">
                       {baseCurrencySymbol}{' '}
                       {selectedFare > 0
                         ? selectedFare
@@ -845,7 +845,7 @@ export default function PassengerDashboardMobile({
                 <button
                   type="button"
                   onClick={handleConfirmBooking}
-                  className="w-full h-[52px] rounded-2xl bg-gradient-to-r from-[#4E54F7] via-[#4338CA] to-[#3B5AFE] hover:opacity-95 text-white font-bold text-sm sm:text-base shadow-lg shadow-indigo-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+                  className="w-full h-[52px] rounded-2xl bg-[#4F46E5] hover:bg-[#4338CA] hover:opacity-95 text-white font-bold text-sm sm:text-base shadow-lg shadow-indigo-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
                 >
                   <Car className="w-5 h-5 text-white stroke-[2.2] shrink-0" />
                   <span className="tracking-wide">

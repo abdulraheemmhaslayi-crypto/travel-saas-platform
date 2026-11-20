@@ -285,18 +285,18 @@ export default function DatePicker({
               className={cn(
                 'h-10 sm:h-9 w-full rounded-xl text-xs sm:text-sm font-medium flex items-center justify-center relative transition-all duration-150',
                 disabledDay && 'text-slate-300 cursor-not-allowed opacity-40',
-                !disabledDay && !selected && 'text-slate-700 hover:bg-blue-50/80 active:scale-95',
+                !disabledDay && !selected && 'text-slate-700 hover:bg-indigo-50/80 active:scale-95',
                 isTodayDate &&
                   !selected &&
                   !disabledDay &&
-                  'border border-[#1D68F2] text-[#1D68F2] font-bold bg-blue-50/40',
+                  'border border-[#4F46E5] text-[#4F46E5] font-bold bg-indigo-50/40',
                 selected &&
-                  'bg-[#1D68F2] text-white font-bold shadow-md shadow-blue-500/30 scale-105 z-10'
+                  'bg-[#4F46E5] text-white font-bold shadow-md shadow-indigo-500/30 scale-105 z-10'
               )}
             >
               {format(day, 'd')}
               {isTodayDate && !selected && (
-                <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#1D68F2]" />
+                <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#4F46E5]" />
               )}
             </button>
           );
@@ -317,7 +317,7 @@ export default function DatePicker({
         aria-expanded={isOpen}
         className={cn(
           'flex items-center justify-between w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-left shadow-2xs transition-all duration-200',
-          'hover:bg-gray-50/70 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1D68F2]/20 focus:border-[#1D68F2]',
+          'hover:bg-gray-50/70 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]',
           disabled && 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60',
           triggerClassName
         )}
@@ -326,7 +326,7 @@ export default function DatePicker({
           <div
             className={cn(
               'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors',
-              value ? 'bg-blue-100 text-[#1D68F2]' : 'bg-slate-100 text-slate-500'
+              value ? 'bg-indigo-100 text-[#4F46E5]' : 'bg-slate-100 text-slate-500'
             )}
           >
             <Calendar className="w-3.5 h-3.5 stroke-[2.2]" />
@@ -354,7 +354,7 @@ export default function DatePicker({
           <ChevronDown
             className={cn(
               'w-3.5 h-3.5 text-slate-400 transition-transform duration-200',
-              isOpen && 'rotate-180 text-[#1D68F2]'
+              isOpen && 'rotate-180 text-[#4F46E5]'
             )}
           />
         </div>
@@ -378,7 +378,7 @@ export default function DatePicker({
               {/* Sheet Header */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#1D68F2] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#4F46E5] flex items-center justify-center">
                     <Calendar className="w-4 h-4 stroke-[2.2]" />
                   </div>
                   <div>
@@ -405,7 +405,7 @@ export default function DatePicker({
                   className={cn(
                     'px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95',
                     value && isSameDay(value, today)
-                      ? 'bg-[#1D68F2] text-white shadow-xs'
+                      ? 'bg-[#4F46E5] text-white shadow-xs'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   )}
                 >
@@ -417,7 +417,7 @@ export default function DatePicker({
                   className={cn(
                     'px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95',
                     value && isSameDay(value, tomorrow)
-                      ? 'bg-[#1D68F2] text-white shadow-xs'
+                      ? 'bg-[#4F46E5] text-white shadow-xs'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   )}
                 >
@@ -429,7 +429,7 @@ export default function DatePicker({
                   className={cn(
                     'px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95',
                     value && isSameDay(value, dayAfter)
-                      ? 'bg-[#1D68F2] text-white shadow-xs'
+                      ? 'bg-[#4F46E5] text-white shadow-xs'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   )}
                 >
@@ -461,7 +461,7 @@ export default function DatePicker({
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="flex-1 h-11 rounded-xl bg-[#1D68F2] hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 h-11 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-xs sm:text-sm shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
                 >
                   <Check className="w-4 h-4 stroke-[2.5]" />
                   <span>
@@ -487,7 +487,7 @@ export default function DatePicker({
           {/* Header on Desktop */}
           <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-blue-50 text-[#1D68F2] flex items-center justify-center">
+              <div className="w-6 h-6 rounded-lg bg-indigo-50 text-[#4F46E5] flex items-center justify-center">
                 <Calendar className="w-3.5 h-3.5 stroke-[2.2]" />
               </div>
               <span className="text-xs font-bold text-slate-900">{title}</span>
@@ -510,7 +510,7 @@ export default function DatePicker({
               className={cn(
                 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95',
                 value && isSameDay(value, today)
-                  ? 'bg-[#1D68F2] text-white shadow-2xs'
+                  ? 'bg-[#4F46E5] text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               )}
             >
@@ -522,7 +522,7 @@ export default function DatePicker({
               className={cn(
                 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95',
                 value && isSameDay(value, tomorrow)
-                  ? 'bg-[#1D68F2] text-white shadow-2xs'
+                  ? 'bg-[#4F46E5] text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               )}
             >
@@ -534,7 +534,7 @@ export default function DatePicker({
               className={cn(
                 'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95',
                 value && isSameDay(value, dayAfter)
-                  ? 'bg-[#1D68F2] text-white shadow-2xs'
+                  ? 'bg-[#4F46E5] text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               )}
             >
@@ -566,7 +566,7 @@ export default function DatePicker({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="px-3.5 py-1.5 rounded-xl bg-[#1D68F2] hover:bg-blue-700 text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center gap-1"
+              className="px-3.5 py-1.5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center gap-1"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Done</span>

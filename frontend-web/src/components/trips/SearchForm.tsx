@@ -221,7 +221,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   type="button"
                   onClick={handleSwap}
                   tabIndex={-1}
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-50 border border-blue-200 hover:bg-blue-100 flex items-center justify-center text-blue-600 shadow-xs hover:shadow transition-all duration-200 active:scale-90"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 flex items-center justify-center text-[#4F46E5] shadow-xs hover:shadow transition-all duration-200 active:scale-90"
                   title="Swap Locations"
                   aria-label="Swap Locations"
                 >
@@ -334,7 +334,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
             <div className="pt-1.5">
               <button
                 type="submit"
-                className="w-full h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-2xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Search Available Rides</span>
@@ -391,7 +391,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
             type="button"
             onClick={handleSwap}
             tabIndex={-1}
-            className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 hover:bg-blue-100 flex items-center justify-center text-blue-600 shadow-xs transition-all active:scale-90"
+            className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 flex items-center justify-center text-[#4F46E5] shadow-xs transition-all active:scale-90"
             title="Swap Locations"
           >
             <ArrowUpDown className="w-3.5 h-3.5 md:hidden" />
@@ -442,7 +442,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   onClick={() => handleChange('date', todayStr)}
                   className={cn(
                     'px-1.5 py-0.5 rounded text-[10px] font-bold transition-all',
-                    filters.date === todayStr ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                    filters.date === todayStr ? 'bg-[#4F46E5] text-white' : 'bg-gray-100 text-gray-600'
                   )}
                 >
                   Today
@@ -452,7 +452,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   onClick={() => handleChange('date', tomorrowStr)}
                   className={cn(
                     'px-1.5 py-0.5 rounded text-[10px] font-bold transition-all',
-                    filters.date === tomorrowStr ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                    filters.date === tomorrowStr ? 'bg-[#4F46E5] text-white' : 'bg-gray-100 text-gray-600'
                   )}
                 >
                   Tmrw
@@ -496,7 +496,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
 
         {/* Search */}
         <div className="md:col-span-9 mt-1 md:mt-0">
-          <Button type="submit" className="w-full h-10 rounded-xl shadow-none font-bold text-xs sm:text-sm active:scale-[0.98] bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="w-full h-10 rounded-xl shadow-none font-bold text-xs sm:text-sm active:scale-[0.98] bg-[#4F46E5] hover:bg-[#4338CA]">
             <Search className="w-3.5 h-3.5 mr-1.5 inline" />
             Search Trips
           </Button>

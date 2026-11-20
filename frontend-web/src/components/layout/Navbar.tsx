@@ -59,7 +59,7 @@ const Navbar: React.FC = () => {
     <nav
       className={cn(
         'bg-white/95 backdrop-blur-md border-b border-gray-150 sticky top-0 z-40',
-        (isTripDetailPage || isPassengerMobilePage || isPopularRoutesMobilePage) && 'hidden lg:block'
+        (isTripDetailPage || isPassengerMobilePage || isPopularRoutesMobilePage) && 'hidden md:block'
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -85,8 +85,8 @@ const Navbar: React.FC = () => {
             )}
 
             <Link href="/dashboard/passenger" className="flex items-center gap-2 active:scale-95 transition-transform">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-xs shrink-0">
-                <MapPin className="w-4 h-4 fill-white text-blue-600" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#4F46E5] flex items-center justify-center text-white shadow-xs shrink-0">
+                <MapPin className="w-4 h-4 fill-white text-[#4F46E5]" />
               </div>
               <span className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Kokan Travel</span>
             </Link>
@@ -163,13 +163,13 @@ const Navbar: React.FC = () => {
               <div className="flex items-center gap-6">
                 <Link
                   href="/dashboard/passenger"
-                  className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors"
+                  className="text-sm font-semibold text-gray-700 hover:text-[#4F46E5] transition-colors"
                 >
                   Search Rides
                 </Link>
                 <Link
                   href="/dashboard/passenger/popular-routes"
-                  className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors"
+                  className="text-sm font-semibold text-gray-700 hover:text-[#4F46E5] transition-colors"
                 >
                   Popular Routes
                 </Link>

@@ -274,14 +274,14 @@ export default function MobilePopularRoutesScreen({
             {user ? (
               <Link
                 href="/dashboard/profile"
-                className="w-9 h-9 rounded-full bg-white text-[#1D68F2] font-bold text-xs shadow-md flex items-center justify-center active:scale-95 transition-transform"
+                className="w-9 h-9 rounded-full bg-white text-[#4F46E5] font-bold text-xs shadow-md flex items-center justify-center active:scale-95 transition-transform"
               >
                 {userInitials}
               </Link>
             ) : (
               <Link
                 href={loginUrl}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-[#1D68F2] font-semibold text-xs shadow-md active:scale-95 transition-transform shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-[#4F46E5] font-semibold text-xs shadow-md active:scale-95 transition-transform shrink-0"
               >
                 <User className="w-3.5 h-3.5 stroke-[2]" />
                 <span>Sign In</span>
@@ -333,9 +333,9 @@ export default function MobilePopularRoutesScreen({
         <button
           type="button"
           onClick={() => setSelectedCategory('all')}
-          className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-xs font-bold text-[#1D68F2] shadow-2xs active:scale-95 transition-all flex-1"
+          className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#EEF2FF] border border-[#C7D2FE] text-xs font-bold text-[#4F46E5] shadow-2xs active:scale-95 transition-all flex-1"
         >
-          <Flame className="w-3.5 h-3.5 fill-[#1D68F2] text-[#1D68F2]" />
+          <Flame className="w-3.5 h-3.5 fill-[#4F46E5] text-[#4F46E5]" />
           <span>Most Traveled Corridors</span>
         </button>
       </div>
@@ -353,9 +353,9 @@ export default function MobilePopularRoutesScreen({
               type="button"
               onClick={detectLocation}
               disabled={isLocating}
-              className="text-xs font-bold text-[#1D68F2] hover:text-blue-700 flex items-center gap-1 active:scale-95 transition-transform disabled:opacity-50"
+              className="text-xs font-bold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1 active:scale-95 transition-transform disabled:opacity-50"
             >
-              <Crosshair className={`w-3.5 h-3.5 text-[#1D68F2] ${isLocating ? 'animate-spin' : ''}`} />
+              <Crosshair className={`w-3.5 h-3.5 text-[#4F46E5] ${isLocating ? 'animate-spin' : ''}`} />
               <span>Use Current</span>
             </button>
           </div>
@@ -378,10 +378,10 @@ export default function MobilePopularRoutesScreen({
               type="button"
               onClick={detectLocation}
               disabled={isLocating}
-              className="h-[46px] px-3.5 rounded-xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-[#1D68F2] text-xs font-bold flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all shrink-0"
+              className="h-[46px] px-3.5 rounded-xl border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 text-[#4F46E5] text-xs font-bold flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all shrink-0"
               title="Detect GPS location"
             >
-              <MapPin className={`w-3.5 h-3.5 text-[#1D68F2] ${isLocating ? 'animate-spin' : ''}`} />
+              <MapPin className={`w-3.5 h-3.5 text-[#4F46E5] ${isLocating ? 'animate-spin' : ''}`} />
               <span>GPS</span>
             </button>
           </div>
@@ -395,7 +395,7 @@ export default function MobilePopularRoutesScreen({
           <button
             type="button"
             onClick={handleSwapSearch}
-            className="w-8 h-8 rounded-full bg-white border border-blue-200 shadow-xs flex items-center justify-center text-[#1D68F2] hover:bg-blue-50 active:scale-90 transition-transform relative z-10"
+            className="w-8 h-8 rounded-full bg-white border border-indigo-200 shadow-xs flex items-center justify-center text-[#4F46E5] hover:bg-indigo-50 active:scale-90 transition-transform relative z-10"
             title="Swap locations"
             aria-label="Swap locations"
           >
@@ -424,7 +424,7 @@ export default function MobilePopularRoutesScreen({
         <div className="space-y-1.5 pt-2 border-t border-slate-100">
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-[#1D68F2]" />
+              <Calendar className="w-3.5 h-3.5 text-[#4F46E5]" />
               <span>Departure Date</span>
             </label>
             <div className="flex items-center gap-1">
@@ -434,7 +434,7 @@ export default function MobilePopularRoutesScreen({
                 className={cn(
                   'px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all active:scale-95',
                   departureDate === todayStr
-                    ? 'bg-[#1D68F2] text-white shadow-xs'
+                    ? 'bg-[#4F46E5] text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 )}
               >
@@ -446,7 +446,7 @@ export default function MobilePopularRoutesScreen({
                 className={cn(
                   'px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all active:scale-95',
                   departureDate === tomorrowStr
-                    ? 'bg-[#1D68F2] text-white shadow-xs'
+                    ? 'bg-[#4F46E5] text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 )}
               >
@@ -481,7 +481,7 @@ export default function MobilePopularRoutesScreen({
         <button
           type="button"
           onClick={handleSearchAvailableRides}
-          className="w-full h-12 rounded-xl bg-[#1D68F2] hover:bg-blue-700 text-white font-bold text-sm shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-3"
+          className="w-full h-12 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-sm shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-3"
         >
           <Search className="w-4 h-4 stroke-[2.5]" />
           <span>Search Available Rides</span>
@@ -547,7 +547,7 @@ export default function MobilePopularRoutesScreen({
               onClick={() => setSelectedCategory(tab.id as any)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                 isActive
-                  ? 'bg-[#1D68F2] text-white shadow-xs'
+                  ? 'bg-[#4F46E5] text-white shadow-xs'
                   : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
               }`}
             >
@@ -649,7 +649,7 @@ export default function MobilePopularRoutesScreen({
                     <button
                       type="button"
                       onClick={() => handleSearchNavigation(route.destination, route.origin)}
-                      className="text-[#1D68F2] hover:underline font-bold flex items-center gap-0.5"
+                      className="text-[#4F46E5] hover:underline font-bold flex items-center gap-0.5"
                     >
                       <ArrowLeftRight className="w-3 h-3" />
                       <span>Swap</span>
@@ -671,7 +671,7 @@ export default function MobilePopularRoutesScreen({
                   <button
                     type="button"
                     onClick={() => handleSearchNavigation(route.origin, route.destination)}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#1D68F2] hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1"
+                    className="px-3.5 py-1.5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] active:scale-95 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1"
                   >
                     <span>Find Rides</span>
                     <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />

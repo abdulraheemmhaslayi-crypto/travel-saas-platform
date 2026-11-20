@@ -311,7 +311,7 @@ const handleBook = async () => {
   return (
     <div className="w-full pb-36 lg:pb-8">
       {/* Mobile Sticky Top App Bar */}
-      <header className="block lg:hidden bg-white/95 backdrop-blur-md px-3.5 py-2.5 border-b border-gray-200/90 sticky top-0 z-30 shadow-xs w-full">
+      <header className="block md:hidden bg-white/95 backdrop-blur-md px-3.5 py-2.5 border-b border-gray-200/90 sticky top-0 z-30 shadow-xs w-full">
         <div className="flex items-center justify-between gap-2.5">
           <button
             type="button"
@@ -331,7 +331,7 @@ const handleBook = async () => {
             <p className="text-[10px] text-gray-500 font-semibold truncate flex items-center gap-1 mt-0.5">
               <span>{formatDateTime(currentTrip.departureDate || currentTrip.departureTime || '')}</span>
               <span className="opacity-40">•</span>
-              <span className="text-blue-600 font-bold">{currencySymbol} {seatPrice}/seat</span>
+              <span className="text-[#4F46E5] font-bold">{currencySymbol} {seatPrice}/seat</span>
             </p>
           </div>
 
@@ -347,20 +347,20 @@ const handleBook = async () => {
       {/* Main Content Container */}
       <div className="w-full px-3.5 sm:px-0 pt-2.5 lg:pt-0">
         {/* Desktop Hero Header Card */}
-        <div className="hidden lg:block bg-white rounded-2xl border border-gray-200/90 p-5 sm:p-6 shadow-xs mb-6">
+        <div className="hidden md:block bg-white rounded-2xl border border-gray-200/90 p-5 sm:p-6 shadow-xs mb-6">
           <div className="flex items-center justify-between gap-4 mb-3">
             <button
               type="button"
               onClick={() => router.push('/dashboard/passenger')}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-blue-600 transition-colors py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-[#4F46E5] transition-colors py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Ride Search</span>
             </button>
 
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold">
-                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-[#4F46E5] text-xs font-bold">
+                <Sparkles className="w-3.5 h-3.5 text-[#4F46E5]" />
                 <span>Verified Express Corridor</span>
               </span>
               <Badge
@@ -381,7 +381,7 @@ const handleBook = async () => {
               </h1>
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium mt-2">
                 <span className="flex items-center gap-1.5 text-slate-800 font-bold">
-                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                  <Calendar className="w-3.5 h-3.5 text-[#4F46E5]" />
                   {formatDateTime(currentTrip.departureDate || currentTrip.departureTime || '')}
                 </span>
                 <span className="text-slate-300">•</span>
@@ -406,23 +406,23 @@ const handleBook = async () => {
               </div>
             </div>
 
-            <div className="flex items-baseline gap-1.5 bg-blue-50/70 border border-blue-200/80 px-4 py-2.5 rounded-2xl shrink-0 self-start md:self-auto">
+            <div className="flex items-baseline gap-1.5 bg-indigo-50/70 border border-indigo-200/80 px-4 py-2.5 rounded-2xl shrink-0 self-start md:self-auto">
               <span className="text-xs font-bold text-slate-500">From</span>
-              <span className="text-2xl font-black text-blue-600">{currencySymbol} {seatPrice}</span>
+              <span className="text-2xl font-black text-[#4F46E5]">{currencySymbol} {seatPrice}</span>
               <span className="text-xs font-semibold text-slate-500">/ seat</span>
             </div>
           </div>
         </div>
 
         {/* Mobile View Tabs Selector (Seats / Route / Vehicle - 3 Equal Balanced Columns) */}
-        <div className="grid grid-cols-3 gap-1.5 bg-white p-1 rounded-2xl border border-gray-200/90 mb-3 shadow-2xs lg:hidden w-full">
+        <div className="grid grid-cols-3 gap-1.5 bg-white p-1 rounded-2xl border border-gray-200/90 mb-3 shadow-2xs md:hidden w-full">
           <button
             type="button"
             onClick={() => setMobileActiveTab('seats')}
             className={cn(
               'py-1.5 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 truncate',
               mobileActiveTab === 'seats'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-[#4F46E5] text-white shadow-xs'
                 : 'text-gray-500 hover:text-gray-900'
             )}
           >
@@ -436,7 +436,7 @@ const handleBook = async () => {
             className={cn(
               'py-1.5 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 truncate',
               mobileActiveTab === 'route'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-[#4F46E5] text-white shadow-xs'
                 : 'text-gray-500 hover:text-gray-900'
             )}
           >
@@ -450,7 +450,7 @@ const handleBook = async () => {
             className={cn(
               'py-1.5 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 truncate',
               mobileActiveTab === 'vehicle'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-[#4F46E5] text-white shadow-xs'
                 : 'text-gray-500 hover:text-gray-900'
             )}
           >
@@ -466,7 +466,7 @@ const handleBook = async () => {
              ════════════════════════════════════════════════════════════════════ */}
           <div className={cn(
             'space-y-4 sm:space-y-6 lg:col-span-7 w-full',
-            mobileActiveTab === 'seats' ? 'hidden lg:block' : 'block'
+            mobileActiveTab === 'seats' ? 'hidden md:block' : 'block'
           )}>
             <TripDetails
               trip={currentTrip}
@@ -481,7 +481,7 @@ const handleBook = async () => {
              ════════════════════════════════════════════════════════════════════ */}
           <div className={cn(
             'space-y-3.5 lg:col-span-5 lg:sticky lg:top-20 w-full',
-            mobileActiveTab !== 'seats' ? 'hidden lg:block' : 'block'
+            mobileActiveTab !== 'seats' ? 'hidden md:block' : 'block'
           )}>
             {/* ── Trip Vehicle Hero Card (Compact for Mobile) ── */}
             <div className="bg-white rounded-2xl border border-gray-200/90 p-3.5 sm:p-4 shadow-xs relative overflow-hidden w-full">
@@ -507,7 +507,7 @@ const handleBook = async () => {
                 </div>
 
                 <div className="text-right shrink-0 min-w-[65px] pl-1">
-                  <span className="text-xs sm:text-sm font-black text-blue-600 block whitespace-nowrap">
+                  <span className="text-xs sm:text-sm font-black text-[#4F46E5] block whitespace-nowrap">
                     {currencySymbol} {seatPrice}
                   </span>
                   <span className="text-[10px] text-gray-400 block whitespace-nowrap">per seat</span>
@@ -542,10 +542,10 @@ const handleBook = async () => {
             <div className="bg-white rounded-2xl border border-gray-200/90 p-3.5 sm:p-5 shadow-xs space-y-3.5 w-full max-w-full overflow-hidden">
               <div className="flex items-center justify-between pb-2.5 border-b border-gray-100">
                 <h3 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                  <Ticket className="w-4 h-4 text-blue-600 shrink-0" />
+                  <Ticket className="w-4 h-4 text-[#4F46E5] shrink-0" />
                   <span>Choose Your Seat</span>
                 </h3>
-                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-[#4F46E5]">
                   {currentTrip.availableSeats} of {currentTrip.totalSeats} open
                 </span>
               </div>
@@ -579,7 +579,7 @@ const handleBook = async () => {
                     className={cn(
                       'py-1.5 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 truncate active:scale-95',
                       passengerGender === 'male'
-                        ? 'bg-blue-600 text-white shadow-xs ring-1 ring-blue-700/20'
+                        ? 'bg-[#4F46E5] text-white shadow-xs ring-1 ring-indigo-700/20'
                         : 'text-gray-600 hover:text-gray-900 bg-transparent'
                     )}
                   >
@@ -630,7 +630,7 @@ const handleBook = async () => {
                               "font-extrabold px-2 py-0.5 rounded-lg text-xs flex items-center gap-1.5 border shadow-2xs transition-all",
                               sGender === 'female'
                                 ? "bg-pink-50 text-pink-700 border-pink-300"
-                                : "bg-blue-50 text-blue-700 border-blue-300"
+                                : "bg-indigo-50 text-[#4F46E5] border-blue-300"
                             )}
                           >
                             <span>Seat #{s}</span>
@@ -729,7 +729,7 @@ const handleBook = async () => {
 
                   <Link 
                     href={`/dashboard/trips/${related.id}`}
-                    className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 pt-1.5 border-t border-gray-100"
+                    className="text-xs font-bold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1 pt-1.5 border-t border-gray-100"
                   >
                     <span>View Trip</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -744,7 +744,7 @@ const handleBook = async () => {
       {/* ════════════════════════════════════════════════════════════════════════
          STICKY BOTTOM ACTION BAR ON MOBILE (Fixed above MobileNav)
          ════════════════════════════════════════════════════════════════════════ */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-3 pb-[calc(env(safe-area-inset-bottom,0px)+74px)] lg:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/90 p-3 pb-[calc(env(safe-area-inset-bottom,0px)+74px)] md:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
         <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
           <div className="min-w-0">
             <div className="text-[10px] font-bold block leading-none mb-1 flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
@@ -762,7 +762,7 @@ const handleBook = async () => {
                           "font-black text-[9px] px-1.5 py-0.5 rounded border shrink-0 flex items-center gap-0.5",
                           g === 'female'
                             ? "bg-pink-50 text-pink-700 border-pink-200"
-                            : "bg-blue-50 text-blue-700 border-blue-200"
+                            : "bg-indigo-50 text-[#4F46E5] border-blue-200"
                         )}
                       >
                         #{s} {g === 'female' ? '♀' : '♂'}
@@ -774,7 +774,7 @@ const handleBook = async () => {
                 <span className="text-slate-400">Select Seat(s)</span>
               )}
             </div>
-            <span className="text-lg font-black text-blue-600 leading-none">
+            <span className="text-lg font-black text-[#4F46E5] leading-none">
               {currencySymbol} {selectedSeats.length > 0 ? totalFinalAmount : seatPrice}
             </span>
           </div>
@@ -783,7 +783,7 @@ const handleBook = async () => {
             type="button"
             onClick={handleProceedToBooking}
             disabled={selectedSeats.length === 0 || isBookingDisabled}
-            className="flex-1 max-w-[200px] h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
+            className="flex-1 max-w-[200px] h-11 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-500/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
           >
             <span>{selectedSeats.length === 0 ? 'Pick a Seat' : 'Proceed to Book'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -800,8 +800,8 @@ const handleBook = async () => {
       >
         <div className="space-y-3.5">
           {/* Trip Header Banner */}
-          <div className="flex items-center gap-2.5 p-2.5 bg-blue-50/60 rounded-xl border border-blue-200/60">
-            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+          <div className="flex items-center gap-2.5 p-2.5 bg-indigo-50/60 rounded-xl border border-indigo-200/60">
+            <CheckCircle2 className="w-4 h-4 text-[#4F46E5] shrink-0" />
             <div className="min-w-0 flex-1">
               <p className="font-bold text-gray-900 text-xs truncate">
                 {currentTrip.origin || currentTrip.source} ➔ {currentTrip.destination}
@@ -825,7 +825,7 @@ const handleBook = async () => {
                   placeholder="Full Name" 
                   value={passengerName}
                   onChange={(e) => setPassengerName(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900 text-xs"
+                  className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-[#4F46E5] font-semibold text-gray-900 text-xs"
                 />
               </div>
 
@@ -839,7 +839,7 @@ const handleBook = async () => {
                     placeholder="Phone Number" 
                     value={passengerPhone}
                     onChange={(e) => setPassengerPhone(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900 text-xs"
+                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-[#4F46E5] font-semibold text-gray-900 text-xs"
                   />
                 </div>
 
@@ -852,7 +852,7 @@ const handleBook = async () => {
                     placeholder="Email Address" 
                     value={passengerEmail}
                     onChange={(e) => setPassengerEmail(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900 text-xs"
+                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-[#4F46E5] font-semibold text-gray-900 text-xs"
                   />
                 </div>
               </div>
@@ -870,7 +870,7 @@ const handleBook = async () => {
                   placeholder="e.g. Bus Stand / Hotel" 
                   value={pickupPoint}
                   onChange={(e) => setPickupPoint(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-blue-500 font-medium text-gray-900 text-xs"
+                  className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-[#4F46E5] font-medium text-gray-900 text-xs"
                 />
               </div>
 
@@ -881,7 +881,7 @@ const handleBook = async () => {
                   placeholder="e.g. Railway Station" 
                   value={dropPoint}
                   onChange={(e) => setDropPoint(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-blue-500 font-medium text-gray-900 text-xs"
+                  className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-[#4F46E5] font-medium text-gray-900 text-xs"
                 />
               </div>
             </div>
