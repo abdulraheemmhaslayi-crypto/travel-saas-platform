@@ -11,6 +11,7 @@ import { formatCurrency, cn } from '@/lib/utils';
 import Loading from '@/components/common/Loading';
 import EmptyState from '@/components/common/EmptyState';
 import MobilePopularRoutesScreen from '@/components/mobile/MobilePopularRoutesScreen';
+import DatePicker from '@/components/ui/DatePicker';
 import {
   MapPin,
   ArrowRight,
@@ -190,6 +191,23 @@ const CURATED_CORRIDORS: RouteDetails[] = [
   },
 ];
 
+const parseLocalDate = (dateStr: string | undefined): Date | undefined => {
+  if (!dateStr) return undefined;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return undefined;
+  const [year, month, day] = parts.map(Number);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return undefined;
+  return new Date(year, month - 1, day);
+};
+
+const formatLocalDate = (date: Date | null | undefined): string => {
+  if (!date) return '';
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 function PopularRoutesContent() {
   const router = useRouter();
   const { user } = useAuthStore();
@@ -198,6 +216,7 @@ function PopularRoutesContent() {
   const { addFavoriteRoute, removeFavoriteRoute, isFavoriteRoute } = usePassengerStore();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [departureDate, setDepartureDate] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'konkan' | 'mumbai' | 'pune' | 'budget'>('all');
   const [sortBy, setSortBy] = useState<'popular' | 'price-asc' | 'distance-asc'>('popular');
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -298,10 +317,11 @@ function PopularRoutesContent() {
   const handleSearchNavigation = (origin: string, destination: string) => {
     const originShort = origin.split(',')[0].trim();
     const destShort = destination.split(',')[0].trim();
+    const dateParam = departureDate ? `&date=${encodeURIComponent(departureDate)}` : '';
     router.push(
       `/dashboard/trips/search?origin=${encodeURIComponent(originShort)}&destination=${encodeURIComponent(
         destShort
-      )}`
+      )}${dateParam}`
     );
   };
 
@@ -418,6 +438,21 @@ function PopularRoutesContent() {
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
+            </div>
+
+            {/* Departure Date Filter on Desktop */}
+            <div className="w-56 shrink-0">
+              <DatePicker
+                value={departureDate ? parseLocalDate(departureDate) : undefined}
+                onChange={(d) => setDepartureDate(formatLocalDate(d))}
+                onClear={() => setDepartureDate('')}
+                placeholder="Departure Date"
+                minDate={new Date()}
+                title="Select Travel Date"
+                subtitle="Filter popular corridors by date"
+                className="w-full text-xs"
+                triggerClassName="h-10 rounded-xl bg-slate-50 border-slate-200 hover:border-slate-300"
+              />
             </div>
 
             {/* Custom Sort Dropdown */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import {
@@ -17,7 +17,7 @@ import {
   startOfDay,
   addDays,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar, X, Check, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, X, Check, RotateCcw, ChevronDown } from 'lucide-react';
 
 export interface DatePickerProps {
   value?: Date;
@@ -31,6 +31,7 @@ export interface DatePickerProps {
   onClear?: () => void;
   title?: string;
   subtitle?: string;
+  align?: 'left' | 'right' | 'auto';
 }
 
 export default function DatePicker({
@@ -45,12 +46,17 @@ export default function DatePicker({
   onClear,
   title = 'Select Departure Date',
   subtitle = 'Choose your travel date across Maharashtra',
+  align = 'auto',
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState<Date>(value || minDate || new Date());
   const [isMobile, setIsMobile] = useState(false);
+  const [desktopAlign, setDesktopAlign] = useState<'left' | 'right'>('left');
+  const [openUpward, setOpenUpward] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   // Synchronize currentMonth when value or modal opens
   useEffect(() => {
@@ -75,9 +81,37 @@ export default function DatePicker({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Compute desktop popover smart position (avoid overflow on right edge and bottom)
+  useLayoutEffect(() => {
+    if (!isOpen || isMobile || !buttonRef.current || typeof window === 'undefined') return;
+
+    const rect = buttonRef.current.getBoundingClientRect();
+    const popoverWidth = 320;
+    const popoverHeight = 360;
+
+    // Alignment horizontally
+    if (align === 'right') {
+      setDesktopAlign('right');
+    } else if (align === 'left') {
+      setDesktopAlign('left');
+    } else {
+      const overflowsRight = rect.left + popoverWidth > window.innerWidth - 16;
+      setDesktopAlign(overflowsRight ? 'right' : 'left');
+    }
+
+    // Direction vertically (open upward if no room below)
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    if (spaceBelow < popoverHeight && spaceAbove > spaceBelow) {
+      setOpenUpward(true);
+    } else {
+      setOpenUpward(false);
+    }
+  }, [isOpen, isMobile, align]);
+
   // Lock background scroll when open on mobile
   useEffect(() => {
-    if (!isOpen || typeof document === 'undefined') return;
+    if (!isOpen || !isMobile || typeof document === 'undefined') return;
 
     const originalOverflow = document.body.style.overflow;
     const originalPaddingRight = document.body.style.paddingRight;
@@ -92,14 +126,19 @@ export default function DatePicker({
       document.body.style.overflow = originalOverflow;
       document.body.style.paddingRight = originalPaddingRight;
     };
-  }, [isOpen]);
+  }, [isOpen, isMobile]);
 
   // Click outside & Escape key listeners for desktop popover
   useEffect(() => {
     if (!isOpen || isMobile) return;
 
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node) &&
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -169,7 +208,7 @@ export default function DatePicker({
     return format(d, 'EEE, d MMM yyyy');
   };
 
-  // Calendar Body Content (Shared between Mobile Bottom Sheet and Desktop Popover)
+  // Shared Calendar Body Content
   const renderCalendarContent = () => (
     <div className="w-full select-none">
       {/* Month Header Navigation */}
@@ -189,7 +228,7 @@ export default function DatePicker({
           <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
         </button>
 
-        <div className="text-sm font-bold text-slate-800 tracking-tight">
+        <div className="text-sm font-bold text-slate-900 tracking-tight">
           {format(currentMonth, 'MMMM yyyy')}
         </div>
 
@@ -226,7 +265,7 @@ export default function DatePicker({
 
       {/* Days Grid */}
       <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
-        {/* Empty slots for month starting offset */}
+        {/* Leading empty slots for proper weekday alignment */}
         {Array.from({ length: startDayOfWeek }).map((_, i) => (
           <div key={`empty-${i}`} className="h-10 sm:h-9 w-full" />
         ))}
@@ -274,6 +313,8 @@ export default function DatePicker({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
         className={cn(
           'flex items-center justify-between w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-left shadow-2xs transition-all duration-200',
           'hover:bg-gray-50/70 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1D68F2]/20 focus:border-[#1D68F2]',
@@ -295,20 +336,28 @@ export default function DatePicker({
           </span>
         </div>
 
-        {value && onClear ? (
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClear();
-            }}
-            className="w-5 h-5 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
-            title="Clear date"
-          >
-            <X className="w-3.5 h-3.5" />
-          </div>
-        ) : null}
+        <div className="flex items-center gap-1 shrink-0 ml-1">
+          {value && onClear && (
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
+              className="w-5 h-5 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+              title="Clear date"
+            >
+              <X className="w-3.5 h-3.5" />
+            </div>
+          )}
+          <ChevronDown
+            className={cn(
+              'w-3.5 h-3.5 text-slate-400 transition-transform duration-200',
+              isOpen && 'rotate-180 text-[#1D68F2]'
+            )}
+          />
+        </div>
       </button>
 
       {/* ── MOBILE VIEW: Native Bottom Sheet Modal (rendered via Portal) ── */}
@@ -425,19 +474,44 @@ export default function DatePicker({
           document.body
         )}
 
-      {/* ── DESKTOP VIEW: Anchored Inline Dropdown Popover ── */}
+      {/* ── DESKTOP VIEW: Anchored Popover with Smart Boundary Alignment ── */}
       {isOpen && !isMobile && (
-        <div className="absolute top-full left-0 mt-2 z-50 w-[310px] bg-white rounded-2xl shadow-xl border border-slate-200 p-3.5 animate-fadeIn">
+        <div
+          ref={popoverRef}
+          className={cn(
+            'absolute z-50 w-[320px] bg-white rounded-2xl shadow-xl border border-slate-200 p-4 animate-in fade-in zoom-in-95 duration-150',
+            openUpward ? 'bottom-full mb-2' : 'top-full mt-2',
+            desktopAlign === 'right' ? 'right-0' : 'left-0'
+          )}
+        >
+          {/* Header on Desktop */}
+          <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-blue-50 text-[#1D68F2] flex items-center justify-center">
+                <Calendar className="w-3.5 h-3.5 stroke-[2.2]" />
+              </div>
+              <span className="text-xs font-bold text-slate-900">{title}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {/* Quick chips on desktop */}
-          <div className="flex items-center gap-1 mb-3 pb-2.5 border-b border-slate-100">
+          <div className="flex items-center gap-1.5 mb-3 pb-2.5 border-b border-slate-100">
             <button
               type="button"
               onClick={() => handleDateSelect(today)}
               className={cn(
-                'px-2 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95',
+                'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95',
                 value && isSameDay(value, today)
-                  ? 'bg-[#1D68F2] text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-[#1D68F2] text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               )}
             >
               Today
@@ -446,30 +520,58 @@ export default function DatePicker({
               type="button"
               onClick={() => handleDateSelect(tomorrow)}
               className={cn(
-                'px-2 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95',
+                'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95',
                 value && isSameDay(value, tomorrow)
-                  ? 'bg-[#1D68F2] text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-[#1D68F2] text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               )}
             >
               Tomorrow
             </button>
-            {value && onClear && (
+            <button
+              type="button"
+              onClick={() => handleDateSelect(dayAfter)}
+              className={cn(
+                'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95',
+                value && isSameDay(value, dayAfter)
+                  ? 'bg-[#1D68F2] text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              )}
+            >
+              Day After
+            </button>
+          </div>
+
+          {/* Calendar Body */}
+          {renderCalendarContent()}
+
+          {/* Desktop Footer Actions */}
+          <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 text-xs">
+            {value && onClear ? (
               <button
                 type="button"
                 onClick={() => {
                   onClear();
                   setIsOpen(false);
                 }}
-                className="ml-auto text-[11px] font-semibold text-rose-500 hover:text-rose-700"
+                className="text-[11px] font-bold text-rose-500 hover:text-rose-700 flex items-center gap-1 py-1 px-1.5 rounded-lg hover:bg-rose-50 transition-colors"
               >
-                Clear
+                <RotateCcw className="w-3 h-3" />
+                <span>Clear Date</span>
               </button>
+            ) : (
+              <span className="text-[11px] text-slate-400">Pick any date</span>
             )}
-          </div>
 
-          {/* Calendar */}
-          {renderCalendarContent()}
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="px-3.5 py-1.5 rounded-xl bg-[#1D68F2] hover:bg-blue-700 text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center gap-1"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Done</span>
+            </button>
+          </div>
         </div>
       )}
     </div>

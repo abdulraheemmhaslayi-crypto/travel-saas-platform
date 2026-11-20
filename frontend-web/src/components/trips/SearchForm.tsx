@@ -301,8 +301,10 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   onClear={() => handleChange('date', '')}
                   placeholder="Select Date"
                   minDate={new Date()}
+                  title="Select Departure Date"
+                  subtitle="Intercity rides across Maharashtra"
                   className="w-full text-xs sm:text-sm"
-                  triggerClassName="h-10 rounded-xl"
+                  triggerClassName="h-11 rounded-xl bg-gray-50/80 hover:bg-white border-gray-200"
                 />
               </div>
 
@@ -460,9 +462,13 @@ const SearchForm: React.FC<SearchFormProps> = ({
             <DatePicker
               value={parseLocalDate(filters.date)}
               onChange={(date) => handleChange('date', formatLocalDate(date))}
+              onClear={() => handleChange('date', '')}
               placeholder="Date"
               minDate={new Date()}
-              className="w-full text-xs h-10"
+              title="Select Departure Date"
+              subtitle="Intercity rides across Maharashtra"
+              className="w-full text-xs"
+              triggerClassName="h-10 rounded-xl bg-gray-50/80 hover:bg-white border-gray-200"
             />
           </div>
 

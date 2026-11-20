@@ -602,6 +602,7 @@ export default function PassengerDashboardPage() {
             </div>
             <p className="text-[11px] text-gray-500 mt-0.5 font-medium">
               {formatDuration(estimatedMins)} • {Math.round(distanceKm)} km trip
+              {date ? ` • 📅 ${date}` : ''}
             </p>
           </div>
 
@@ -826,8 +827,10 @@ export default function PassengerDashboardPage() {
                     onClear={() => setDate('')}
                     placeholder="Select Departure Date"
                     minDate={new Date()}
+                    title="Select Departure Date"
+                    subtitle="Intercity rides across Maharashtra"
                     className="w-full text-xs sm:text-sm"
-                    triggerClassName="h-10 rounded-xl"
+                    triggerClassName="h-11 rounded-xl bg-white border-gray-200 hover:border-blue-400 shadow-2xs"
                   />
                 </div>
               </div>
@@ -957,7 +960,7 @@ export default function PassengerDashboardPage() {
                   {isSearching
                     ? 'Searching available fleet rides...'
                     : availableRealTrips.length > 0
-                    ? `${availableRealTrips.length} verified trip${availableRealTrips.length > 1 ? 's' : ''} available`
+                    ? `${availableRealTrips.length} verified trip${availableRealTrips.length > 1 ? 's' : ''} available${date ? ` for ${date}` : ''}`
                     : 'Choose your preferred journey'}
                 </p>
               </div>
