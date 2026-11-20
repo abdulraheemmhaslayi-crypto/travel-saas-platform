@@ -53,13 +53,14 @@ const Navbar: React.FC = () => {
   const isTripDetailPage = pathname?.startsWith('/dashboard/trips/');
   const isPassengerMobilePage = pathname === '/dashboard/passenger';
   const isPopularRoutesMobilePage = pathname === '/dashboard/passenger/popular-routes';
+  const isDashboardMobilePage = pathname?.startsWith('/dashboard') && !pathname?.startsWith('/dashboard/admin');
   const isRootPage = pathname === '/' || pathname === '/dashboard/passenger';
 
   return (
     <nav
       className={cn(
         'bg-white/95 backdrop-blur-md border-b border-gray-150 sticky top-0 z-40',
-        (isTripDetailPage || isPassengerMobilePage || isPopularRoutesMobilePage) && 'hidden md:block'
+        (isDashboardMobilePage || isTripDetailPage || isPassengerMobilePage || isPopularRoutesMobilePage) && 'hidden md:block'
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
