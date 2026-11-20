@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTripStore } from '@/store/slices/tripSlice';
@@ -222,6 +223,17 @@ function PopularRoutesContent() {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
   const [activeModalRoute, setActiveModalRoute] = useState<RouteDetails | null>(null);
+
+  // Lock body scroll when activeModalRoute bottom sheet is open on mobile
+  useEffect(() => {
+    if (activeModalRoute && typeof document !== 'undefined') {
+      const origOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = origOverflow;
+      };
+    }
+  }, [activeModalRoute]);
 
   // Close sort menu on click outside
   useEffect(() => {
@@ -776,58 +788,75 @@ function PopularRoutesContent() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* Route Stops & Timetable Modal (Shared by Mobile & Desktop)          */}
+      {/* Route Stops & Timetable Native Bottom Sheet (Mobile) & Modal (Desktop)*/}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {activeModalRoute && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-200 flex items-start justify-between bg-slate-50">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold mb-1.5">
-                  <Sparkles className="w-3 h-3" />
-                  Corridor Timetable & Waypoints
+      {activeModalRoute && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[60] flex flex-col justify-end sm:items-center sm:justify-center p-0 sm:p-4">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+            onClick={() => setActiveModalRoute(null)}
+          />
+
+          {/* Drawer Sheet on Mobile / Centered Modal on Desktop */}
+          <div className="relative z-10 w-full bg-white rounded-t-[32px] sm:rounded-2xl shadow-2xl border-t sm:border border-slate-200 max-w-lg overflow-hidden flex flex-col max-h-[88vh] sm:max-h-[90vh] animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+            {/* Mobile Drag Handle Bar */}
+            <div className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto my-2.5 sm:hidden shrink-0" />
+
+            {/* Header */}
+            <div className="px-4 sm:px-5 pb-3 sm:py-4 border-b border-slate-100 flex items-start justify-between bg-slate-50/80 sm:bg-slate-50 shrink-0">
+              <div className="min-w-0 flex-1 pr-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EEF2FF] border border-[#C7D2FE] text-[#4F46E5] text-xs font-bold mb-1">
+                  <Sparkles className="w-3 h-3 text-[#4F46E5]" />
+                  <span>Corridor Timetable & Waypoints</span>
                 </div>
-                <h3 className="text-base font-extrabold text-slate-900">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 truncate tracking-tight">
                   {activeModalRoute.origin.split(',')[0]} ⇄ {activeModalRoute.destination.split(',')[0]}
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
                   {activeModalRoute.distanceKm} km • {activeModalRoute.duration} typical travel time
                 </p>
               </div>
+
               <button
+                type="button"
                 onClick={() => setActiveModalRoute(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-transform active:scale-90 shrink-0"
+                aria-label="Close"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 stroke-[2.2]" />
               </button>
             </div>
 
-            <div className="p-5 overflow-y-auto space-y-5">
+            {/* Scrollable Content */}
+            <div className="px-4 sm:px-5 py-4 overflow-y-auto space-y-4 flex-1 overscroll-contain">
+              {/* Departure Slots */}
               <div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-2">
-                  <Calendar className="w-4 h-4 text-blue-600" />
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 mb-2">
+                  <Calendar className="w-4 h-4 text-[#4F46E5]" />
                   <span>Scheduled Daily Departure Slots</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {activeModalRoute.schedules.map((slot) => (
                     <div
                       key={slot}
-                      className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200 text-xs font-bold text-slate-800 flex items-center gap-1.5 shadow-2xs"
                     >
-                      <Clock className="w-3 h-3 text-slate-500" />
+                      <Clock className="w-3.5 h-3.5 text-slate-500" />
                       <span>{slot}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
+              {/* Waypoints Timeline */}
               <div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 mb-2.5">
                   <MapPin className="w-4 h-4 text-emerald-600" />
                   <span>Route Stops & Landmark Boarding Points</span>
                 </div>
 
-                <div className="relative pl-6 space-y-4">
+                <div className="relative pl-6 space-y-3.5">
                   <div className="absolute left-2.5 top-2 bottom-2 w-0.5 bg-slate-200" />
 
                   {activeModalRoute.stops.map((stop, sIdx) => {
@@ -837,17 +866,17 @@ function PopularRoutesContent() {
                     return (
                       <div key={stop.name} className="relative">
                         <div
-                          className={`absolute -left-6 top-1 w-3 h-3 rounded-full border-2 border-white shadow-sm ring-2 ${
+                          className={`absolute -left-6 top-1 w-3 h-3 rounded-full border-2 border-white shadow-xs ring-2 ${
                             isFirst
                               ? 'bg-emerald-500 ring-emerald-100'
                               : isLast
-                              ? 'bg-blue-600 ring-blue-100'
+                              ? 'bg-[#4F46E5] ring-indigo-100'
                               : 'bg-slate-400 ring-slate-100'
                           }`}
                         />
                         <div className="flex items-baseline justify-between gap-2">
                           <p className="text-xs font-bold text-slate-900">{stop.name}</p>
-                          <span className="text-[10px] font-semibold text-slate-400">
+                          <span className="text-[10px] font-semibold text-slate-400 shrink-0">
                             {stop.km === 0 ? 'Start (0 km)' : `+${stop.km} km`}
                           </span>
                         </div>
@@ -858,59 +887,64 @@ function PopularRoutesContent() {
                 </div>
               </div>
 
-              <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2">
-                <p className="text-xs font-bold text-slate-700">Fleet Comfort & Inclusions:</p>
-                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+              {/* Fleet Amenities / Comfort */}
+              <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200/90 space-y-2">
+                <p className="text-xs font-bold text-slate-800">Fleet Comfort & Inclusions:</p>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 font-medium">
                   <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Air Conditioned Fleet</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Dedicated Luggage Boot</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Live GPS Vehicle Tracking</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Clean Commercial Permits</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+            {/* Bottom Sticky Action Bar - Never cut off by MobileNav */}
+            <div className="p-3.5 sm:p-4 bg-white border-t border-slate-100 flex items-center justify-between gap-3 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-500 block">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">
                   Fixed Fare
                 </span>
-                <span className="text-lg font-extrabold text-slate-900">
+                <span className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
                   {formatCurrency(activeModalRoute.avgPrice)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => setActiveModalRoute(null)}
-                  className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
+                  className="h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 active:scale-95 transition-all"
                 >
                   Close
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     handleSearchNavigation(activeModalRoute.origin, activeModalRoute.destination);
                     setActiveModalRoute(null);
                   }}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-colors flex items-center gap-1.5"
+                  className="h-10 px-4 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold shadow-md shadow-indigo-500/25 transition-all active:scale-95 flex items-center gap-1.5"
                 >
                   <span>Search Live Rides</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

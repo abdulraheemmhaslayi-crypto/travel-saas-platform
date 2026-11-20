@@ -60,40 +60,46 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[60] flex flex-col justify-end sm:items-center sm:justify-center p-0 sm:p-6">
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
         onClick={closeOnOverlayClick ? onClose : undefined}
       />
       <div
         className={cn(
-          'relative bg-white rounded-2xl shadow-2xl w-full transform transition-all max-h-[92vh] flex flex-col overflow-hidden',
+          'relative z-10 bg-white rounded-t-[28px] sm:rounded-2xl shadow-2xl w-full transform transition-all max-h-[88vh] sm:max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200',
           sizes[size]
         )}
       >
+        {/* Mobile Drag Handle Bar */}
+        <div className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto my-2.5 sm:hidden shrink-0" />
+
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 border-b border-gray-100 sm:border-gray-200 shrink-0">
             {title && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-                {description && <p className="text-sm text-gray-500 mt-1">{description}</p>}
+                <h3 className="text-base sm:text-lg font-bold text-gray-900">{title}</h3>
+                {description && <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{description}</p>}
               </div>
             )}
             {showCloseButton && (
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
+                type="button"
                 onClick={onClose}
-                className="!p-1"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-transform active:scale-90 shrink-0"
                 aria-label="Close"
               >
-                <X className="w-5 h-5" />
-              </Button>
+                <X className="w-4 h-4 stroke-[2.2]" />
+              </button>
             )}
           </div>
         )}
-        <div className="px-5 sm:px-6 py-4 overflow-y-auto flex-1">{children}</div>
-        {footer && <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">{footer}</div>}
+        <div className="px-5 sm:px-6 py-4 overflow-y-auto flex-1 overscroll-contain">{children}</div>
+        {footer && (
+          <div className="px-5 sm:px-6 py-3.5 sm:py-4 border-t border-gray-100 sm:border-gray-200 bg-white sm:bg-gray-50 pb-[max(0.875rem,env(safe-area-inset-bottom,0px))] shrink-0">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body
