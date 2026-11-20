@@ -450,80 +450,84 @@ export default function PassengerDashboardMobile({
               />
             </div>
 
-            {/* ── Native Date Strip (Capsule Selector Matching Mockup Calendar) ── */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
+            {/* ── Native Date Section (Custom Date First, Followed by Quick Shortcuts) ── */}
+            <div className="space-y-2.5 pt-2 border-t border-slate-100">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <Calendar className="w-3 h-3 text-[#4F46E5]" />
+                <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-[#4F46E5]" />
                   <span>Travel Date</span>
                 </label>
                 {date && (
                   <button
                     type="button"
                     onClick={() => setDate?.('')}
-                    className="text-[10px] font-bold text-rose-500 hover:text-rose-700"
+                    className="text-[11px] font-bold text-rose-500 hover:text-rose-700 active:scale-95 transition-all cursor-pointer"
                   >
                     Reset Date
                   </button>
                 )}
               </div>
 
-              {/* Horizontal Date Pills */}
-              <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] py-1 -mx-0.5 px-0.5">
-                {dateOptions.map((opt) => {
-                  const isSelected = date === opt.iso;
-                  return (
-                    <button
-                      key={opt.iso}
-                      type="button"
-                      onClick={() => setDate?.(isSelected ? '' : opt.iso)}
-                      className={cn(
-                        'min-w-[62px] h-[66px] rounded-2xl flex flex-col items-center justify-center p-1.5 transition-all active:scale-95 shrink-0',
-                        isSelected
-                          ? 'bg-[#4F46E5] text-white shadow-md shadow-indigo-500/25 scale-102 ring-2 ring-indigo-400'
-                          : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:border-indigo-200 hover:bg-slate-100/70 shadow-2xs'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'text-[10px] font-bold uppercase tracking-wider leading-none',
-                          isSelected ? 'text-white/80' : 'text-slate-400'
-                        )}
-                      >
-                        {opt.dayName}
-                      </span>
-                      <span
-                        className={cn(
-                          'text-base font-black leading-tight mt-1',
-                          isSelected ? 'text-white' : 'text-slate-900'
-                        )}
-                      >
-                        {opt.dayNum}
-                      </span>
-                      <span
-                        className={cn(
-                          'text-[9px] font-semibold mt-0.5 leading-none',
-                          isSelected ? 'text-white/80' : 'text-slate-400'
-                        )}
-                      >
-                        {opt.monthName}
-                      </span>
-                    </button>
-                  );
-                })}
+              {/* 1. Custom Date Picker (Pehle: Tap to open full calendar modal) */}
+              <DatePicker
+                value={parseLocalDate(date)}
+                onChange={(d) => setDate?.(formatLocalDate(d))}
+                onClear={() => setDate?.('')}
+                placeholder="Choose Custom Travel Date"
+                minDate={new Date()}
+                title="Select Travel Date"
+                subtitle="Intercity rides across Maharashtra"
+                className="w-full"
+                triggerClassName="h-12 rounded-2xl bg-white border border-slate-200/90 hover:border-indigo-400 shadow-2xs font-bold text-xs sm:text-sm text-slate-800"
+              />
 
-                {/* Custom Date Picker Trigger */}
-                <div className="shrink-0">
-                  <DatePicker
-                    value={parseLocalDate(date)}
-                    onChange={(d) => setDate?.(formatLocalDate(d))}
-                    onClear={() => setDate?.('')}
-                    placeholder="Custom"
-                    minDate={new Date()}
-                    title="Select Travel Date"
-                    subtitle="Intercity rides across Maharashtra"
-                    triggerClassName="w-[62px] h-[66px] rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col items-center justify-center p-1.5 hover:bg-slate-100 shadow-2xs text-slate-700 text-[10px] font-bold"
-                  />
+              {/* 2. Quick Date Shortcuts (Baad me: Today, Tomorrow, Upcoming Days) */}
+              <div className="space-y-1 pt-0.5">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Quick Select (Today / Tomorrow)
+                </p>
+                <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] py-1 -mx-0.5 px-0.5">
+                  {dateOptions.map((opt) => {
+                    const isSelected = date === opt.iso;
+                    return (
+                      <button
+                        key={opt.iso}
+                        type="button"
+                        onClick={() => setDate?.(isSelected ? '' : opt.iso)}
+                        className={cn(
+                          'min-w-[62px] h-[64px] rounded-2xl flex flex-col items-center justify-center p-1.5 transition-all active:scale-95 shrink-0 cursor-pointer',
+                          isSelected
+                            ? 'bg-[#4F46E5] text-white shadow-md shadow-indigo-500/25 scale-102 ring-2 ring-indigo-400'
+                            : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:border-indigo-200 hover:bg-slate-100/70 shadow-2xs'
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'text-[10px] font-bold uppercase tracking-wider leading-none',
+                            isSelected ? 'text-white/80' : 'text-slate-400'
+                          )}
+                        >
+                          {opt.dayName}
+                        </span>
+                        <span
+                          className={cn(
+                            'text-base font-black leading-tight mt-1',
+                            isSelected ? 'text-white' : 'text-slate-900'
+                          )}
+                        >
+                          {opt.dayNum}
+                        </span>
+                        <span
+                          className={cn(
+                            'text-[9px] font-semibold mt-0.5 leading-none',
+                            isSelected ? 'text-white/80' : 'text-slate-400'
+                          )}
+                        >
+                          {opt.monthName}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
