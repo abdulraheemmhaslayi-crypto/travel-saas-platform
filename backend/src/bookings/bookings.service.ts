@@ -166,7 +166,7 @@ export class BookingsService {
                 finalAmount,
                 pickupLocation: createBookingDto.pickupLocation,
                 dropLocation: createBookingDto.dropLocation,
-                passengerName: primaryPassenger?.name || createBookingDto.passengerName,
+                passengerName: (primaryPassenger?.name && primaryPassenger.name.trim()) || createBookingDto.passengerName || 'Passenger',
                 passengerPhone: createBookingDto.passengerPhone,
                 passengerEmail: createBookingDto.passengerEmail,
                 metadata: {

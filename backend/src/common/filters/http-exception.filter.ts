@@ -36,6 +36,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     console.error(
       `${request.method} ${request.url} - ${status}`,
+      JSON.stringify(errorResponse.message),
       exception instanceof Error ? exception.stack : '',
     );
 
