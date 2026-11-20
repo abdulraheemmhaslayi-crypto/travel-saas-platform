@@ -214,7 +214,7 @@ export default function MobilePopularRoutesScreen({
   }, []);
 
   return (
-    <div className="w-full select-none pb-20 bg-[#F0F5FA] min-h-[calc(100dvh-66px)] animate-fadeIn">
+    <div className="w-full select-none pb-20 bg-[#F8F9FE] min-h-[calc(100dvh-66px)] animate-fadeIn">
       {/* ── Top Scenic Header ─────────────────────────────────────────── */}
       <div className="relative w-full h-[220px] sm:h-[240px] shrink-0 overflow-hidden">
         <div
@@ -245,7 +245,7 @@ export default function MobilePopularRoutesScreen({
               <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
             </button>
             <div className="w-10 h-10 rounded-2xl bg-white shadow-md flex items-center justify-center shrink-0">
-              <BusFront className="w-5 h-5 text-[#1D68F2] stroke-[2.2]" />
+              <BusFront className="w-5 h-5 text-[#4F46E5] stroke-[2.2]" />
             </div>
             <div>
               <h1 className="text-[18px] sm:text-[19px] font-bold text-white tracking-tight leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">

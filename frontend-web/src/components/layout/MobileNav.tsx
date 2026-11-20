@@ -81,7 +81,7 @@ const MobileNav: React.FC = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0]/80 rounded-t-[24px] z-50 md:hidden shadow-[0_-4px_24px_rgba(15,23,42,0.06)] pb-[env(safe-area-inset-bottom,0px)]">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-150/80 rounded-t-[28px] z-50 md:hidden shadow-[0_-8px_30px_rgba(20,20,60,0.06)] pb-[env(safe-area-inset-bottom,0px)]">
       <div className="flex items-center justify-around h-[66px] px-2 max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = isCurrentActive(item.href);
