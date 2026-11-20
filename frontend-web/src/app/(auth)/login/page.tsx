@@ -51,14 +51,15 @@ function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const identifier = loginMethod === 'email' ? data.email : data.phone;
+      const rawIdentifier = loginMethod === 'email' ? data.email : data.phone;
+      const identifier = rawIdentifier ? rawIdentifier.trim() : '';
       if (!identifier) {
         showToast(`Please enter your ${loginMethod}`, 'error');
         return;
       }
 
       await login({
-        email: loginMethod === 'email' ? identifier : undefined,
+        email: loginMethod === 'email' ? identifier.toLowerCase() : undefined,
         phone: loginMethod === 'phone' ? identifier : undefined,
         password: data.password,
         rememberMe,

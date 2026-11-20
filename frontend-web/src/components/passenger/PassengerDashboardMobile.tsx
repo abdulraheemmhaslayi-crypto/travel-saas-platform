@@ -222,7 +222,7 @@ export default function PassengerDashboardMobile({
       dLat: 18.114,
       dLng: 73.1592,
       icon: Landmark,
-      theme: 'peach', // Peach pastel card from mockup
+      theme: 'peach',
       tag: 'Fast Corridor',
     },
     {
@@ -237,7 +237,7 @@ export default function PassengerDashboardMobile({
       dLat: 17.7562,
       dLng: 73.1873,
       icon: Building2,
-      theme: 'cyan', // Soft sky blue pastel card from mockup
+      theme: 'cyan',
       tag: 'Daily Fleet',
     },
     {
@@ -252,101 +252,98 @@ export default function PassengerDashboardMobile({
       dLat: 19.055,
       dLng: 72.8692,
       icon: Plane,
-      theme: 'violet', // Soft lavender pastel card from mockup
+      theme: 'violet',
       tag: 'Express Return',
     },
   ];
 
   return (
     <div className="flex flex-col w-full bg-[#F8F9FE] min-h-[calc(100dvh-66px)] select-none pb-6 relative overflow-x-hidden">
-      {/* ── Ambient Soft Glow Orbs Matching Mobile UI Kit Mockup ───────────── */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-emerald-100/35 rounded-full blur-3xl pointer-events-none -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute top-20 right-0 w-80 h-80 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none translate-x-1/3" />
-
       {viewMode === 'home' ? (
         /* ════════════════════════════════════════════════════════════════════
-           SCREEN 1: Mobile Native Neo-Design Travel Experience
+           SCREEN 1: Mobile Native Kokan Tour & Travel Experience
            ════════════════════════════════════════════════════════════════════ */
-        <div className="flex flex-col w-full animate-fadeIn px-4 pt-3.5 max-w-md mx-auto space-y-4 relative z-10">
+        <div className="flex flex-col w-full animate-fadeIn px-4 pt-3 max-w-md mx-auto space-y-3.5 relative z-10">
           
-          {/* ── Top Header Bar: User Greeting + Notifications ───────────────── */}
+          {/* ── Top Header Bar: Kokan Tour Official Branding + Sign In / Profile ── */}
           <header className="flex items-center justify-between gap-3 pt-1">
-            <div className="flex items-center gap-3 min-w-0">
-              {/* User Avatar with subtle ring */}
-              <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#4F46E5] to-[#818CF8] p-0.5 shadow-xs shrink-0">
-                <div className="w-full h-full rounded-full bg-white flex items-center justify-center font-black text-xs text-[#4F46E5]">
-                  {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'KT'}
-                </div>
+            <div className="flex items-center gap-2.5 min-w-0">
+              {/* Bus Brand Icon Badge */}
+              <div className="w-11 h-11 rounded-2xl bg-[#4F46E5] text-white shadow-md shadow-indigo-500/20 flex items-center justify-center shrink-0">
+                <BusFront className="w-6 h-6 stroke-[2.2]" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider leading-none">
-                  Hello! 👋
+                <div className="flex items-center gap-1.5">
+                  <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-none">
+                    Kokan Tour
+                  </h1>
+                  <span className="px-1.5 py-0.5 rounded-md bg-indigo-50 border border-indigo-200/80 text-[#4F46E5] font-extrabold text-[9px] uppercase tracking-wider">
+                    Travel
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 font-semibold tracking-wide mt-1 truncate">
+                  Intercity Rides Across Maharashtra
                 </p>
-                <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug truncate mt-0.5">
-                  {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Explore Maharashtra'}
-                </h1>
               </div>
             </div>
 
-            {/* Notification / Sign In Pill Button */}
-            {user ? (
-              <Link
-                href="/dashboard/notifications"
-                className="w-10 h-10 rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-center text-slate-700 hover:text-[#4F46E5] active:scale-95 transition-all relative shrink-0"
-                aria-label="Notifications"
-              >
-                <Bell className="w-4.5 h-4.5" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
-              </Link>
-            ) : (
-              <Link
-                href={loginUrl}
-                className="px-4 py-2 rounded-2xl bg-[#4F46E5] text-white font-bold text-xs shadow-md shadow-indigo-500/20 active:scale-95 transition-all shrink-0"
-              >
-                Sign In
-              </Link>
-            )}
+            {/* Profile / Sign In Pill */}
+            <div className="flex items-center gap-2 shrink-0">
+              {user ? (
+                <Link
+                  href="/dashboard/profile"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs text-[#4F46E5] font-bold text-xs active:scale-95 transition-all"
+                >
+                  <div className="w-5 h-5 rounded-full bg-[#4F46E5] text-white text-[10px] font-black flex items-center justify-center">
+                    {user.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <span className="truncate max-w-[70px]">{user.firstName || 'Profile'}</span>
+                </Link>
+              ) : (
+                <Link
+                  href={loginUrl}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-xs shadow-md shadow-indigo-500/20 active:scale-95 transition-all"
+                >
+                  <User className="w-3.5 h-3.5 stroke-[2.2]" />
+                  <span>Sign In</span>
+                </Link>
+              )}
+            </div>
           </header>
 
-          {/* ── Hero Banner Card (Deep Violet Gradient Matching Mockup) ─────── */}
-          <div className="relative rounded-[28px] bg-gradient-to-br from-[#4F46E5] via-[#5B4DFF] to-[#7C3AED] p-5 text-white shadow-xl shadow-indigo-500/20 overflow-hidden">
-            {/* Background glowing geometric aura */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-indigo-300/20 rounded-full blur-xl pointer-events-none" />
+          {/* ── Hero Banner Card (Solid #4F46E5 Brand Color - No Gradient) ────── */}
+          <div className="relative rounded-[26px] bg-[#4F46E5] p-5 text-white shadow-lg shadow-indigo-500/20 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="px-3 py-1 rounded-full bg-white/20 text-[10px] font-extrabold uppercase tracking-wider text-white border border-white/25 flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-amber-300 fill-amber-300" />
+                <span>Kokan Express Fleet</span>
+              </span>
+              <span className="text-[11px] font-bold text-indigo-100 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                <span>Fixed Fares</span>
+              </span>
+            </div>
 
-            <div className="relative z-10 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-[10px] font-extrabold uppercase tracking-wider text-white border border-white/20 flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-amber-300 fill-amber-300" />
-                  <span>Verified Intercity Fleet</span>
-                </span>
-                <span className="text-[11px] font-bold text-indigo-100 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-                  <span>Fixed Fares</span>
-                </span>
-              </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug">
+                Where to, {user?.firstName ? user.firstName : 'Traveler'}? 👋
+              </h2>
+              <p className="text-xs text-indigo-100 font-medium mt-1 leading-relaxed">
+                Comfortable AC Innova, sedans & daily express rides across Mumbai, Thane, Pune & Kokan.
+              </p>
+            </div>
 
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug">
-                  Where are you heading today?
-                </h2>
-                <p className="text-xs text-indigo-100/90 font-medium mt-1 leading-relaxed">
-                  AC Innova, sedans & express shared rides across Mumbai, Thane & Konkan.
-                </p>
-              </div>
-
-              {/* Quick Feature Badges */}
-              <div className="flex items-center gap-2 pt-1 text-[10px] font-bold text-indigo-100">
-                <span className="flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-lg">
-                  <Snowflake className="w-3 h-3 text-cyan-200" /> AC Cabin
-                </span>
-                <span className="flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-lg">
-                  <Luggage className="w-3 h-3 text-amber-200" /> Free Luggage
-                </span>
-                <span className="flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-lg">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-200" /> Doorstep Pickup
-                </span>
-              </div>
+            {/* Quick Feature Badges */}
+            <div className="flex items-center gap-2 pt-1 text-[10px] font-bold text-indigo-100 flex-wrap">
+              <span className="flex items-center gap-1 bg-white/15 px-2.5 py-0.5 rounded-lg">
+                <Snowflake className="w-3 h-3 text-cyan-200" /> AC Guaranteed
+              </span>
+              <span className="flex items-center gap-1 bg-white/15 px-2.5 py-0.5 rounded-lg">
+                <Luggage className="w-3 h-3 text-amber-200" /> Free Luggage
+              </span>
+              <span className="flex items-center gap-1 bg-white/15 px-2.5 py-0.5 rounded-lg">
+                <CheckCircle2 className="w-3 h-3 text-emerald-200" /> Doorstep Pickup
+              </span>
             </div>
           </div>
 
@@ -658,11 +655,11 @@ export default function PassengerDashboardMobile({
               className="w-full h-full"
             />
 
-            {/* Back Button (Clean round card) */}
+            {/* Back Button (Clean round card matching mockup) */}
             <button
               type="button"
               onClick={() => setViewMode('home')}
-              className="absolute top-3.5 left-3.5 z-[1001] w-11 h-11 rounded-2xl bg-white shadow-lg border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all cursor-pointer pointer-events-auto"
+              className="absolute top-3.5 left-3.5 z-[1001] w-11 h-11 rounded-full bg-white shadow-md border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all cursor-pointer pointer-events-auto"
               aria-label="Back to search"
               title="Back to search"
             >
@@ -682,7 +679,7 @@ export default function PassengerDashboardMobile({
               type="button"
               onClick={detectLocation}
               disabled={isLocating}
-              className="absolute bottom-4 right-3.5 z-20 w-11 h-11 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all"
+              className="absolute bottom-4 right-3.5 z-20 w-11 h-11 rounded-full bg-white shadow-md border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all"
               title="Locate my position"
             >
               <Crosshair
@@ -719,10 +716,10 @@ export default function PassengerDashboardMobile({
                 <button
                   type="button"
                   onClick={() => setViewMode('home')}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-[12px] font-bold text-[#4F46E5] transition-all active:scale-95 shadow-2xs flex items-center gap-1.5 border border-indigo-200/60"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#EEF2FF] hover:bg-indigo-100 text-[12px] font-bold text-[#4F46E5] transition-all active:scale-95 shadow-2xs flex items-center gap-1.5 border border-indigo-200/60"
                 >
                   <Pencil className="w-3.5 h-3.5 stroke-[2.2]" />
-                  <span>Edit Route</span>
+                  <span>Edit</span>
                 </button>
               </div>
 
@@ -803,14 +800,14 @@ export default function PassengerDashboardMobile({
                     <h3 className="text-base font-black text-slate-900 mt-1">
                       No Direct Rides Found
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1 max-w-[240px] leading-relaxed">
-                      No fleet trips found for this route right now. Try changing pickup or destination.
+                    <p className="text-xs text-slate-500 mt-1 max-w-[260px] leading-relaxed">
+                      No direct trips available for this route right now. Try changing pickup or dropoff location.
                     </p>
 
                     <button
                       type="button"
                       onClick={() => setViewMode('home')}
-                      className="mt-3.5 px-5 py-2.5 rounded-full bg-white border border-[#4F46E5]/40 text-[#4F46E5] text-xs font-bold shadow-2xs active:scale-95 transition-all flex items-center gap-1.5"
+                      className="mt-3.5 px-6 py-2.5 rounded-full bg-[#EEF2FF] hover:bg-[#E0E7FF] border border-[#C7D2FE] text-[#4F46E5] text-xs font-bold shadow-2xs active:scale-95 transition-all flex items-center gap-2"
                     >
                       <ArrowLeftRight className="w-3.5 h-3.5 stroke-[2.2]" />
                       <span>Change Route</span>
@@ -954,7 +951,7 @@ export default function PassengerDashboardMobile({
                       ? `Confirm Booking • ${baseCurrencySymbol}${
                           selectedFare > 0 ? selectedFare : 399
                         }`
-                      : `Sign In to Book • ${baseCurrencySymbol}${
+                      : `Sign In to Book a Ride ${baseCurrencySymbol}${
                           selectedFare > 0 ? selectedFare : 399
                         }`}
                   </span>

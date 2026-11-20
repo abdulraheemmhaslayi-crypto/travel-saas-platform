@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api';
 import { useAppStore } from '@/store';
 import WalletCard from '@/components/payments/WalletCard';
@@ -12,11 +13,13 @@ import {
   TrendingUp,
   TrendingDown,
   RefreshCw,
+  ChevronLeft,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { Wallet as WalletType, Transaction as TransactionType } from '@/types/payment';
 
 export default function WalletPage() {
+  const router = useRouter();
   const { showToast } = useAppStore();
   const [wallet, setWallet] = useState<WalletType | null>(null);
   const [transactions, setTransactions] = useState<TransactionType[]>([]);
@@ -70,21 +73,37 @@ export default function WalletPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 w-full min-w-0 pb-28 md:pb-12">
-      {/* ── Page Header ────────────────────────────────────────────── */}
+      {/* ── Page Header with native mobile back button ──────────────── */}
       <div className="flex items-center justify-between gap-3 pt-1">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-            Wallet
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Manage your balance and transaction history
-          </p>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/dashboard/passenger');
+              }
+            }}
+            className="md:hidden w-10 h-10 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-800 active:scale-90 transition-transform shrink-0 cursor-pointer"
+            aria-label="Back"
+          >
+            <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+          </button>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+              Wallet
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+              Manage your balance and transaction history
+            </p>
+          </div>
         </div>
 
         <button
           onClick={() => loadWalletData(true)}
           disabled={isRefreshing || isLoading}
-          className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200/80 transition-colors disabled:opacity-50 active:scale-95 shadow-2xs shrink-0"
+          className="flex items-center gap-1.5 text-xs font-bold text-[#4F46E5] hover:text-[#4338CA] bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200/80 transition-colors disabled:opacity-50 active:scale-95 shadow-2xs shrink-0 cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>Refresh</span>

@@ -68,14 +68,15 @@ export default function MobileLoginScreen() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const identifier = loginMethod === 'email' ? data.email?.trim() : data.phone?.trim();
+      const rawIdentifier = loginMethod === 'email' ? data.email : data.phone;
+      const identifier = rawIdentifier ? rawIdentifier.trim() : '';
       if (!identifier) {
         showToast(`Please enter your ${loginMethod}`, 'error');
         return;
       }
 
       await login({
-        email: loginMethod === 'email' ? identifier : undefined,
+        email: loginMethod === 'email' ? identifier.toLowerCase() : undefined,
         phone: loginMethod === 'phone' ? identifier : undefined,
         password: data.password,
         rememberMe,
@@ -118,14 +119,21 @@ export default function MobileLoginScreen() {
         {/* Subtle top gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/25 pointer-events-none" />
 
-        {/* Back to Home / Search Button */}
-        <Link
-          href="/"
-          className="absolute top-4 left-4 z-20 flex items-center gap-1.5 text-xs font-medium text-white bg-black/35 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 active:scale-95 transition-transform"
+        {/* Back to Home / Search Button (Clean native circular card) */}
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== 'undefined' && window.history.length > 1) {
+              router.back();
+            } else {
+              router.push('/dashboard/passenger');
+            }
+          }}
+          className="absolute top-4 left-4 z-20 w-10 h-10 rounded-2xl bg-white/90 backdrop-blur-md shadow-md border border-white/50 flex items-center justify-center text-slate-800 active:scale-90 transition-transform cursor-pointer"
+          aria-label="Back"
         >
-          <ArrowLeft className="w-3.5 h-3.5 stroke-[1.75]" />
-          <span>Home</span>
-        </Link>
+          <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
+        </button>
 
         {/* Brand Logo in Top Center of Scenery */}
         <div className="absolute top-7 inset-x-0 flex flex-col items-center justify-center z-10 pointer-events-none">
@@ -233,17 +241,28 @@ export default function MobileLoginScreen() {
                     <Phone className="w-4 h-4 text-slate-400 mr-2.5 shrink-0 stroke-[1.5]" />
                   )}
 
-                  <input
-                    type={loginMethod === 'email' ? 'email' : 'tel'}
-                    placeholder={
-                      loginMethod === 'email'
-                        ? 'abdul.razzaque@quikro.com'
-                        : '+91 98765 43210'
-                    }
-                    className="w-full text-sm font-normal text-slate-900 placeholder:text-slate-400 bg-transparent outline-none"
-                    autoComplete={loginMethod === 'email' ? 'email' : 'tel'}
-                    {...register(loginMethod === 'email' ? 'email' : 'phone')}
-                  />
+                  {loginMethod === 'email' ? (
+                    <input
+                      key="mobile-email-input"
+                      type="email"
+                      placeholder="you@example.com"
+                      className="w-full text-sm font-normal text-slate-900 placeholder:text-slate-400 bg-transparent outline-none"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck="false"
+                      {...register('email')}
+                    />
+                  ) : (
+                    <input
+                      key="mobile-phone-input"
+                      type="tel"
+                      placeholder="+91 98765 43210"
+                      className="w-full text-sm font-normal text-slate-900 placeholder:text-slate-400 bg-transparent outline-none"
+                      autoComplete="tel"
+                      {...register('phone')}
+                    />
+                  )}
 
                   {/* Refined green validation checkmark when valid */}
                   {((loginMethod === 'email' && isEmailValid) ||
@@ -277,6 +296,9 @@ export default function MobileLoginScreen() {
                     placeholder="••••••••••••"
                     className="w-full text-sm font-normal text-slate-900 placeholder:text-slate-400 bg-transparent outline-none tracking-wider"
                     autoComplete="current-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
                     {...register('password')}
                   />
                   <button

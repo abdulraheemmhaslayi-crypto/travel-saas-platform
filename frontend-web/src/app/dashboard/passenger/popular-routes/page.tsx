@@ -791,15 +791,15 @@ function PopularRoutesContent() {
       {/* Route Stops & Timetable Native Bottom Sheet (Mobile) & Modal (Desktop)*/}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {activeModalRoute && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[60] flex flex-col justify-end sm:items-center sm:justify-center p-0 sm:p-4">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end sm:items-center sm:justify-center p-0 sm:p-4">
+          {/* Full Screen Backdrop */}
           <div
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+            className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
             onClick={() => setActiveModalRoute(null)}
           />
 
           {/* Drawer Sheet on Mobile / Centered Modal on Desktop */}
-          <div className="relative z-10 w-full bg-white rounded-t-[32px] sm:rounded-2xl shadow-2xl border-t sm:border border-slate-200 max-w-lg overflow-hidden flex flex-col max-h-[88vh] sm:max-h-[90vh] animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+          <div className="relative z-10 w-full bg-white rounded-t-[32px] sm:rounded-2xl shadow-2xl border-t sm:border border-slate-200 max-w-lg overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[90vh] animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             {/* Mobile Drag Handle Bar */}
             <div className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto my-2.5 sm:hidden shrink-0" />
 
@@ -821,7 +821,7 @@ function PopularRoutesContent() {
               <button
                 type="button"
                 onClick={() => setActiveModalRoute(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-transform active:scale-90 shrink-0"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-transform active:scale-90 shrink-0 cursor-pointer"
                 aria-label="Close"
               >
                 <X className="w-4 h-4 stroke-[2.2]" />
@@ -829,7 +829,7 @@ function PopularRoutesContent() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="px-4 sm:px-5 py-4 overflow-y-auto space-y-4 flex-1 overscroll-contain">
+            <div className="px-4 sm:px-5 py-4 overflow-y-auto space-y-4 flex-1 overscroll-contain pb-6">
               {/* Departure Slots */}
               <div>
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 mb-2">
@@ -912,7 +912,7 @@ function PopularRoutesContent() {
             </div>
 
             {/* Bottom Sticky Action Bar - Never cut off by MobileNav */}
-            <div className="p-3.5 sm:p-4 bg-white border-t border-slate-100 flex items-center justify-between gap-3 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            <div className="p-3.5 sm:p-4 bg-white border-t border-slate-100 flex items-center justify-between gap-3 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom,0px))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">
                   Fixed Fare
@@ -925,7 +925,7 @@ function PopularRoutesContent() {
                 <button
                   type="button"
                   onClick={() => setActiveModalRoute(null)}
-                  className="h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 active:scale-95 transition-all"
+                  className="h-10 px-3.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
                 >
                   Close
                 </button>
@@ -935,7 +935,7 @@ function PopularRoutesContent() {
                     handleSearchNavigation(activeModalRoute.origin, activeModalRoute.destination);
                     setActiveModalRoute(null);
                   }}
-                  className="h-10 px-4 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold shadow-md shadow-indigo-500/25 transition-all active:scale-95 flex items-center gap-1.5"
+                  className="h-10 px-4 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold shadow-md shadow-indigo-500/25 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>Search Live Rides</span>
                   <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />

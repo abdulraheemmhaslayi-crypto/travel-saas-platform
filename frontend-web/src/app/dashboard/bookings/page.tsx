@@ -5,7 +5,7 @@ import { useBookingStore } from '@/store/slices/bookingSlice';
 import { useAppStore } from '@/store';
 import { Booking, BookingFilters, isPaymentPending } from '@/types/booking';
 import BookingList from '@/components/booking/BookingList';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import CancellationModal from '@/components/booking/CancellationModal';
 import PaymentForm from '@/components/payments/PaymentForm';
 import Modal from '@/components/ui/Modal';
@@ -15,10 +15,12 @@ import {
   Clock,
   RefreshCw,
   Sparkles,
+  ChevronLeft,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 function BookingsContent() {
+  const router = useRouter();
   const { bookings, isLoading, getMyBookings, cancelBooking } = useBookingStore();
   const { showToast } = useAppStore();
   const searchParams = useSearchParams();
@@ -134,23 +136,39 @@ function BookingsContent() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 w-full min-w-0 pb-28 md:pb-12">
-      {/* Header section */}
+      {/* Header section with native mobile back button */}
       <div className="flex items-center justify-between gap-3 pt-1">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            My Bookings
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            {bookings.length > 0
-              ? `${bookings.length} journey${bookings.length !== 1 ? 's' : ''} booked`
-              : 'Manage and track all your rides'}
-          </p>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/dashboard/passenger');
+              }
+            }}
+            className="md:hidden w-10 h-10 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-800 active:scale-90 transition-transform shrink-0 cursor-pointer"
+            aria-label="Back"
+          >
+            <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+          </button>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              My Bookings
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              {bookings.length > 0
+                ? `${bookings.length} journey${bookings.length !== 1 ? 's' : ''} booked`
+                : 'Manage and track all your rides'}
+            </p>
+          </div>
         </div>
 
         <button
           onClick={handleRefreshStatus}
           disabled={isRefreshing || isLoading}
-          className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors disabled:opacity-50 active:scale-95 shadow-2xs shrink-0"
+          className="flex items-center gap-1.5 text-xs font-bold text-[#4F46E5] hover:text-[#4338CA] bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200/80 transition-colors disabled:opacity-50 active:scale-95 shadow-2xs shrink-0 cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>Refresh</span>
@@ -159,13 +177,13 @@ function BookingsContent() {
 
       {/* Payment Polling Alert Banner */}
       {hasPendingPayments && !isLoading && (
-        <div className="flex items-center gap-2.5 p-3 sm:p-3.5 bg-blue-50 border border-blue-200 rounded-2xl animate-pulse">
-          <RefreshCw className="w-4 h-4 text-blue-600 animate-spin shrink-0" />
+        <div className="flex items-center gap-2.5 p-3 sm:p-3.5 bg-indigo-50/80 border border-indigo-200/80 rounded-2xl animate-pulse">
+          <RefreshCw className="w-4 h-4 text-[#4F46E5] animate-spin shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-blue-900">
+            <p className="text-xs font-bold text-slate-900">
               Verifying payment status...
             </p>
-            <p className="text-[11px] text-blue-600 mt-0.5 leading-tight">
+            <p className="text-[11px] text-[#4F46E5] mt-0.5 leading-tight font-medium">
               We are checking your confirmation. Please do not make another payment.
             </p>
           </div>

@@ -47,9 +47,15 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     const { email, phone, password, userType, firstName, lastName, roleName } = registerDto as any;
+    const cleanEmail = email ? String(email).trim().toLowerCase() : undefined;
+    const cleanPhone = phone ? String(phone).trim() : undefined;
 
     const existingUser = await this.userRepository.findOne({
-      where: [{ email }, { phone }],
+      where: cleanEmail && cleanPhone 
+        ? [{ email: cleanEmail }, { phone: cleanPhone }]
+        : cleanEmail 
+        ? [{ email: cleanEmail }]
+        : [{ phone: cleanPhone }],
     });
 
     if (existingUser) {
@@ -68,8 +74,8 @@ export class AuthService {
     const role = await this.roleRepository.findOne({ where: { name: resolvedRoleName } });
 
     const user = this.userRepository.create({
-      email,
-      phone,
+      email: cleanEmail,
+      phone: cleanPhone,
       password: hashedPassword,
       firstName,
       lastName,
@@ -94,7 +100,7 @@ export class AuthService {
       action: AuditAction.CREATE,
       entityType: 'User',
       entityId: user.id,
-      description: `New user registered: ${email}`,
+      description: `New user registered: ${cleanEmail || cleanPhone}`,
     });
 
     // Reload user with role relationship
@@ -113,15 +119,22 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const { email, phone, password } = loginDto;
+    const cleanEmail = email ? String(email).trim().toLowerCase() : undefined;
+    const cleanPhone = phone ? String(phone).trim() : undefined;
 
-    const where: any = {};
-    if (email) where.email = email;
-    if (phone) where.phone = phone;
-
-    const user = await this.userRepository.findOne({
-      where,
-      relations: ['role'],
-    });
+    let user: User | null = null;
+    if (cleanEmail) {
+      user = await this.userRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.role', 'role')
+        .where('LOWER(user.email) = LOWER(:email)', { email: cleanEmail })
+        .getOne();
+    } else if (cleanPhone) {
+      user = await this.userRepository.findOne({
+        where: { phone: cleanPhone },
+        relations: ['role'],
+      });
+    }
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');

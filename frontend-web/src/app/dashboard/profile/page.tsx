@@ -32,6 +32,7 @@ import {
   ChevronRight,
   ShieldCheck,
   Check,
+  ChevronLeft,
 } from 'lucide-react';
 import { KycStatus } from '@/types/auth';
 import { cn } from '@/lib/utils';
@@ -249,15 +250,31 @@ function ProfileContent() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 w-full min-w-0 pb-28 md:pb-12">
-      {/* ── Page Header ────────────────────────────────────────────── */}
+      {/* ── Page Header with native mobile back button ──────────────── */}
       <div className="flex items-center justify-between gap-3 pt-1">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-            My Profile
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Manage your account and verification details
-          </p>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/dashboard/passenger');
+              }
+            }}
+            className="md:hidden w-10 h-10 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-800 active:scale-90 transition-transform shrink-0 cursor-pointer"
+            aria-label="Back"
+          >
+            <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+          </button>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+              My Profile
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+              Manage your account and verification details
+            </p>
+          </div>
         </div>
 
         {/* KYC Badge */}
