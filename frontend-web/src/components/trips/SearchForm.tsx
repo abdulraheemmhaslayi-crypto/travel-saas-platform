@@ -298,9 +298,11 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 <DatePicker
                   value={parseLocalDate(filters.date)}
                   onChange={(date) => handleChange('date', formatLocalDate(date))}
+                  onClear={() => handleChange('date', '')}
                   placeholder="Select Date"
                   minDate={new Date()}
-                  className="w-full text-xs sm:text-sm h-10"
+                  className="w-full text-xs sm:text-sm"
+                  triggerClassName="h-10 rounded-xl"
                 />
               </div>
 

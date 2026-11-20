@@ -451,9 +451,13 @@ export default function MobilePopularRoutesScreen({
           <DatePicker
             value={parseLocalDate(departureDate)}
             onChange={(d) => setDepartureDate(formatLocalDate(d))}
+            onClear={() => setDepartureDate('')}
             placeholder="Select Departure Date"
             minDate={new Date()}
-            className="w-full text-xs sm:text-sm h-11"
+            title="Select Departure Date"
+            subtitle="Intercity routes across Maharashtra"
+            className="w-full text-xs sm:text-sm"
+            triggerClassName="h-12 rounded-xl bg-slate-50/80 hover:bg-slate-50 border-slate-200/90 shadow-2xs"
           />
         </div>
 

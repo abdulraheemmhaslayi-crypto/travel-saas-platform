@@ -823,9 +823,11 @@ export default function PassengerDashboardPage() {
                   <DatePicker
                     value={parseLocalDate(date)}
                     onChange={(d) => setDate(formatLocalDate(d))}
+                    onClear={() => setDate('')}
                     placeholder="Select Departure Date"
                     minDate={new Date()}
-                    className="w-full text-xs sm:text-sm h-10"
+                    className="w-full text-xs sm:text-sm"
+                    triggerClassName="h-10 rounded-xl"
                   />
                 </div>
               </div>
