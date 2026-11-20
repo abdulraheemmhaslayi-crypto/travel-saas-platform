@@ -8,9 +8,32 @@ import {
   IsArray,
   Min,
   IsDecimal,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BookingStatus, BookingType } from '../../database/entities/booking.entity';
+
+export class PassengerDto {
+  @ApiProperty({ example: '1' })
+  @IsString()
+  @IsNotEmpty()
+  seatNumber: string;
+
+  @ApiProperty({ example: 'Rahul Sharma' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({ example: 28 })
+  @IsNumber()
+  @Min(1)
+  age: number;
+
+  @ApiProperty({ example: 'male', enum: ['male', 'female'] })
+  @IsEnum(['male', 'female'])
+  gender: string;
+}
 
 export class CreateBookingDto {
   @ApiProperty({ example: 'uuid' })
@@ -63,6 +86,13 @@ export class CreateBookingDto {
   @ApiPropertyOptional({ example: { '1': 'female', '2': 'male' } })
   @IsOptional()
   passengerGenders?: Record<string, string>;
+
+  @ApiPropertyOptional({ type: [PassengerDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PassengerDto)
+  passengers?: PassengerDto[];
 }
 
 export class BookingQueryDto {

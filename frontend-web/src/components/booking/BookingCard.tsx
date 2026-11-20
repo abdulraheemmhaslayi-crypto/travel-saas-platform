@@ -103,7 +103,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <BookingStatus status={booking.status} showLabel={false} size="sm" />
-            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
+            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-[#4F46E5] transition-colors" />
           </div>
         </div>
       </Link>
@@ -122,7 +122,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
       )}
       {isProcessing && (
         <div className="bg-blue-50 border-b border-blue-100 px-3.5 py-2 flex items-center gap-2 text-xs font-bold text-blue-700">
-          <RefreshCw className="w-3.5 h-3.5 shrink-0 animate-spin text-blue-500" />
+          <RefreshCw className="w-3.5 h-3.5 shrink-0 animate-spin text-[#4F46E5]" />
           <span>Payment verifying...</span>
         </div>
       )}
@@ -160,7 +160,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
           </div>
 
           <div className="flex flex-col items-end justify-center shrink-0">
-            <p className="text-xs sm:text-sm font-black text-blue-600 leading-none">
+            <p className="text-xs sm:text-sm font-black text-[#4F46E5] leading-none">
               {formatCurrency(bookingPrice, booking.currency || 'INR')}
             </p>
             <div className="mt-1">
@@ -216,8 +216,8 @@ const BookingCard: React.FC<BookingCardProps> = ({
           </div>
 
           {booking.seatNumbers && booking.seatNumbers.length > 0 && (
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-bold">
-              <Hash className="w-3 h-3 text-blue-500 shrink-0" />
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-50 text-[#4F46E5] font-bold">
+              <Hash className="w-3 h-3 text-[#4F46E5] shrink-0" />
               <span>Seat {booking.seatNumbers.join(', ')}</span>
             </div>
           )}
@@ -272,7 +272,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
             <button
               type="button"
               onClick={() => onPayNow(booking)}
-              className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              className="w-full h-10 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-xs shadow-md shadow-indigo-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
             >
               <CreditCard className="w-3.5 h-3.5" />
               <span>{canRetryPayment ? 'Retry Payment' : 'Pay Now to Confirm Seat'}</span>
@@ -293,7 +293,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
             >
               <button
                 type="button"
-                className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                className="w-full h-10 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-xs shadow-md shadow-indigo-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
               >
                 <span>View Ticket & Trip Details</span>
                 <ArrowRight className="w-3.5 h-3.5" />
