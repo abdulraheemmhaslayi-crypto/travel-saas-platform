@@ -9,6 +9,7 @@ import TripList from '@/components/trips/TripList';
 import TripFilter from '@/components/trips/TripFilter';
 import Pagination from '@/components/ui/Pagination';
 import Button from '@/components/ui/Button';
+import MobileTripSearchScreen from '@/components/mobile/MobileTripSearchScreen';
 import {
   Search,
   Filter,
@@ -388,13 +389,21 @@ export default function TripSearchPage() {
       fallback={
         <div className="min-h-[400px] flex items-center justify-center">
           <div className="flex items-center gap-2 text-slate-500 font-semibold text-sm">
-            <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-[#4F46E5] animate-ping" />
             <span>Loading trip search...</span>
           </div>
         </div>
       }
     >
-      <TripSearchContent />
+      {/* ── Dedicated Mobile Screen Component (< lg) ── */}
+      <div className="block lg:hidden w-full">
+        <MobileTripSearchScreen />
+      </div>
+
+      {/* ── Desktop Screen Experience (>= lg) ── */}
+      <div className="hidden lg:block">
+        <TripSearchContent />
+      </div>
     </Suspense>
   );
 }
