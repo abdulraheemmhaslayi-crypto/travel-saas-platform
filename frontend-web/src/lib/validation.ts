@@ -1,10 +1,24 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address').optional(),
-  phone: z.string().min(10, 'Phone number must be at least 10 digits').optional(),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || z.string().email().safeParse(val).success, {
+      message: 'Invalid email address',
+    }),
+  phone: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || val.replace(/\D/g, '').length >= 10, {
+      message: 'Phone number must be at least 10 digits',
+    }),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-}).refine((data) => data.email || data.phone, {
+}).refine((data) => Boolean(data.email?.trim() || data.phone?.trim()), {
   message: 'Either email or phone is required',
   path: ['email'],
 });

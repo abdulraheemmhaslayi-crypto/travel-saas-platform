@@ -36,20 +36,27 @@ export default function MobileLoginScreen() {
     register,
     handleSubmit,
     watch,
+    setValue,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      phone: '',
-      password: '',
-    },
   });
 
   const emailValue = watch('email') || '';
   const phoneValue = watch('phone') || '';
   const isEmailValid = emailValue.includes('@') && emailValue.includes('.');
   const isPhoneValid = phoneValue.replace(/\D/g, '').length >= 10;
+
+  const handleMethodChange = (method: 'email' | 'phone') => {
+    setLoginMethod(method);
+    clearErrors();
+    if (method === 'email') {
+      setValue('phone', '');
+    } else {
+      setValue('email', '');
+    }
+  };
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -61,7 +68,7 @@ export default function MobileLoginScreen() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const identifier = loginMethod === 'email' ? data.email : data.phone;
+      const identifier = loginMethod === 'email' ? data.email?.trim() : data.phone?.trim();
       if (!identifier) {
         showToast(`Please enter your ${loginMethod}`, 'error');
         return;
@@ -163,7 +170,7 @@ export default function MobileLoginScreen() {
             {/* ── WELCOME BACK SECTION (CLEAN UBER/OLA STYLE) ───────────── */}
             <div className="flex flex-col items-center text-center mb-5">
               {/* Refined Soft-Blue User Badge */}
-              <div className="w-11 h-11 rounded-2xl bg-[#EEF4FF] border border-[#DCE7FD] flex items-center justify-center text-[#2563EB] mb-2.5 shadow-xs">
+              <div className="w-11 h-11 rounded-2xl bg-[#EEF2FF] border border-[#C7D2FE] flex items-center justify-center text-[#4F46E5] mb-2.5 shadow-xs">
                 <User className="w-5 h-5 stroke-[1.6]" />
               </div>
 
@@ -182,10 +189,10 @@ export default function MobileLoginScreen() {
             <div className="flex p-1 bg-slate-100 rounded-xl mb-4.5 border border-slate-200/50">
               <button
                 type="button"
-                onClick={() => setLoginMethod('email')}
+                onClick={() => handleMethodChange('email')}
                 className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
                   loginMethod === 'email'
-                    ? 'bg-[#1D68F2] text-white shadow-xs'
+                    ? 'bg-[#4F46E5] text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -194,10 +201,10 @@ export default function MobileLoginScreen() {
               </button>
               <button
                 type="button"
-                onClick={() => setLoginMethod('phone')}
+                onClick={() => handleMethodChange('phone')}
                 className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
                   loginMethod === 'phone'
-                    ? 'bg-[#1D68F2] text-white shadow-xs'
+                    ? 'bg-[#4F46E5] text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -217,7 +224,7 @@ export default function MobileLoginScreen() {
                   className={`relative flex items-center bg-white border rounded-xl px-3.5 py-2.5 transition-all ${
                     errors.email || errors.phone
                       ? 'border-red-400 ring-2 ring-red-100'
-                      : 'border-slate-200 focus-within:border-[#1D68F2] focus-within:ring-2 focus-within:ring-blue-100'
+                      : 'border-slate-200 focus-within:border-[#4F46E5] focus-within:ring-2 focus-within:ring-indigo-100'
                   }`}
                 >
                   {loginMethod === 'email' ? (
@@ -261,7 +268,7 @@ export default function MobileLoginScreen() {
                   className={`relative flex items-center bg-white border rounded-xl px-3.5 py-2.5 transition-all ${
                     errors.password
                       ? 'border-red-400 ring-2 ring-red-100'
-                      : 'border-slate-200 focus-within:border-[#1D68F2] focus-within:ring-2 focus-within:ring-blue-100'
+                      : 'border-slate-200 focus-within:border-[#4F46E5] focus-within:ring-2 focus-within:ring-indigo-100'
                   }`}
                 >
                   <Lock className="w-4 h-4 text-slate-400 mr-2.5 shrink-0 stroke-[1.5]" />
@@ -301,14 +308,14 @@ export default function MobileLoginScreen() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-[#1D68F2] focus:ring-[#1D68F2] cursor-pointer"
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-[#4F46E5] focus:ring-[#4F46E5] cursor-pointer"
                   />
                   <span className="text-slate-600 font-normal text-xs">Remember me</span>
                 </label>
 
                 <Link
                   href="/forgot-password"
-                  className="font-medium text-[#1D68F2] hover:text-blue-700 transition-colors text-xs"
+                  className="font-medium text-[#4F46E5] hover:text-[#4338CA] transition-colors text-xs"
                 >
                   Forgot password?
                 </Link>
@@ -318,7 +325,7 @@ export default function MobileLoginScreen() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-11 sm:h-12 bg-[#1D68F2] hover:bg-blue-700 text-white font-medium text-sm sm:text-[15px] rounded-xl shadow-xs active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-11 sm:h-12 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-medium text-sm sm:text-[15px] rounded-xl shadow-md shadow-indigo-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <span>{isSubmitting ? 'Signing In...' : 'Sign In'}</span>
                 {!isSubmitting && <ArrowRight className="w-4 h-4 stroke-[1.75]" />}
@@ -370,7 +377,7 @@ export default function MobileLoginScreen() {
                 Don&apos;t have an account?{' '}
                 <Link
                   href="/register"
-                  className="font-medium text-[#1D68F2] hover:text-blue-700 hover:underline transition-colors ml-1"
+                  className="font-medium text-[#4F46E5] hover:text-[#4338CA] hover:underline transition-colors ml-1"
                 >
                   Create an account
                 </Link>
