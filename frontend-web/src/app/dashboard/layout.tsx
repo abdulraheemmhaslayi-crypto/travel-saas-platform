@@ -28,7 +28,8 @@ export default function DashboardLayout({
     pathname === '/dashboard/passenger' ||
     pathname === '/dashboard/passenger/popular-routes' ||
     pathname?.startsWith('/dashboard/trips/') ||
-    pathname === '/dashboard/trips';
+    pathname === '/dashboard/trips' ||
+    pathname?.startsWith('/dashboard/bookings');
 
   // Only show fullScreen blocking loading state for private/protected routes
   if (isInitializing && !isPublicGuestRoute) {
@@ -40,10 +41,10 @@ export default function DashboardLayout({
   }
 
   const dashboardContent = (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col w-full">
       <Navbar />
 
-      <div className="flex flex-1 min-w-0 w-full overflow-x-hidden">
+      <div className="flex flex-1 min-w-0 w-full relative">
         {/* Only show persistent dashboard sidebar to logged-in users. Guests get clean full-width search. */}
         {isAuthenticated && (
           <Suspense fallback={<div className="w-64 bg-white border-r border-gray-200 hidden lg:block" />}>

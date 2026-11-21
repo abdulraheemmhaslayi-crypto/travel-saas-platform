@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import apiClient from '@/lib/api';
 import { useAuthStore } from '@/store/slices/authSlice';
 import { useAppStore } from '@/store';
@@ -18,6 +18,9 @@ import {
   Save,
   Smartphone,
   Eye,
+  Trash2,
+  Image as ImageIcon,
+  Loader2,
 } from 'lucide-react';
 
 export default function DirectUpiSettingsCard() {
@@ -28,7 +31,9 @@ export default function DirectUpiSettingsCard() {
   const [upiAccountName, setUpiAccountName] = useState(user?.upiAccountName || '');
   const [upiQrCodeUrl, setUpiQrCodeUrl] = useState(user?.upiQrCodeUrl || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingQr, setIsUploadingQr] = useState(false);
   const [copied, setCopied] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Generate dynamic QR code URL based on UPI URI specification: upi://pay?pa=...&pn=...
   const dynamicQrCodeUrl = upiId
@@ -46,6 +51,42 @@ export default function DirectUpiSettingsCard() {
     setCopied(true);
     showToast('UPI ID copied to clipboard', 'success');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleQrFileUpload = async (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, JPEG)', 'error');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('QR code image size must be under 5MB', 'error');
+      return;
+    }
+
+    setIsUploadingQr(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await apiClient.getClient().post('/uploads', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const url = res.data?.url || res.data?.fileUrl;
+      if (url) {
+        setUpiQrCodeUrl(url);
+        showToast('QR Code image uploaded successfully!', 'success');
+      }
+    } catch {
+      // Fallback to Data URL for instant offline/direct persistence
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUpiQrCodeUrl(reader.result as string);
+        showToast('QR Code loaded into profile preview!', 'success');
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingQr(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -124,22 +165,79 @@ export default function DirectUpiSettingsCard() {
             helperText="Shown to passengers on the UPI payment verification screen."
           />
 
-          <Input
-            label="Custom UPI QR Code Image URL (Optional)"
-            placeholder="https://... (Leave blank to use auto-generated QR)"
-            value={upiQrCodeUrl}
-            onChange={(e) => setUpiQrCodeUrl(e.target.value)}
-            helperText="Optional URL to your printed GPay/PhonePe/Paytm QR image."
-          />
+          {/* QR Code Upload Section */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+              UPI QR Code Image
+            </label>
+            <p className="text-xs text-gray-500">
+              Upload your printed Google Pay, PhonePe, Paytm, or BHIM QR code image.
+            </p>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleQrFileUpload(file);
+              }}
+            />
+
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingQr}
+                className="font-bold text-xs"
+              >
+                {isUploadingQr ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5 mr-1.5" />
+                    Upload QR Image
+                  </>
+                )}
+              </Button>
+
+              {upiQrCodeUrl && (
+                <Button
+                  type="button"
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setUpiQrCodeUrl('')}
+                  className="font-bold text-xs"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                  Remove Custom QR
+                </Button>
+              )}
+            </div>
+
+            <Input
+              label=""
+              placeholder="Or enter QR image URL directly (e.g. https://...)"
+              value={upiQrCodeUrl}
+              onChange={(e) => setUpiQrCodeUrl(e.target.value)}
+              className="text-xs mt-2"
+            />
+          </div>
 
           <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl flex items-start gap-2.5">
             <ShieldCheck className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
             <p className="text-xs text-blue-900 leading-relaxed">
-              <strong>How it works:</strong> When passengers book a seat on your vehicle, they scan this QR code or click 'Pay via UPI App' on mobile. The payment credits straight to your bank account. You then approve their 12-digit UTR in your dashboard!
+              <strong>How it works:</strong> When passengers book a seat on your vehicle, they scan this QR code or click &apos;Pay via UPI App&apos; on mobile. The payment credits straight to your bank account. You then approve their 12-digit UTR in your dashboard!
             </p>
           </div>
 
-          <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
+          <Button type="submit" disabled={isSaving || isUploadingQr} className="w-full sm:w-auto">
             <Save className="w-4 h-4 mr-1.5" />
             {isSaving ? 'Saving...' : 'Save UPI & QR Configuration'}
           </Button>
@@ -163,7 +261,7 @@ export default function DirectUpiSettingsCard() {
           ) : (
             <div className="w-44 h-44 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center p-4 text-gray-400">
               <QrCode className="w-10 h-10 mb-2 opacity-40" />
-              <p className="text-xs">Enter your UPI ID to generate live QR preview</p>
+              <p className="text-xs">Enter your UPI ID or upload a QR image to generate live preview</p>
             </div>
           )}
 
@@ -186,10 +284,14 @@ export default function DirectUpiSettingsCard() {
             ) : (
               <p className="text-xs text-gray-400 italic">No UPI ID set</p>
             )}
+            {upiQrCodeUrl && (
+              <span className="text-[10px] text-emerald-600 font-semibold block pt-1">
+                ✓ Using uploaded custom QR code
+              </span>
+            )}
           </div>
         </div>
       </div>
     </Card>
   );
 }
-

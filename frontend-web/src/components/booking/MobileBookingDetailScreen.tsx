@@ -129,9 +129,20 @@ export default function MobileBookingDetailScreen({
           <h1 className="text-base font-black text-slate-900 tracking-tight leading-tight">
             Booking Details
           </h1>
-          <p className="text-[11px] font-mono font-bold text-slate-400 truncate">
-            #{booking.id.slice(0, 10).toUpperCase()}
-          </p>
+          <button
+            type="button"
+            onClick={handleCopyId}
+            className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-500 hover:text-slate-800 transition-colors mx-auto mt-0.5 active:scale-95 cursor-pointer bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full"
+            title="Click to copy full booking reference"
+          >
+            <span>#{booking.id.slice(0, 10).toUpperCase()}</span>
+            {copiedId ? (
+              <Check className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+            ) : (
+              <Copy className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+            )}
+            {copiedId && <span className="text-[10px] text-emerald-600 font-bold ml-0.5">Copied</span>}
+          </button>
         </div>
 
         <Link
@@ -145,7 +156,7 @@ export default function MobileBookingDetailScreen({
 
       {/* ── Unified Status Hero Card ─────────────────────────────────────── */}
       {isCancelled ? (
-        <div className="bg-white rounded-3xl border border-rose-150 p-5 shadow-xs relative overflow-hidden">
+        <div className="bg-white rounded-3xl border border-rose-200 p-5 shadow-xs relative overflow-hidden">
           <div className="flex items-start gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
               <XCircle className="w-6 h-6 stroke-[2.2]" />
@@ -156,42 +167,84 @@ export default function MobileBookingDetailScreen({
                   {cancelledByLabel || 'Booking Cancelled'}
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 shrink-0">
-                  {paymentStatus === 'FAILED' ? 'Failed' : 'Cancelled'}
+                  {booking.cancellationReason === 'Payment session expired' ? 'Payment Expired' : 'Cancelled'}
                 </span>
               </div>
               <p className="text-xs text-rose-600 mt-1 font-medium leading-relaxed">
-                {booking.cancellationReason || (isPayFailed ? 'Payment was not completed within the session timeout.' : 'This booking has been cancelled.')}
+                {booking.cancellationReason === 'Payment session expired'
+                  ? 'Payment session expired before completion (10-minute window). Your seats were released back to the schedule.'
+                  : (booking.cancellationReason ? `Reason: ${booking.cancellationReason}` : 'This booking has been cancelled and seats are no longer reserved.')}
               </p>
               <div className="mt-2.5 pt-2.5 border-t border-rose-100/80 flex items-center justify-between text-[11px] text-slate-400">
                 <span>Booked on {formattedBookDate}</span>
-                <span className="font-semibold text-rose-600">No active seat reserved</span>
+                <span className="font-semibold text-rose-600">Seats Released</span>
               </div>
             </div>
           </div>
 
           {/* Action buttons inside status card */}
           <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
-            {isPayFailed && (
-              <button
-                type="button"
-                onClick={onRetryPayment}
-                className="w-full h-12 rounded-2xl bg-[#4F46E5] text-white font-black text-sm flex items-center justify-center gap-2 shadow-xs hover:bg-[#4338CA] active:scale-[0.98] transition-all cursor-pointer"
-              >
-                <CreditCard className="w-4 h-4 stroke-[2.2]" />
-                Retry Payment • {formatCurrency(finalAmount, currency)}
-              </button>
-            )}
             <Link
-              href="/dashboard/passenger"
-              className="w-full h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all"
+              href={trip?.id ? `/dashboard/trips/${trip.id}` : '/dashboard/passenger'}
+              className="w-full h-12 rounded-2xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-black text-sm flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#4F46E5]" />
-              Book Another Ride
+              <Sparkles className="w-4 h-4" />
+              {trip?.id ? 'Re-book on This Trip' : 'Book Another Ride'}
+            </Link>
+            <Link
+              href="/dashboard/support"
+              className="w-full h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all"
+            >
+              <HeadphonesIcon className="w-3.5 h-3.5 text-slate-500" />
+              Need Help? Contact Support
+            </Link>
+          </div>
+        </div>
+      ) : !isCancelled && isPayFailed ? (
+        <div className="bg-white rounded-3xl border border-amber-200 p-5 shadow-xs relative overflow-hidden">
+          <div className="flex items-start gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+              <AlertCircle className="w-6 h-6 stroke-[2.2]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-base font-black text-slate-900 tracking-tight">
+                  Payment Unsuccessful
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 shrink-0">
+                  Payment Failed
+                </span>
+              </div>
+              <p className="text-xs text-amber-700 mt-1 font-medium leading-relaxed">
+                We were unable to complete your payment. Your seats are temporarily on hold. Please retry payment.
+              </p>
+              <div className="mt-2.5 pt-2.5 border-t border-amber-100/80 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Booked on {formattedBookDate}</span>
+                <span className="font-semibold text-amber-700">Seats On Hold</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
+            <button
+              type="button"
+              onClick={onRetryPayment}
+              className="w-full h-12 rounded-2xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-black text-sm flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <CreditCard className="w-4 h-4 stroke-[2.2]" />
+              Retry Payment • {formatCurrency(finalAmount, currency)}
+            </button>
+            <Link
+              href="/dashboard/support"
+              className="w-full h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all"
+            >
+              <HeadphonesIcon className="w-3.5 h-3.5 text-slate-500" />
+              Contact Support
             </Link>
           </div>
         </div>
       ) : isPayProcessing ? (
-        <div className="bg-white rounded-3xl border border-indigo-150 p-5 shadow-xs relative overflow-hidden">
+        <div className="bg-white rounded-3xl border border-indigo-200 p-5 shadow-xs relative overflow-hidden">
           <div className="flex items-start gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-[#4F46E5] shrink-0">
               <RefreshCw className="w-5 h-5 animate-spin" />
@@ -232,7 +285,7 @@ export default function MobileBookingDetailScreen({
           </div>
         </div>
       ) : isConfirmed ? (
-        <div className="bg-white rounded-3xl border border-emerald-150 p-5 shadow-xs relative overflow-hidden">
+        <div className="bg-white rounded-3xl border border-emerald-200 p-5 shadow-xs relative overflow-hidden">
           <div className="flex items-start gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
               <CheckCircle2 className="w-6 h-6 stroke-[2.2]" />
@@ -508,7 +561,7 @@ export default function MobileBookingDetailScreen({
       </div>
 
       {/* ── Fixed Bottom Sticky Bar for Mobile ───────────────────────────── */}
-      {isPayFailed && (
+      {!isCancelled && isPayFailed && (
         <div className="fixed bottom-[66px] left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200/90 z-40 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
           <div className="max-w-md mx-auto flex items-center gap-3 px-2">
             <div className="flex-1 min-w-0">

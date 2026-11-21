@@ -12,7 +12,8 @@ import Badge from '@/components/ui/Badge';
 import Loading from '@/components/common/Loading';
 import { 
   ArrowLeft, Calendar, Clock, MapPin, Users, Car, 
-  Trash2, ShieldAlert, CheckCircle2, AlertTriangle, RefreshCw
+  Trash2, ShieldAlert, CheckCircle2, AlertTriangle, RefreshCw,
+  UserCheck, Phone, Star, AlertCircle
 } from 'lucide-react';
 
 export default function FleetOwnerTripDetailPage() {
@@ -31,9 +32,10 @@ export default function FleetOwnerTripDetailPage() {
   const fetchTripDetails = async () => {
     try {
       const tripRes = await apiClient.getTrip(tripId);
-      setTrip(tripRes.data);
-      if (tripRes.data?.driverId) {
-        setSelectedDriverId(tripRes.data.driverId);
+      const tripData = tripRes.data?.data || tripRes.data;
+      setTrip(tripData);
+      if (tripData?.driverId) {
+        setSelectedDriverId(tripData.driverId);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to retrieve trip details');
@@ -43,7 +45,10 @@ export default function FleetOwnerTripDetailPage() {
   const fetchDrivers = async () => {
     try {
       const driversRes = await apiClient.getFleetDrivers();
-      setDrivers(driversRes.data || []);
+      const list = Array.isArray(driversRes.data)
+        ? driversRes.data
+        : (driversRes.data?.data || []);
+      setDrivers(list);
     } catch (err: any) {
       console.error('Failed to retrieve fleet drivers', err);
     }
@@ -61,6 +66,58 @@ export default function FleetOwnerTripDetailPage() {
       loadAll();
     }
   }, [tripId]);
+
+  // Find if this trip's vehicle already has a driver assigned from the fleet roster
+  const vehicleAssignedDriver = React.useMemo(() => {
+    if (!trip?.vehicleId && !trip?.vehicle?.id) return null;
+    const targetVehId = trip.vehicleId || trip.vehicle?.id;
+    return drivers.find(
+      (d: any) => d.assignedVehicleId === targetVehId || d.assignedVehicle?.id === targetVehId
+    );
+  }, [trip, drivers]);
+
+  // Auto-select vehicle's default driver if trip currently has no driver assigned
+  useEffect(() => {
+    if (!trip?.driverId && !trip?.driver && vehicleAssignedDriver && !selectedDriverId) {
+      setSelectedDriverId(vehicleAssignedDriver.id);
+    }
+  }, [trip, vehicleAssignedDriver, selectedDriverId]);
+
+  // Active assigned driver for this trip
+  const assignedDriver = React.useMemo(() => {
+    if (trip?.driver) {
+      const u = trip.driver.user;
+      const fullName = u
+        ? `${u.firstName || ''} ${u.lastName || ''}`.trim()
+        : (trip.driver.name || '');
+      return {
+        id: trip.driver.id,
+        name: fullName || 'Assigned Driver',
+        phone: u?.phone || trip.driver.phone || '',
+        email: u?.email || trip.driver.email || '',
+        licenseNumber: trip.driver.licenseNumber || '',
+        rating: Number(trip.driver.rating || 5.0),
+        status: trip.driver.status || 'ACTIVE',
+        totalTrips: trip.driver.totalTrips || 0,
+      };
+    }
+    if (trip?.driverId) {
+      const found = drivers.find((d: any) => d.id === trip.driverId);
+      if (found) {
+        return {
+          id: found.id,
+          name: found.name || `${found.user?.firstName || ''} ${found.user?.lastName || ''}`.trim() || 'Driver',
+          phone: found.phone || found.user?.phone || '',
+          email: found.email || found.user?.email || '',
+          licenseNumber: found.licenseNumber || '',
+          rating: Number(found.rating || 5.0),
+          status: found.status || 'ACTIVE',
+          totalTrips: found.totalTrips || 0,
+        };
+      }
+    }
+    return null;
+  }, [trip, drivers]);
 
   const handleAssignDriver = async () => {
     if (!selectedDriverId) {
@@ -82,8 +139,9 @@ export default function FleetOwnerTripDetailPage() {
   const handleStatusChange = async (newStatus: string) => {
     setIsActionLoading(true);
     try {
-      await apiClient.updateTripStatus(tripId, { status: newStatus });
-      showToast(`Trip status updated to ${newStatus}.`, 'success');
+      const lowerStatus = newStatus.toLowerCase();
+      await apiClient.updateTripStatus(tripId, { status: lowerStatus });
+      showToast(`Trip status updated to ${lowerStatus}.`, 'success');
       await fetchTripDetails();
     } catch (err: any) {
       showToast(err.message || 'Failed to update status', 'error');
@@ -230,6 +288,26 @@ export default function FleetOwnerTripDetailPage() {
                     </p>
                   </div>
                 </div>
+
+                <div className="flex items-start gap-2.5">
+                  <UserCheck className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-gray-700">Assigned Driver</p>
+                    {assignedDriver ? (
+                      <div className="mt-0.5">
+                        <p className="text-gray-900 font-medium">{assignedDriver.name}</p>
+                        <p className="text-xs text-gray-500 font-mono">
+                          {assignedDriver.phone ? `${assignedDriver.phone} • ` : ''}
+                          {assignedDriver.licenseNumber ? `DL: ${assignedDriver.licenseNumber}` : ''}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-full inline-block mt-0.5">
+                        Unassigned
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </Card>
@@ -279,15 +357,69 @@ export default function FleetOwnerTripDetailPage() {
           {/* Driver Assignment Card */}
           <Card className="bg-white p-6 shadow-sm border border-gray-100 rounded-2xl">
             <h3 className="font-bold text-gray-900 text-lg mb-4">Driver Assignment</h3>
+
+            {/* Currently assigned driver detail box */}
+            {assignedDriver ? (
+              <div className="p-4 bg-blue-50/70 border border-blue-100 rounded-xl space-y-2 mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">Assigned Driver</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                    assignedDriver.status === 'ACTIVE' || assignedDriver.status === 'active'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {assignedDriver.status}
+                  </span>
+                </div>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-bold text-gray-900 text-base">{assignedDriver.name}</p>
+                    {assignedDriver.phone && (
+                      <p className="text-xs text-gray-600 flex items-center gap-1.5 mt-0.5">
+                        <Phone className="w-3.5 h-3.5 text-gray-400" />
+                        <span>{assignedDriver.phone}</span>
+                      </p>
+                    )}
+                    {assignedDriver.licenseNumber && (
+                      <p className="text-xs text-gray-500 font-mono mt-0.5">
+                        DL: {assignedDriver.licenseNumber}
+                      </p>
+                    )}
+                  </div>
+                  {assignedDriver.rating && (
+                    <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-blue-100 shadow-xs shrink-0">
+                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                      <span className="text-xs font-bold text-gray-800">{Number(assignedDriver.rating).toFixed(1)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : vehicleAssignedDriver ? (
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl mb-4 text-xs text-amber-900 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-amber-800">Vehicle's Assigned Driver Available</p>
+                  <p className="mt-0.5 text-gray-600">
+                    This trip's vehicle is assigned to <strong>{vehicleAssignedDriver.name}</strong>. You can assign them below.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             <div className="space-y-4">
               <Select
-                label="Assigned Driver"
+                label="Select Driver"
                 value={selectedDriverId}
                 onChange={(e) => setSelectedDriverId(e.target.value)}
-                options={drivers.map((d: any) => ({
-                  value: d.id,
-                  label: `${d.user?.firstName} ${d.user?.lastName} (${d.licenseNumber || 'No License'})`,
-                }))}
+                options={drivers.map((d: any) => {
+                  const driverName = d.name || `${d.user?.firstName || ''} ${d.user?.lastName || ''}`.trim() || d.email || 'Driver';
+                  const license = d.licenseNumber ? `DL: ${d.licenseNumber}` : 'No License';
+                  const vehicleNote = d.assignedVehicle ? ` • Vehicle: ${d.assignedVehicle.registrationNumber}` : '';
+                  return {
+                    value: d.id,
+                    label: `${driverName} (${license})${vehicleNote}`,
+                  };
+                })}
                 placeholder="Choose a driver"
               />
               <Button
@@ -295,7 +427,7 @@ export default function FleetOwnerTripDetailPage() {
                 isLoading={isActionLoading}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
               >
-                Reassign Driver
+                {assignedDriver ? 'Change Assigned Driver' : 'Assign Driver to Trip'}
               </Button>
             </div>
           </Card>
@@ -306,9 +438,9 @@ export default function FleetOwnerTripDetailPage() {
             <div className="space-y-2">
               <p className="text-xs text-gray-500 mb-3">Update this trip's current operational state:</p>
               
-              {trip.status === 'SCHEDULED' && (
+              {(String(trip.status || '').toLowerCase() === 'scheduled' || String(trip.status || '').toLowerCase() === 'upcoming') && (
                 <Button
-                  onClick={() => handleStatusChange('ACTIVE')}
+                  onClick={() => handleStatusChange('active')}
                   isLoading={isActionLoading}
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
                 >
@@ -316,9 +448,9 @@ export default function FleetOwnerTripDetailPage() {
                 </Button>
               )}
 
-              {trip.status === 'ACTIVE' && (
+              {(String(trip.status || '').toLowerCase() === 'active' || String(trip.status || '').toLowerCase() === 'in_progress') && (
                 <Button
-                  onClick={() => handleStatusChange('COMPLETED')}
+                  onClick={() => handleStatusChange('completed')}
                   isLoading={isActionLoading}
                   className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold"
                 >
@@ -326,9 +458,9 @@ export default function FleetOwnerTripDetailPage() {
                 </Button>
               )}
 
-              {trip.status !== 'CANCELLED' && trip.status !== 'COMPLETED' && (
+              {String(trip.status || '').toLowerCase() !== 'cancelled' && String(trip.status || '').toLowerCase() !== 'completed' && (
                 <Button
-                  onClick={() => handleStatusChange('CANCELLED')}
+                  onClick={() => handleStatusChange('cancelled')}
                   isLoading={isActionLoading}
                   variant="secondary"
                   className="w-full text-red-600 hover:text-red-700 font-semibold border-red-200 hover:bg-red-50"
@@ -337,14 +469,14 @@ export default function FleetOwnerTripDetailPage() {
                 </Button>
               )}
 
-              {trip.status === 'CANCELLED' && (
+              {String(trip.status || '').toLowerCase() === 'cancelled' && (
                 <div className="p-3 bg-red-50 text-red-700 border border-red-100 rounded-xl text-xs flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>This trip has been marked as cancelled. No further action can be taken.</span>
                 </div>
               )}
 
-              {trip.status === 'COMPLETED' && (
+              {String(trip.status || '').toLowerCase() === 'completed' && (
                 <div className="p-3 bg-green-50 text-green-700 border border-green-100 rounded-xl text-xs flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>This trip is completed successfully.</span>

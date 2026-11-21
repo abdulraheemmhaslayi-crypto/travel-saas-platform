@@ -1,3 +1,4 @@
+import { json, urlencoded } from 'express';
 import { otelSDK } from './observability/otel';
 otelSDK.start();
 
@@ -29,6 +30,9 @@ async function bootstrap() {
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     },
   });
+
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ limit: '50mb', extended: true }));
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads',

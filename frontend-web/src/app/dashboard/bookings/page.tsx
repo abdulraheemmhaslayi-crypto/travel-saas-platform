@@ -135,7 +135,7 @@ function BookingsContent() {
   const hasPendingPayments = bookings.some(isPaymentPending);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 w-full min-w-0 pb-28 md:pb-12">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 w-full min-w-0 pb-28 md:pb-12 px-4 sm:px-0">
       {/* Header section with native mobile back button */}
       <div className="flex items-center justify-between gap-3 pt-1">
         <div className="flex items-center gap-2.5 min-w-0">

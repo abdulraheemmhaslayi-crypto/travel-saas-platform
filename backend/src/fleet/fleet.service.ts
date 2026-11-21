@@ -304,19 +304,40 @@ export class FleetService {
   }
 
   private formatFleetVehicleResponse(fleetVehicle: FleetVehicle) {
+    const v = fleetVehicle.vehicle || ({} as any);
     return {
-      id: fleetVehicle.vehicle.id,
+      id: v.id || fleetVehicle.id,
       fleetVehicleId: fleetVehicle.id,
-      registrationNumber: fleetVehicle.vehicle.registrationNumber,
-      make: fleetVehicle.vehicle.brand,
-      model: fleetVehicle.vehicle.model,
-      year: fleetVehicle.vehicle.year,
-      capacity: fleetVehicle.vehicle.seatingCapacity,
-      status: fleetVehicle.status,
+      registrationNumber: v.registrationNumber,
+      make: v.brand,
+      brand: v.brand,
+      model: v.model,
+      year: v.year,
+      type: v.type,
+      color: v.color,
+      capacity: v.seatingCapacity,
+      seatingCapacity: v.seatingCapacity,
+      fuelType: v.fuelType,
+      transmission: v.transmission,
+      vehicleImage: v.vehicleImage,
+      rcNumber: v.rcNumber,
+      rcDocument: v.rcDocument,
+      insuranceNumber: v.insuranceNumber,
+      insuranceExpiry: v.insuranceExpiry,
+      insuranceDocument: v.insuranceDocument,
+      hasAC: v.hasAC,
+      hasWifi: v.hasWifi,
+      hasCharging: v.hasCharging,
+      basePrice: v.basePrice !== undefined ? Number(v.basePrice) : 0,
+      pricePerKm: v.pricePerKm !== undefined ? Number(v.pricePerKm) : 0,
+      status: v.status || fleetVehicle.status,
+      approvalStatus: v.status,
+      fleetStatus: fleetVehicle.status,
       fleetNumber: fleetVehicle.fleetNumber,
       purchaseDate: fleetVehicle.purchaseDate,
       purchasePrice: fleetVehicle.purchasePrice,
-      vehicle: fleetVehicle.vehicle,
+      documents: v.documents || [],
+      vehicle: v,
     };
   }
 
@@ -401,27 +422,139 @@ export class FleetService {
       relations: ['user'],
     });
 
-    return drivers.map((d) => ({
-      id: d.id,
-      name: `${d.user.firstName} ${d.user.lastName}`,
-      phone: d.user.phone,
-      email: d.user.email,
-      licenseNumber: d.licenseNumber,
-      status: d.status,
-      rating: Number(d.rating || 5.0),
-      totalTrips: d.totalTrips || 0,
-    }));
+    return drivers.map((d) => {
+      const firstName = d.user?.firstName || '';
+      const lastName = d.user?.lastName || '';
+      const fullName = `${firstName} ${lastName}`.trim() || 'Driver';
+      return {
+        id: d.id,
+        name: fullName,
+        phone: d.user?.phone || '',
+        email: d.user?.email || '',
+        licenseNumber: d.licenseNumber,
+        status: d.status,
+        rating: Number(d.rating || 5.0),
+        totalTrips: d.totalTrips || 0,
+        assignedVehicle: d.documents?.assignedVehicle || null,
+        assignedVehicleId: d.documents?.assignedVehicleId || null,
+        user: {
+          id: d.user?.id || d.userId || d.id,
+          firstName: firstName || 'Driver',
+          lastName: lastName || '',
+          phone: d.user?.phone || '',
+          email: d.user?.email || '',
+        },
+      };
+    });
   }
 
-  async addDriver(ownerId: string, emailOrPhone: string, licenseNumber?: string) {
+  async assignVehicleToDriver(ownerId: string, driverId: string, vehicleId?: string) {
+    const fleets = await this.fleetRepository.find({ where: { ownerId } });
+    if (!fleets || fleets.length === 0) {
+      throw new ForbiddenException('You do not own any fleet company');
+    }
+    const fleetIds = fleets.map((f) => f.id);
+    const driver = await this.driverRepository.findOne({
+      where: { id: driverId, fleetCompanyId: In(fleetIds) },
+      relations: ['user'],
+    });
+    if (!driver) {
+      throw new NotFoundException('Driver not found in your fleet');
+    }
+
+    if (!vehicleId) {
+      driver.documents = { ...(driver.documents || {}), assignedVehicle: null, assignedVehicleId: null };
+      await this.driverRepository.save(driver);
+      return { success: true, message: 'Driver unassigned from vehicle' };
+    }
+
+    let vehicle = await this.vehicleRepository.findOne({
+      where: [
+        { id: vehicleId, ownerId },
+        { id: vehicleId, fleetCompanyId: In(fleetIds) },
+      ],
+    });
+
+    if (!vehicle) {
+      const fleetVehicle = await this.fleetVehicleRepository.findOne({
+        where: { id: vehicleId, fleetCompanyId: In(fleetIds) },
+        relations: ['vehicle'],
+      });
+      if (fleetVehicle?.vehicle) {
+        vehicle = fleetVehicle.vehicle;
+      }
+    }
+
+    if (!vehicle) {
+      throw new NotFoundException('Vehicle not found in your fleet');
+    }
+
+    // Unassign this vehicle from any other driver in this fleet
+    const otherDrivers = await this.driverRepository.find({
+      where: { fleetCompanyId: In(fleetIds) },
+    });
+    for (const other of otherDrivers) {
+      if (other.id !== driver.id && other.documents?.assignedVehicleId === vehicle.id) {
+        other.documents = {
+          ...other.documents,
+          assignedVehicle: null,
+          assignedVehicleId: null,
+        };
+        await this.driverRepository.save(other);
+      }
+    }
+
+    const assignedVehicle = {
+      id: vehicle.id,
+      brand: vehicle.brand,
+      model: vehicle.model,
+      registrationNumber: vehicle.registrationNumber,
+      type: vehicle.type,
+      seatingCapacity: vehicle.seatingCapacity,
+    };
+
+    driver.documents = {
+      ...(driver.documents || {}),
+      assignedVehicleId: vehicle.id,
+      assignedVehicle,
+    };
+    await this.driverRepository.save(driver);
+
+    return {
+      success: true,
+      message: `Vehicle ${vehicle.brand} ${vehicle.model} (${vehicle.registrationNumber}) assigned successfully`,
+      assignedVehicle,
+    };
+  }
+
+  async addDriver(
+    ownerId: string,
+    emailOrPhoneOrData: any,
+    licenseNumberParam?: string,
+  ) {
     const fleets = await this.fleetRepository.find({ where: { ownerId } });
     if (!fleets || fleets.length === 0) {
       throw new BadRequestException('Create a fleet company first before adding drivers');
     }
     const fleet = fleets[0];
 
+    const data = typeof emailOrPhoneOrData === 'object' && emailOrPhoneOrData !== null
+      ? emailOrPhoneOrData
+      : { emailOrPhone: emailOrPhoneOrData, licenseNumber: licenseNumberParam };
+
+    const emailOrPhone = data.email || data.phone || data.emailOrPhone || '';
+    const licenseNumber = data.licenseNumber || licenseNumberParam;
+    const firstName = data.firstName?.trim() || 'Fleet';
+    const lastName = data.lastName?.trim() || 'Driver';
+    const phoneInput = data.phone?.trim();
+    const emailInput = data.email?.trim();
+
     let user = await this.userRepository.findOne({
-      where: [{ email: emailOrPhone }, { phone: emailOrPhone }],
+      where: [
+        ...(emailOrPhone ? [{ email: emailOrPhone }, { phone: emailOrPhone }] : []),
+        ...(emailInput ? [{ email: emailInput }] : []),
+        ...(phoneInput ? [{ phone: phoneInput }] : []),
+      ],
       relations: ['driverProfile'],
     });
 
@@ -429,12 +562,18 @@ export class FleetService {
 
     if (user) {
       if (user.userType !== UserType.DRIVER) {
-        throw new BadRequestException('User is not registered as a driver');
+        const roleRepository = this.userRepository.manager.getRepository(Role);
+        const role = await roleRepository.findOne({ where: { name: RoleName.DRIVER } });
+        user.userType = UserType.DRIVER;
+        if (role) user.roleId = role.id;
+        await this.userRepository.save(user);
       }
       if (!user.driverProfile) {
         driver = this.driverRepository.create({
           userId: user.id,
-          licenseNumber,
+          licenseNumber: licenseNumber || 'LIC-' + Math.floor(Math.random() * 10000000),
+          licenseDocument: data.licenseDocument,
+          drivingExperience: data.experienceYears ? Number(data.experienceYears) : 0,
           status: DriverStatus.ACTIVE,
           fleetCompanyId: fleet.id,
         });
@@ -445,14 +584,20 @@ export class FleetService {
         if (licenseNumber) {
           driver.licenseNumber = licenseNumber;
         }
+        if (data.licenseDocument) {
+          driver.licenseDocument = data.licenseDocument;
+        }
+        if (data.experienceYears) {
+          driver.drivingExperience = Number(data.experienceYears);
+        }
         await this.driverRepository.save(driver);
       }
     } else {
       const tempPassword = await bcrypt.hash('Driver@12345', 12);
       const isEmail = emailOrPhone.includes('@');
-      const email = isEmail ? emailOrPhone : `driver.${Math.floor(Math.random() * 1000000)}@travelsaas.com`;
-      const phone = isEmail ? `+91${Math.floor(1000000000 + Math.random() * 9000000000)}` : emailOrPhone;
-      
+      const email = emailInput || (isEmail ? emailOrPhone : `driver.${Date.now()}@travelsaas.com`);
+      const phone = phoneInput || (isEmail ? `+9198${Math.floor(10000000 + Math.random() * 90000000)}` : emailOrPhone);
+
       const roleRepository = this.userRepository.manager.getRepository(Role);
       const role = await roleRepository.findOne({ where: { name: RoleName.DRIVER } });
 
@@ -460,8 +605,8 @@ export class FleetService {
         email,
         phone,
         password: tempPassword,
-        firstName: 'Fleet',
-        lastName: 'Driver',
+        firstName,
+        lastName,
         userType: UserType.DRIVER,
         roleId: role?.id,
         status: UserStatus.ACTIVE,
@@ -473,6 +618,8 @@ export class FleetService {
       driver = this.driverRepository.create({
         userId: user.id,
         licenseNumber: licenseNumber || 'LIC-' + Math.floor(Math.random() * 10000000),
+        licenseDocument: data.licenseDocument,
+        drivingExperience: data.experienceYears ? Number(data.experienceYears) : 0,
         status: DriverStatus.ACTIVE,
         fleetCompanyId: fleet.id,
       });
@@ -524,12 +671,35 @@ export class FleetService {
     startOfWeek.setHours(0, 0, 0, 0);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    let totalBookings = 0;
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const trendMap: Record<string, number> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * oneDay);
+      const dayName = days[d.getDay()];
+      trendMap[dayName] = 0;
+    }
+
+    const vehicleRevenueMap: Record<string, { name: string; revenue: number; trips: number }> = {};
+    for (const v of vehicles) {
+      const vName = `${v.brand || ''} ${v.model || ''}`.trim() || v.registrationNumber;
+      vehicleRevenueMap[v.id] = { name: vName, revenue: 0, trips: 0 };
+    }
+
     for (const trip of trips) {
+      if (trip.vehicleId && vehicleRevenueMap[trip.vehicleId]) {
+        vehicleRevenueMap[trip.vehicleId].trips += 1;
+      }
       if (!trip.bookings) continue;
       for (const booking of trip.bookings) {
         if (booking.paymentStatus === PaymentStatus.PAID || booking.status === BookingStatus.CONFIRMED || booking.status === BookingStatus.COMPLETED) {
           const amount = Number(booking.finalAmount || booking.totalAmount || 0);
           total += amount;
+          totalBookings += 1;
+
+          if (trip.vehicleId && vehicleRevenueMap[trip.vehicleId]) {
+            vehicleRevenueMap[trip.vehicleId].revenue += amount;
+          }
 
           const bookingDate = new Date(booking.createdAt);
           if (bookingDate >= startOfToday) {
@@ -541,11 +711,30 @@ export class FleetService {
           if (bookingDate >= startOfMonth) {
             thisMonth += amount;
           }
+
+          const bDayName = days[bookingDate.getDay()];
+          if (trendMap[bDayName] !== undefined) {
+            trendMap[bDayName] += amount;
+          }
         }
       }
     }
 
-    return { today, thisWeek, thisMonth, total, activeTrips };
+    const weeklyTrend = Object.keys(trendMap).map((k) => ({ name: k, revenue: trendMap[k] }));
+    const vehicleStatsList = Object.values(vehicleRevenueMap);
+    vehicleStatsList.sort((a, b) => b.revenue - a.revenue);
+
+    const topVehicles = vehicleStatsList.map((v) => ({ name: v.name, revenue: v.revenue }));
+    const highestRevenueVehicle = vehicleStatsList.length > 0 && vehicleStatsList[0].revenue > 0
+      ? `${vehicleStatsList[0].name} (₹${vehicleStatsList[0].revenue.toLocaleString()})`
+      : vehicles[0] ? `${vehicles[0].brand || ''} ${vehicles[0].model || ''} (₹0)`.trim() : 'No data';
+
+    const mostUsedList = [...vehicleStatsList].sort((a, b) => b.trips - a.trips);
+    const mostUsedVehicle = mostUsedList.length > 0 && mostUsedList[0].trips > 0
+      ? `${mostUsedList[0].name} (${mostUsedList[0].trips} Trips)`
+      : vehicles[0] ? `${vehicles[0].brand || ''} ${vehicles[0].model || ''} (0 Trips)`.trim() : 'No data';
+
+    return { today, thisWeek, thisMonth, total, activeTrips, totalBookings, weeklyTrend, topVehicles, highestRevenueVehicle, mostUsedVehicle };
   }
 
   async updateStatus(id: string, status: string) {

@@ -123,6 +123,7 @@ function FleetOwnerVehiclesPageContent() {
     fuelType: '',
     transmission: '',
     vehicleImage: '',
+    vehicleImageFile: null as File | null,
     rcNumber: '',
     rcDocument: '',
     rcDocumentFile: null as File | null,
@@ -145,6 +146,7 @@ function FleetOwnerVehiclesPageContent() {
     fuelType: '',
     transmission: '',
     vehicleImage: '',
+    vehicleImageFile: null as File | null,
     rcNumber: '',
     rcDocument: '',
     rcDocumentFile: null as File | null,
@@ -258,6 +260,15 @@ function FleetOwnerVehiclesPageContent() {
     try {
       let finalRcDocumentUrl = rcDocument;
       let finalInsuranceDocumentUrl = insuranceDocument;
+      let finalVehicleImageUrl = vehicleImage;
+
+      if (form.vehicleImageFile) {
+        finalVehicleImageUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(form.vehicleImageFile as File);
+        });
+      }
 
       if (rcDocumentFile) {
         finalRcDocumentUrl = await new Promise<string>((resolve) => {
@@ -287,7 +298,7 @@ function FleetOwnerVehiclesPageContent() {
 
       if (fuelType) payload.fuelType = fuelType;
       if (transmission) payload.transmission = transmission;
-      if (vehicleImage) payload.vehicleImage = vehicleImage.trim();
+      if (finalVehicleImageUrl) payload.vehicleImage = finalVehicleImageUrl.trim();
       if (rcNumber) payload.rcNumber = rcNumber.trim();
       if (finalRcDocumentUrl) payload.rcDocument = finalRcDocumentUrl;
       if (insuranceNumber) payload.insuranceNumber = insuranceNumber.trim();
@@ -315,6 +326,7 @@ function FleetOwnerVehiclesPageContent() {
         fuelType: '',
         transmission: '',
         vehicleImage: '',
+        vehicleImageFile: null,
         rcNumber: '',
         rcDocument: '',
         rcDocumentFile: null,
@@ -329,8 +341,9 @@ function FleetOwnerVehiclesPageContent() {
         pricePerKm: '',
       });
       showToast('Vehicle submitted. Status is pending approval.', 'success');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to add vehicle.';
+    } catch (err: any) {
+      const apiMsg = err?.response?.data?.message;
+      const message = Array.isArray(apiMsg) ? apiMsg.join(', ') : (apiMsg || (err instanceof Error ? err.message : 'Unable to add vehicle.'));
       showToast(message, 'error');
     } finally {
       setIsSubmitting(false);
@@ -340,25 +353,26 @@ function FleetOwnerVehiclesPageContent() {
   const handleOpenEdit = (vehicle: any) => {
     setSelectedVehicle(vehicle);
     setEditForm({
-      brand: vehicle.brand || vehicle.make || '',
-      model: vehicle.model || '',
-      color: vehicle.color || '',
-      seatingCapacity: String(vehicle.seatingCapacity || vehicle.capacity || ''),
-      fuelType: vehicle.fuelType || '',
-      transmission: vehicle.transmission || '',
-      vehicleImage: vehicle.vehicleImage || '',
-      rcNumber: vehicle.rcNumber || '',
-      rcDocument: vehicle.rcDocument || '',
+      brand: vehicle.brand || vehicle.make || vehicle.vehicle?.brand || vehicle.vehicle?.make || '',
+      model: vehicle.model || vehicle.vehicle?.model || '',
+      color: vehicle.color || vehicle.vehicle?.color || '',
+      seatingCapacity: String(vehicle.seatingCapacity || vehicle.capacity || vehicle.vehicle?.seatingCapacity || ''),
+      fuelType: vehicle.fuelType || vehicle.vehicle?.fuelType || '',
+      transmission: vehicle.transmission || vehicle.vehicle?.transmission || '',
+      vehicleImage: vehicle.vehicleImage || vehicle.vehicle?.vehicleImage || '',
+      vehicleImageFile: null,
+      rcNumber: vehicle.rcNumber || vehicle.vehicle?.rcNumber || '',
+      rcDocument: vehicle.rcDocument || vehicle.vehicle?.rcDocument || '',
       rcDocumentFile: null,
-      insuranceNumber: vehicle.insuranceNumber || '',
-      insuranceExpiry: vehicle.insuranceExpiry ? vehicle.insuranceExpiry.split('T')[0] : '',
-      insuranceDocument: vehicle.insuranceDocument || '',
+      insuranceNumber: vehicle.insuranceNumber || vehicle.vehicle?.insuranceNumber || '',
+      insuranceExpiry: vehicle.insuranceExpiry ? vehicle.insuranceExpiry.split('T')[0] : (vehicle.vehicle?.insuranceExpiry ? vehicle.vehicle.insuranceExpiry.split('T')[0] : ''),
+      insuranceDocument: vehicle.insuranceDocument || vehicle.vehicle?.insuranceDocument || '',
       insuranceDocumentFile: null,
-      hasAC: !!vehicle.hasAC,
-      hasWifi: !!vehicle.hasWifi,
-      hasCharging: !!vehicle.hasCharging,
-      basePrice: String(vehicle.basePrice || ''),
-      pricePerKm: String(vehicle.pricePerKm || ''),
+      hasAC: !!(vehicle.hasAC ?? vehicle.vehicle?.hasAC),
+      hasWifi: !!(vehicle.hasWifi ?? vehicle.vehicle?.hasWifi),
+      hasCharging: !!(vehicle.hasCharging ?? vehicle.vehicle?.hasCharging),
+      basePrice: String(vehicle.basePrice ?? vehicle.vehicle?.basePrice ?? ''),
+      pricePerKm: String(vehicle.pricePerKm ?? vehicle.vehicle?.pricePerKm ?? ''),
     });
     setIsDetailsModalOpen(false);
     setIsEditModalOpen(true);
@@ -398,6 +412,15 @@ function FleetOwnerVehiclesPageContent() {
     try {
       let finalRcDocumentUrl = rcDocument;
       let finalInsuranceDocumentUrl = insuranceDocument;
+      let finalVehicleImageUrl = vehicleImage;
+
+      if (editForm.vehicleImageFile) {
+        finalVehicleImageUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(editForm.vehicleImageFile as File);
+        });
+      }
 
       if (rcDocumentFile) {
         finalRcDocumentUrl = await new Promise<string>((resolve) => {
@@ -422,7 +445,7 @@ function FleetOwnerVehiclesPageContent() {
         seatingCapacity: Number(seatingCapacity),
         fuelType,
         transmission,
-        vehicleImage,
+        vehicleImage: finalVehicleImageUrl,
         rcNumber,
         rcDocument: finalRcDocumentUrl,
         insuranceNumber,
@@ -440,8 +463,9 @@ function FleetOwnerVehiclesPageContent() {
       await getVehicleStats();
       setIsEditModalOpen(false);
       showToast('Vehicle updated successfully.', 'success');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to update vehicle.';
+    } catch (err: any) {
+      const apiMsg = err?.response?.data?.message;
+      const message = Array.isArray(apiMsg) ? apiMsg.join(', ') : (apiMsg || (err instanceof Error ? err.message : 'Unable to update vehicle.'));
       showToast(message, 'error');
     } finally {
       setIsSubmitting(false);
@@ -473,13 +497,13 @@ function FleetOwnerVehiclesPageContent() {
       case 'active':
         return <Badge variant="success">Approved</Badge>;
       case 'pending':
-        return <Badge variant="warning">Pending Review</Badge>;
+        return <Badge variant="warning">Pending Admin Approval</Badge>;
       case 'rejected':
         return <Badge variant="danger">Rejected</Badge>;
       case 'suspended':
         return <Badge variant="default">Suspended</Badge>;
       default:
-        return <Badge variant="default">{status}</Badge>;
+        return <Badge variant="default">{status || 'Pending'}</Badge>;
     }
   };
 
@@ -593,13 +617,14 @@ function FleetOwnerVehiclesPageContent() {
               {(() => {
                 const grouped: Record<string, any[]> = {};
                 vehicles.forEach((v) => {
-                  const type = (v.type || 'unknown').toLowerCase();
+                  const rawType = v.type || v.vehicle?.type || 'sedan';
+                  const type = rawType.toLowerCase() === 'unknown' ? 'sedan' : rawType.toLowerCase();
                   if (!grouped[type]) grouped[type] = [];
                   grouped[type].push(v);
                 });
                 return Object.entries(grouped).map(([type, typeVehicles]) => {
-                  const approved = typeVehicles.filter(v => v.status === 'approved' || v.status === 'active').length;
-                  const pending = typeVehicles.filter(v => v.status === 'pending').length;
+                  const approved = typeVehicles.filter(v => (v.approvalStatus || v.status || '').toLowerCase() === 'approved' || (v.approvalStatus || v.status || '').toLowerCase() === 'active').length;
+                  const pending = typeVehicles.filter(v => (v.approvalStatus || v.status || '').toLowerCase() === 'pending').length;
                   return (
                     <Card key={type} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                       <div className="p-5">
@@ -631,7 +656,7 @@ function FleetOwnerVehiclesPageContent() {
                             {typeVehicles.slice(0, 3).map((v) => (
                               <div key={v.id} className="flex items-center justify-between text-xs">
                                 <span className="text-gray-700 font-medium capitalize">{v.brand || v.make} {v.model}</span>
-                                {getStatusBadge(v.status)}
+                                {getStatusBadge(v.approvalStatus || v.status)}
                               </div>
                             ))}
                             {typeVehicles.length > 3 && (
@@ -651,6 +676,15 @@ function FleetOwnerVehiclesPageContent() {
         ) : currentTab === 'approval' ? (
           /* ─── Approval Status View ─────────────────────────────── */
           <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900">
+              <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <h4 className="font-semibold text-sm text-amber-900">Admin Document Verification</h4>
+                <p className="text-xs text-amber-800 mt-0.5">
+                  Newly added vehicles remain in <strong>Pending</strong> status until platform administrators check and approve your RC book and Insurance documents. Once verified, the vehicle is activated for passenger trips.
+                </p>
+              </div>
+            </div>
             <h2 className="text-lg font-semibold text-gray-900">Approval Status</h2>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
               {[
@@ -659,7 +693,7 @@ function FleetOwnerVehiclesPageContent() {
                 { label: 'Rejected', status: 'rejected', color: 'red' },
                 { label: 'Suspended', status: 'suspended', color: 'orange' },
               ].map(({ label, status, color }) => {
-                const count = vehicles.filter(v => (v.status || '').toLowerCase() === status || (status === 'approved' && (v.status || '').toLowerCase() === 'active')).length;
+                const count = vehicles.filter(v => (v.approvalStatus || v.status || '').toLowerCase() === status || (status === 'approved' && (v.approvalStatus || v.status || '').toLowerCase() === 'active')).length;
                 return (
                   <Card key={status} className={`border bg-${color}-50 border-${color}-200 shadow-sm`}>
                     <div className="p-3 text-center">
@@ -1090,51 +1124,62 @@ function FleetOwnerVehiclesPageContent() {
 
             {/* Tab panels */}
             {detailsTab === 'info' && (
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-gray-800 text-sm border-b pb-1">Core Specifications</h4>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <span className="text-gray-400">Registration Number</span>
-                    <span className="font-mono text-gray-900 font-medium">{selectedVehicle.registrationNumber}</span>
-                    <span className="text-gray-400">Brand</span>
-                    <span className="font-medium text-gray-900 capitalize">{selectedVehicle.brand || selectedVehicle.make}</span>
-                    <span className="text-gray-400">Model</span>
-                    <span className="font-medium text-gray-900 capitalize">{selectedVehicle.model}</span>
-                    <span className="text-gray-400">Year</span>
-                    <span className="font-medium text-gray-900">{selectedVehicle.year}</span>
-                    <span className="text-gray-400">Color</span>
-                    <span className="font-medium text-gray-900 capitalize">{selectedVehicle.color}</span>
-                    <span className="text-gray-400">Type</span>
-                    <span className="font-medium text-gray-900 capitalize">{selectedVehicle.type}</span>
-                    <span className="text-gray-400">Seating Capacity</span>
-                    <span className="font-medium text-gray-900">{selectedVehicle.seatingCapacity || selectedVehicle.capacity} seats</span>
+              <div className="space-y-6">
+                {(selectedVehicle.vehicleImage || selectedVehicle.vehicle?.vehicleImage) && (
+                  <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+                    <img
+                      src={selectedVehicle.vehicleImage || selectedVehicle.vehicle?.vehicleImage}
+                      alt={`${selectedVehicle.brand || ''} ${selectedVehicle.model || ''}`}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                </div>
+                )}
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-800 text-sm border-b pb-1">Core Specifications</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <span className="text-gray-400">Registration Number</span>
+                      <span className="font-mono text-gray-900 font-medium">{selectedVehicle.registrationNumber}</span>
+                      <span className="text-gray-400">Brand</span>
+                      <span className="font-medium text-gray-900 capitalize">{selectedVehicle.brand || selectedVehicle.make || selectedVehicle.vehicle?.brand || selectedVehicle.vehicle?.make || '—'}</span>
+                      <span className="text-gray-400">Model</span>
+                      <span className="font-medium text-gray-900 capitalize">{selectedVehicle.model || selectedVehicle.vehicle?.model || '—'}</span>
+                      <span className="text-gray-400">Year</span>
+                      <span className="font-medium text-gray-900">{selectedVehicle.year || selectedVehicle.vehicle?.year || '—'}</span>
+                      <span className="text-gray-400">Color</span>
+                      <span className="font-medium text-gray-900 capitalize">{selectedVehicle.color || selectedVehicle.vehicle?.color || '—'}</span>
+                      <span className="text-gray-400">Type</span>
+                      <span className="font-medium text-gray-900 capitalize">{selectedVehicle.type || selectedVehicle.vehicle?.type || 'Sedan'}</span>
+                      <span className="text-gray-400">Seating Capacity</span>
+                      <span className="font-medium text-gray-900">{(selectedVehicle.seatingCapacity ?? selectedVehicle.capacity ?? selectedVehicle.vehicle?.seatingCapacity) || '—'} seats</span>
+                    </div>
+                  </div>
 
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-gray-800 text-sm border-b pb-1">Features & Pricing</h4>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <span className="text-gray-400">Fuel Type</span>
-                    <span className="font-medium text-gray-900 capitalize">{selectedVehicle.fuelType || '—'}</span>
-                    <span className="text-gray-400">Transmission</span>
-                    <span className="font-medium text-gray-900 capitalize">{selectedVehicle.transmission || '—'}</span>
-                    <span className="text-gray-400">Base Price</span>
-                    <span className="font-bold text-gray-900">₹{Number(selectedVehicle.basePrice || 0).toLocaleString()}</span>
-                    <span className="text-gray-400">Price Per Km</span>
-                    <span className="font-bold text-gray-900">₹{Number(selectedVehicle.pricePerKm || 0).toFixed(2)}</span>
-                  </div>
-                  <div className="mt-4">
-                    <span className="text-gray-400 text-sm block mb-2">Amenities Included</span>
-                    <div className="flex flex-wrap gap-2">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full border ${selectedVehicle.hasAC ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
-                        <Wind className="w-3.5 h-3.5" /> AC
-                      </span>
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full border ${selectedVehicle.hasWifi ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
-                        <Wifi className="w-3.5 h-3.5" /> WiFi
-                      </span>
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full border ${selectedVehicle.hasCharging ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
-                        <Zap className="w-3.5 h-3.5" /> Charging
-                      </span>
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-800 text-sm border-b pb-1">Features & Pricing</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <span className="text-gray-400">Fuel Type</span>
+                      <span className="font-medium text-gray-900 capitalize">{selectedVehicle.fuelType || selectedVehicle.vehicle?.fuelType || '—'}</span>
+                      <span className="text-gray-400">Transmission</span>
+                      <span className="font-medium text-gray-900 capitalize">{selectedVehicle.transmission || selectedVehicle.vehicle?.transmission || '—'}</span>
+                      <span className="text-gray-400">Base Price</span>
+                      <span className="font-bold text-gray-900">₹{Number(selectedVehicle.basePrice ?? selectedVehicle.vehicle?.basePrice ?? 0).toLocaleString()}</span>
+                      <span className="text-gray-400">Price Per Km</span>
+                      <span className="font-bold text-gray-900">₹{Number(selectedVehicle.pricePerKm ?? selectedVehicle.vehicle?.pricePerKm ?? 0).toFixed(2)}</span>
+                    </div>
+                    <div className="mt-4">
+                      <span className="text-gray-400 text-sm block mb-2">Amenities Included</span>
+                      <div className="flex flex-wrap gap-2">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full border ${selectedVehicle.hasAC || selectedVehicle.vehicle?.hasAC ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
+                          <Wind className="w-3.5 h-3.5" /> AC
+                        </span>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full border ${selectedVehicle.hasWifi || selectedVehicle.vehicle?.hasWifi ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
+                          <Wifi className="w-3.5 h-3.5" /> WiFi
+                        </span>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full border ${selectedVehicle.hasCharging || selectedVehicle.vehicle?.hasCharging ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
+                          <Zap className="w-3.5 h-3.5" /> Charging
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1360,13 +1405,45 @@ function FleetOwnerVehiclesPageContent() {
                 options={transmissionOptions}
               />
             </div>
-            <Input
-              label="Vehicle Image URL"
-              value={form.vehicleImage}
-              onChange={(e) => handleInputChange('vehicleImage', e.target.value)}
-              placeholder="https://example.com/vehicle.jpg"
-              className="mt-4"
-            />
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Vehicle Photo</label>
+              {form.vehicleImage ? (
+                <div className="relative w-full h-44 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
+                  <img src={form.vehicleImage} alt="Vehicle preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setForm(prev => ({ ...prev, vehicleImage: '', vehicleImageFile: null }))}
+                    className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full shadow-md text-xs font-semibold flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-xl p-5 text-center bg-gray-50 hover:bg-blue-50/30 transition-colors">
+                  <Upload className="w-7 h-7 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-700">Upload vehicle photo</p>
+                  <p className="text-xs text-gray-400 mt-0.5">PNG, JPG or WEBP up to 5MB</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) {
+                        showToast('Vehicle image must be less than 5MB', 'error');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setForm((prev) => ({ ...prev, vehicleImage: reader.result as string, vehicleImageFile: file }));
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                    className="mt-3 block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Amenities */}
@@ -1582,13 +1659,45 @@ function FleetOwnerVehiclesPageContent() {
                 options={transmissionOptions}
               />
             </div>
-            <Input
-              label="Vehicle Image URL"
-              value={editForm.vehicleImage}
-              onChange={(e) => handleEditInputChange('vehicleImage', e.target.value)}
-              placeholder="https://example.com/vehicle.jpg"
-              className="mt-4"
-            />
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Vehicle Photo</label>
+              {editForm.vehicleImage ? (
+                <div className="relative w-full h-44 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
+                  <img src={editForm.vehicleImage} alt="Vehicle preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setEditForm(prev => ({ ...prev, vehicleImage: '', vehicleImageFile: null }))}
+                    className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full shadow-md text-xs font-semibold flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-xl p-5 text-center bg-gray-50 hover:bg-blue-50/30 transition-colors">
+                  <Upload className="w-7 h-7 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-700">Upload new vehicle photo</p>
+                  <p className="text-xs text-gray-400 mt-0.5">PNG, JPG or WEBP up to 5MB</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) {
+                        showToast('Vehicle image must be less than 5MB', 'error');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setEditForm((prev) => ({ ...prev, vehicleImage: reader.result as string, vehicleImageFile: file }));
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                    className="mt-3 block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="border-t pt-4">

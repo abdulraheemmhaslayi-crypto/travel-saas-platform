@@ -42,14 +42,28 @@ export default function DriverVehiclePage() {
   const fetchVehicle = async () => {
     setIsLoading(true);
     try {
-      // Fetch the driver's vehicles
+      // 1. First check if fleet owner assigned a vehicle directly to this driver
+      try {
+        const assignedResp = await apiClient.get('/driver/assigned-vehicle');
+        const assignedPayload = assignedResp.data || assignedResp;
+        const assignedData = assignedPayload?.data || assignedPayload;
+        if (assignedData && (assignedData.id || assignedData.registrationNumber)) {
+          setVehicle(assignedData);
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        // Fallback to my-vehicles or active trips if assigned-vehicle is empty
+      }
+
+      // 2. Fetch the driver's registered vehicles (if any)
       const resp = await apiClient.get('/vehicles/my-vehicles');
       const payload = resp.data || resp;
       const vehicleList = Array.isArray(payload) ? payload : payload.data || [];
       if (vehicleList.length > 0) {
         setVehicle(vehicleList[0]);
       } else {
-        // Fallback: try checking active trips to get assigned vehicle
+        // 3. Fallback: try checking active trips to get assigned vehicle
         const activeTripResp = await apiClient.get('/driver/trips/active');
         const activeTripPayload = activeTripResp.data || activeTripResp;
         const activeTripList = Array.isArray(activeTripPayload) ? activeTripPayload : activeTripPayload.data || [];

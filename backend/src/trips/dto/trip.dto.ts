@@ -14,7 +14,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { TripType, TripStatus } from '../../database/entities/trip.entity';
 
 export class CreateRouteDto {
@@ -320,6 +320,7 @@ export class TripQueryDto {
 
 export class UpdateTripStatusDto {
   @ApiProperty({ enum: TripStatus, example: TripStatus.ACTIVE })
+  @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase() : value))
   @IsEnum(TripStatus)
   status: TripStatus;
 

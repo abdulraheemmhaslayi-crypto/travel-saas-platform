@@ -87,11 +87,15 @@ export default function FleetOwnerAnalyticsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-xl bg-blue-50 p-4">
                 <p className="text-sm text-blue-700">Highest Revenue Vehicle</p>
-                <p className="mt-2 text-lg font-semibold text-blue-900 line-clamp-1">Bus A (₹34k)</p>
+                <p className="mt-2 text-lg font-semibold text-blue-900 line-clamp-1">
+                  {(revenue as any)?.highestRevenueVehicle || ((revenue as any)?.topVehicles?.[0] ? `${(revenue as any).topVehicles[0].name} (₹${Number((revenue as any).topVehicles[0].revenue).toLocaleString()})` : 'No revenue yet')}
+                </p>
               </div>
               <div className="rounded-xl bg-green-50 p-4">
                 <p className="text-sm text-green-700">Most Used Vehicle</p>
-                <p className="mt-2 text-lg font-semibold text-green-900 line-clamp-1">Sedan X (120 Trips)</p>
+                <p className="mt-2 text-lg font-semibold text-green-900 line-clamp-1">
+                  {(revenue as any)?.mostUsedVehicle || ((revenue as any)?.topVehicles?.[0] ? `${(revenue as any).topVehicles[0].name} (${(revenue as any).topVehicles[0].tripsCount || 0} Trips)` : 'No trips yet')}
+                </p>
               </div>
             </div>
           </div>
@@ -110,14 +114,14 @@ export default function FleetOwnerAnalyticsPage() {
               <div className="rounded-xl bg-white p-4 border border-gray-200">
                 <p className="text-sm text-gray-500">Utilization Rate</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {stats?.totalVehicles ? Math.round((stats?.activeVehicles / stats?.totalVehicles) * 100) : 0}%
+                  {stats?.totalVehicles ? Math.round(((stats.activeVehicles || 0) / stats.totalVehicles) * 100) : 0}%
                 </p>
-                <p className="text-xs text-green-600 mt-1">+5% from last week</p>
+                <p className="text-xs text-gray-500 mt-1">{stats?.activeVehicles || 0} of {stats?.totalVehicles || 0} active vehicles</p>
               </div>
               <div className="rounded-xl bg-white p-4 border border-gray-200">
                 <p className="text-sm text-gray-500">Booking Trends</p>
-                <p className="text-2xl font-semibold text-gray-900">1,240</p>
-                <p className="text-xs text-green-600 mt-1">Bookings this month</p>
+                <p className="text-2xl font-semibold text-gray-900">{(revenue as any)?.totalBookings ?? 0}</p>
+                <p className="text-xs text-gray-500 mt-1">Total bookings recorded</p>
               </div>
             </div>
           </div>

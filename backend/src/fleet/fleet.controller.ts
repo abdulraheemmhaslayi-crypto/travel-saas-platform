@@ -68,9 +68,21 @@ export class FleetController {
   @ApiOperation({ summary: 'Add a driver to fleet' })
   async addDriver(
     @CurrentUser('id') ownerId: string,
-    @Body() body: { emailOrPhone: string; licenseNumber?: string },
+    @Body() body: { emailOrPhone?: string; email?: string; phone?: string; firstName?: string; lastName?: string; licenseNumber?: string; licenseDocument?: string; experienceYears?: number },
   ) {
-    return this.fleetService.addDriver(ownerId, body.emailOrPhone, body.licenseNumber);
+    return this.fleetService.addDriver(ownerId, body);
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @Post('drivers/:driverId/assign-vehicle')
+  @ApiOperation({ summary: 'Assign or unassign a vehicle to a driver' })
+  async assignVehicle(
+    @Param('driverId', ParseUUIDPipe) driverId: string,
+    @CurrentUser('id') ownerId: string,
+    @Body() body: { vehicleId?: string },
+  ) {
+    return this.fleetService.assignVehicleToDriver(ownerId, driverId, body.vehicleId);
   }
 
   @ApiBearerAuth('JWT-auth')

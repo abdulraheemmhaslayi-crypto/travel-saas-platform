@@ -35,6 +35,10 @@ import {
   ArrowRight,
   Car,
   BadgeCheck,
+  Check,
+  Copy,
+  Sparkles,
+  XCircle,
 } from 'lucide-react';
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -125,6 +129,7 @@ export default function BookingDetailPage() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
+  const [desktopCopied, setDesktopCopied] = useState(false);
 
   // ── Load booking ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -212,6 +217,7 @@ export default function BookingDetailPage() {
   const isPayFailed = paymentStatus === 'FAILED';
   const isPayProcessing = paymentStatus === 'PROCESSING' || paymentStatus === 'PENDING';
   const isPaid = paymentStatus === 'PAID';
+  const isCancelled = bookingStatus === 'CANCELLED';
   const canCancel = isCancellable(booking);
   const cancelledByLabel = bookingStatus === 'CANCELLED' ? getCancelledByLabel(booking.cancelledBy) : null;
 
@@ -257,131 +263,204 @@ export default function BookingDetailPage() {
       <div className="hidden md:block max-w-2xl mx-auto space-y-4 px-4 sm:px-0 pb-12">
 
       {/* ── Back + Header ──────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard/bookings"
-          className="p-2 hover:bg-gray-100 rounded-xl transition-colors bg-white border border-gray-100 shadow-sm"
-        >
-          <ArrowLeft className="w-4 h-4 text-gray-600" />
-        </Link>
-        <div>
-          <h1 className="text-xl font-black text-gray-900 tracking-tight">Booking Details</h1>
-          <p className="text-xs text-gray-400 font-mono mt-0.5">#{booking.id.toUpperCase()}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/bookings"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors bg-white border border-gray-100 shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </Link>
+          <div>
+            <h1 className="text-xl font-black text-gray-900 tracking-tight">Booking Details</h1>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-xs text-gray-500 font-mono font-bold">
+                #{booking.id.slice(0, 10).toUpperCase()}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                    navigator.clipboard.writeText(booking.id);
+                    setDesktopCopied(true);
+                    setTimeout(() => setDesktopCopied(false), 2000);
+                  }
+                }}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded-full cursor-pointer transition-all active:scale-95"
+                title="Copy full booking reference"
+              >
+                {desktopCopied ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-600" />
+                    <span className="text-emerald-600 text-[10px]">Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3 text-gray-400" />
+                    <span className="text-[10px]">Copy ID</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
+        <Link href="/dashboard/support">
+          <Button variant="secondary" size="sm" className="font-bold text-xs rounded-xl" leftIcon={<HeadphonesIcon className="w-3.5 h-3.5" />}>
+            Need Help?
+          </Button>
+        </Link>
       </div>
 
-      {/* ── Payment Failure Banner ─────────────────────────────────────────── */}
-      {isPayFailed && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-5 space-y-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-bold text-red-800">Payment Failed</p>
-              <p className="text-xs text-red-600 mt-1 leading-relaxed">
-                We were unable to complete your payment. Your booking is on hold.
-              </p>
-              <p className="text-xs text-red-500 mt-2 font-semibold">Possible reasons:</p>
-              <ul className="text-xs text-red-500 mt-1 space-y-0.5 list-disc list-inside">
-                <li>Insufficient account balance</li>
-                <li>Network issue during payment</li>
-                <li>Bank declined the transaction</li>
-                <li>Payment session expired</li>
-              </ul>
+      {/* ── Unified Status Hero Banner ─────────────────────────────────────── */}
+      {isCancelled ? (
+        <div className="bg-white border border-rose-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0 mt-0.5">
+              <XCircle className="w-5 h-5 stroke-[2.2]" />
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 w-full">
-            <Button
-              size="sm"
-              className="font-bold text-xs rounded-xl w-full"
-              leftIcon={<CreditCard className="w-3.5 h-3.5" />}
-              onClick={() => setPayOpen(true)}
-            >
-              Retry Payment
-            </Button>
-            <Link href="/dashboard/support" className="w-full">
-              <Button variant="secondary" size="sm" className="w-full font-bold text-xs rounded-xl">
-                Contact Support
-              </Button>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* ── Payment Processing Banner ──────────────────────────────────────── */}
-      {isPayProcessing && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
-          <div className="flex items-start gap-3">
-            <Loader2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5 animate-spin" />
-            <div className="flex-1">
-              <p className="text-sm font-bold text-blue-800">Payment Being Verified</p>
-              <p className="text-xs text-blue-600 mt-1 leading-relaxed">
-                Your payment is being processed. We will automatically update your booking status once confirmation is received.
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-base font-black text-gray-900 tracking-tight">
+                  {cancelledByLabel ?? 'Booking Cancelled'}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800">
+                    {booking.cancellationReason === 'Payment session expired' ? 'Payment Expired' : 'Cancelled'}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                    Seats Released
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-rose-600 mt-1.5 leading-relaxed">
+                {booking.cancellationReason === 'Payment session expired'
+                  ? 'The payment session expired before checkout was completed (10-minute window). The reserved seats have been released back to the schedule.'
+                  : (booking.cancellationReason ? `Reason: ${booking.cancellationReason}` : 'This booking has been cancelled and seats are no longer reserved.')}
               </p>
-              <p className="text-xs font-bold text-blue-700 mt-2">
-                ⚠️ Please do not make another payment.
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 mt-4 w-full">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="font-bold text-xs rounded-xl w-full"
-              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-              onClick={() => getBooking(bookingId)}
-            >
-              Refresh Status
-            </Button>
-            <Link href="/dashboard/support" className="w-full">
-              <Button variant="secondary" size="sm" className="w-full font-bold text-xs rounded-xl">
-                Contact Support
-              </Button>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* ── Cancelled Banner ──────────────────────────────────────────────── */}
-      {bookingStatus === 'CANCELLED' && (
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-bold text-gray-700">{cancelledByLabel ?? 'Cancelled'}</p>
-              {booking.cancellationReason && (
-                <p className="text-xs text-gray-500 mt-1">Reason: {booking.cancellationReason}</p>
-              )}
               {booking.refundAmount && booking.refundAmount > 0 && (
-                <p className="text-xs text-emerald-600 font-semibold mt-2">
+                <p className="text-xs text-emerald-600 font-semibold mt-2 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
                   Refund of {formatCurrency(booking.refundAmount, currency)} is being processed.
                 </p>
               )}
             </div>
           </div>
+          <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
+            <span>Booked {new Date(booking.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            <div className="flex items-center gap-2">
+              <Link href={trip?.id ? `/dashboard/trips/${trip.id}` : '/dashboard/passenger'}>
+                <Button size="sm" className="font-bold text-xs rounded-xl" leftIcon={<Sparkles className="w-3.5 h-3.5" />}>
+                  {trip?.id ? 'Re-book on this Trip' : 'Book Another Ride'}
+                </Button>
+              </Link>
+              <Link href="/dashboard/support">
+                <Button variant="secondary" size="sm" className="font-bold text-xs rounded-xl">
+                  Contact Support
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : isPayProcessing ? (
+        <div className="bg-white border border-blue-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 mt-0.5">
+              <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-base font-black text-gray-900 tracking-tight">Payment Being Verified</h2>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-100 text-blue-800">
+                  Processing
+                </span>
+              </div>
+              <p className="text-xs text-blue-600 mt-1 leading-relaxed">
+                Your payment is being processed. We will automatically update your booking status once confirmation is received.
+              </p>
+              <p className="text-xs font-bold text-blue-700 mt-2">
+                ⚠️ Please do not make another payment while verification is pending.
+              </p>
+            </div>
+          </div>
+          <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="font-bold text-xs rounded-xl"
+              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+              onClick={() => getBooking(bookingId)}
+            >
+              Refresh Status
+            </Button>
+            <Link href="/dashboard/support">
+              <Button variant="secondary" size="sm" className="font-bold text-xs rounded-xl">
+                Contact Support
+              </Button>
+            </Link>
+          </div>
+        </div>
+      ) : isPayFailed ? (
+        <div className="bg-white border border-amber-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0 mt-0.5">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-base font-black text-gray-900 tracking-tight">Payment Unsuccessful</h2>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800">
+                  Payment Failed
+                </span>
+              </div>
+              <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                We were unable to complete your payment. Your seats are temporarily on hold.
+              </p>
+              <p className="text-xs text-amber-600 mt-2 font-semibold">Possible reasons:</p>
+              <ul className="text-xs text-amber-600 mt-1 space-y-0.5 list-disc list-inside">
+                <li>Insufficient account balance</li>
+                <li>Network issue during payment session</li>
+                <li>Bank declined the transaction</li>
+              </ul>
+            </div>
+          </div>
+          <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+            <Button
+              size="sm"
+              className="font-bold text-xs rounded-xl"
+              leftIcon={<CreditCard className="w-3.5 h-3.5" />}
+              onClick={() => setPayOpen(true)}
+            >
+              Retry Payment • {formatCurrency(finalAmount, currency)}
+            </Button>
+            <Link href="/dashboard/support">
+              <Button variant="secondary" size="sm" className="font-bold text-xs rounded-xl">
+                Contact Support
+              </Button>
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Booking Status</p>
+              <BookingStatus status={booking.status} size="lg" />
+            </div>
+            <div className="space-y-1 sm:text-right">
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Payment Status</p>
+              <PaymentStatusBadge status={booking.paymentStatus} size="lg" />
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
+            <span>Booked {new Date(booking.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            {isPaid && (
+              <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+                <CheckCircle2 className="w-3 h-3" /> Payment Confirmed
+              </span>
+            )}
+          </div>
         </div>
       )}
-
-      {/* ── Status Overview ───────────────────────────────────────────────── */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Booking Status</p>
-            <BookingStatus status={booking.status} size="lg" />
-          </div>
-          <div className="space-y-1 sm:text-right">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Payment Status</p>
-            <PaymentStatusBadge status={booking.paymentStatus} size="lg" />
-          </div>
-        </div>
-        <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
-          <span>Booked {new Date(booking.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-          {isPaid && (
-            <span className="flex items-center gap-1 text-emerald-600 font-semibold">
-              <CheckCircle2 className="w-3 h-3" /> Payment Confirmed
-            </span>
-          )}
-        </div>
-      </div>
 
       {/* ── Trip Information ──────────────────────────────────────────────── */}
       <SectionCard title="Trip Information" icon={MapPin} accent="border-l-primary-400">
@@ -602,7 +681,7 @@ export default function BookingDetailPage() {
 
       {/* ── Action Bar ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 pt-2 sm:flex sm:flex-row w-full">
-        {isPayFailed && (
+        {!isCancelled && isPayFailed && (
           <Button
             className="col-span-2 sm:flex-1 font-bold rounded-xl"
             leftIcon={<CreditCard className="w-4 h-4" />}
@@ -610,6 +689,16 @@ export default function BookingDetailPage() {
           >
             Retry Payment
           </Button>
+        )}
+        {isCancelled && (
+          <Link href={trip?.id ? `/dashboard/trips/${trip.id}` : '/dashboard/passenger'} className="col-span-2 sm:flex-1">
+            <Button
+              className="w-full font-bold rounded-xl"
+              leftIcon={<Sparkles className="w-4 h-4" />}
+            >
+              {trip?.id ? 'Re-book on this Trip' : 'Book Another Ride'}
+            </Button>
+          </Link>
         )}
         {bookingStatus === 'CONFIRMED' && isPaid && (
           <Button

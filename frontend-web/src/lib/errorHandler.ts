@@ -48,6 +48,7 @@ const HTTP_STATUS_MESSAGES: Record<number, string> = {
   408: 'The request took too long. Please try again.',
   409: 'This action could not be completed due to a conflict. Please refresh and try again.',
   410: 'This resource is no longer available.',
+  413: 'The uploaded file or image is too large. Please select a smaller file (under 10MB).',
   422: 'Some fields have invalid values. Please review the form and try again.',
   429: 'Too many requests. Please wait a moment before trying again.',
   500: 'Something went wrong on our end. Please try again later.',
@@ -183,7 +184,7 @@ const DOMAIN_ERROR_RULES: DomainRule[] = [
     'An account with this email address already exists. Please log in instead.',
   ],
   [
-    /phone.*(already\s+)?(exists?|taken|registered|in\s+use)/i,
+    /(?:phone(?:\s+number)?\s+(?:is\s+)?already\s+exists?|phone.*(?:already\s+registered|already\s+taken|already\s+in\s+use))/i,
     'This phone number is already registered. Please log in instead.',
   ],
   [
@@ -271,6 +272,10 @@ const DOMAIN_ERROR_RULES: DomainRule[] = [
   [
     /duplicate|already\s+exists?/i,
     'A record with this information already exists.',
+  ],
+  [
+    /payload\s+too\s+large|entity\s+too\s+large|request\s+entity\s+too\s+large|file.*too\s+large/i,
+    'The uploaded file is too large. Please select a smaller image or document (under 10MB).',
   ],
   [
     /permission|role|access/i,

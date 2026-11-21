@@ -13,6 +13,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Trip, TripStatus } from '../database/entities/trip.entity';
 import { Driver } from '../database/entities/driver.entity';
+import { Vehicle } from '../database/entities/vehicle.entity';
 
 @ApiTags('Driver')
 @ApiBearerAuth('JWT-auth')
@@ -24,7 +25,29 @@ export class DriverController {
     private readonly tripRepository: Repository<Trip>,
     @InjectRepository(Driver)
     private readonly driverRepository: Repository<Driver>,
+    @InjectRepository(Vehicle)
+    private readonly vehicleRepository: Repository<Vehicle>,
   ) {}
+
+  @Get('assigned-vehicle')
+  @ApiOperation({ summary: 'Get assigned vehicle for the logged-in driver' })
+  async getAssignedVehicle(@CurrentUser('id') userId: string) {
+    const driver = await this.driverRepository.findOne({
+      where: { userId },
+    });
+    if (!driver) {
+      throw new NotFoundException('Driver profile not found');
+    }
+    const vehicleId = driver.documents?.assignedVehicleId;
+    if (vehicleId) {
+      const vehicle = await this.vehicleRepository.findOne({
+        where: { id: vehicleId },
+        relations: ['documents'],
+      });
+      if (vehicle) return vehicle;
+    }
+    return driver.documents?.assignedVehicle || null;
+  }
 
   @Get('trips/active')
   @ApiOperation({ summary: 'Get active trips for the logged-in driver' })

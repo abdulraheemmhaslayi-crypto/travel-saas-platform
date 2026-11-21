@@ -629,10 +629,19 @@ export class SupportService {
       .skip(skip)
       .take(limit);
 
-    if (user.role === RoleName.PASSENGER || user.role === RoleName.DRIVER) {
-      qb.andWhere('ticket.userId = :userId', { userId: user.userId });
-    } else if ((user.role === RoleName.FLEET_MANAGER || user.role === RoleName.VEHICLE_OWNER) && user.fleetCompanyId) {
-      qb.andWhere('ticket.fleetCompanyId = :fleetCompanyId', { fleetCompanyId: user.fleetCompanyId });
+    const userRole = (user.role || '').toUpperCase();
+    const isAdmin = [RoleName.ADMIN, RoleName.SUPER_ADMIN, RoleName.SUPPORT].some(
+      (r) => r.toUpperCase() === userRole,
+    );
+    if (!isAdmin) {
+      if (user.fleetCompanyId) {
+        qb.andWhere('(ticket.userId = :userId OR ticket.fleetCompanyId = :fleetCompanyId)', {
+          userId: user.userId,
+          fleetCompanyId: user.fleetCompanyId,
+        });
+      } else {
+        qb.andWhere('ticket.userId = :userId', { userId: user.userId });
+      }
     }
 
     if (status) qb.andWhere('ticket.status = :status', { status });

@@ -30,6 +30,11 @@ export class UpdateProfileDto {
   @MaxLength(100)
   lastName?: string;
 
+  @ApiPropertyOptional({ example: '+919876543210' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
   @ApiPropertyOptional({ example: '123 Main St' })
   @IsOptional()
   @IsString()

@@ -152,23 +152,16 @@ function EarningsContent() {
   const totalCommissionDeducted = totalGrossFare * 0.12;
   const netFleetShare = totalGrossFare * 0.88;
 
-  // Mock data for charts
-  const revenueTrendData = [
-    { name: 'Mon', revenue: 4000 },
-    { name: 'Tue', revenue: 3000 },
-    { name: 'Wed', revenue: 5000 },
-    { name: 'Thu', revenue: 2780 },
-    { name: 'Fri', revenue: 8090 },
-    { name: 'Sat', revenue: 12390 },
-    { name: 'Sun', revenue: 10490 },
-  ];
+  // Real dynamic weekly trend and top vehicles from backend
+  const defaultWeekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const revenueTrendData = (revenue as any)?.weeklyTrend && Array.isArray((revenue as any).weeklyTrend) && (revenue as any).weeklyTrend.length > 0
+    ? (revenue as any).weeklyTrend
+    : defaultWeekDays.map(day => ({ name: day, revenue: 0 }));
 
-  const vehicleRevenueData = [
-    { name: 'Sedan X', revenue: 15000 },
-    { name: 'SUV Y', revenue: 23000 },
-    { name: 'Van Z', revenue: 12000 },
-    { name: 'Bus A', revenue: 34000 },
-  ];
+  const vehicleRevenueData: Array<{ name: string; revenue: number }> =
+    (revenue as any)?.topVehicles && Array.isArray((revenue as any).topVehicles) && (revenue as any).topVehicles.length > 0
+      ? (revenue as any).topVehicles
+      : [];
 
   const tabs = [
     { id: 'revenue', label: 'Revenue Reports', icon: <BarChart3 className="w-4 h-4" /> },
@@ -317,20 +310,28 @@ function EarningsContent() {
 
                 <Card className="p-6 border-gray-100 shadow-sm bg-white">
                   <h3 className="text-lg font-bold text-gray-900 mb-6">Top Performing Vehicles</h3>
-                  <div className="h-72 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={vehicleRevenueData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
-                        <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} tickFormatter={(val) => `₹${val/1000}k`} />
-                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#4b5563', fontSize: 12, fontWeight: 500}} />
-                        <RechartsTooltip
-                          cursor={{fill: '#f3f4f6'}}
-                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                          formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Revenue']}
-                        />
-                        <Bar dataKey="revenue" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <div className="h-72 w-full flex items-center justify-center">
+                    {vehicleRevenueData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={vehicleRevenueData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                          <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} tickFormatter={(val) => `₹${val/1000}k`} />
+                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#4b5563', fontSize: 12, fontWeight: 500}} />
+                          <RechartsTooltip
+                            cursor={{fill: '#f3f4f6'}}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                            formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Revenue']}
+                          />
+                          <Bar dataKey="revenue" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="text-center p-6 text-gray-400">
+                        <BarChart3 className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm font-medium text-gray-600">No Vehicle Revenue Recorded Yet</p>
+                        <p className="text-xs text-gray-400 mt-1">Vehicle earnings will automatically populate here as trips complete.</p>
+                      </div>
+                    )}
                   </div>
                 </Card>
               </div>

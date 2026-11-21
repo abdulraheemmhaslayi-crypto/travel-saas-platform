@@ -160,10 +160,70 @@ export class UpdateVehicleDto {
   @IsString()
   model?: string;
 
+  @ApiPropertyOptional({ example: 2024 })
+  @IsOptional()
+  @IsInt()
+  year?: number;
+
+  @ApiPropertyOptional({ enum: VehicleType })
+  @IsOptional()
+  @IsEnum(VehicleType)
+  type?: VehicleType;
+
   @ApiPropertyOptional({ example: 'White' })
   @IsOptional()
   @IsString()
   color?: string;
+
+  @ApiPropertyOptional({ example: 7 })
+  @IsOptional()
+  @IsInt()
+  seatingCapacity?: number;
+
+  @ApiPropertyOptional({ example: 'Diesel' })
+  @IsOptional()
+  @IsString()
+  fuelType?: string;
+
+  @ApiPropertyOptional({ example: 'Manual' })
+  @IsOptional()
+  @IsString()
+  transmission?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/vehicle.jpg' })
+  @IsOptional()
+  @IsString()
+  vehicleImage?: string;
+
+  @ApiPropertyOptional({ example: 'RC123456789' })
+  @IsOptional()
+  @IsString()
+  rcNumber?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/rc.pdf' })
+  @IsOptional()
+  @IsString()
+  rcDocument?: string;
+
+  @ApiPropertyOptional({ example: 'INS123456' })
+  @IsOptional()
+  @IsString()
+  insuranceNumber?: string;
+
+  @ApiPropertyOptional({ example: '2026-12-31' })
+  @IsOptional()
+  @IsString()
+  insuranceExpiry?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/insurance.pdf' })
+  @IsOptional()
+  @IsString()
+  insuranceDocument?: string;
+
+  @ApiPropertyOptional({ example: 'MH12AB1234' })
+  @IsOptional()
+  @IsString()
+  registrationNumber?: string;
 
   @ApiPropertyOptional({ example: 500.00 })
   @IsOptional()
@@ -196,6 +256,7 @@ export class UpdateVehicleDto {
   @IsOptional()
   @IsBoolean()
   hasCharging?: boolean;
+
   @ApiPropertyOptional({ example: 'owner@okhdfcbank' })
   @IsOptional()
   @IsString()

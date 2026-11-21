@@ -12,8 +12,16 @@ export interface Vehicle {
   capacity: number;
   seatingCapacity?: number;
   type?: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE' | 'PENDING';
+  status: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE' | 'PENDING' | string;
   assignedDriver?: string;
+  color?: string;
+  fuelType?: string;
+  transmission?: string;
+  basePrice?: number;
+  pricePerKm?: number;
+  approvalStatus?: string;
+  vehicleImage?: string;
+  vehicle?: any;
 }
 
 export interface FleetDriver {
@@ -85,6 +93,7 @@ interface FleetState {
   updateVehicle: (id: string, data: Partial<Vehicle>) => Promise<void>;
   deleteVehicle: (id: string) => Promise<void>;
   addDriver: (data: Partial<FleetDriver>) => Promise<void>;
+  assignVehicleToDriver: (driverId: string, vehicleId?: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -305,6 +314,19 @@ export const useFleetStore = create<FleetState>((set, get) => ({
       }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to add driver';
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+
+  assignVehicleToDriver: async (driverId: string, vehicleId?: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.post(`/fleet/drivers/${driverId}/assign-vehicle`, { vehicleId });
+      await Promise.all([get().getDrivers(), get().getVehicles()]);
+      set({ isLoading: false });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to assign vehicle';
       set({ error: message, isLoading: false });
       throw error;
     }

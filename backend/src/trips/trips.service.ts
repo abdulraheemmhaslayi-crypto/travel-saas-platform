@@ -597,17 +597,17 @@ export class TripsService {
       throw new ForbiddenException('You are not authorized to update this trip status');
     }
 
-    const allowedTransitions: Record<TripStatus, TripStatus[]> = {
-      [TripStatus.SCHEDULED]: [TripStatus.ACTIVE, TripStatus.CANCELLED],
-      [TripStatus.ACTIVE]: [TripStatus.IN_PROGRESS, TripStatus.CANCELLED],
-      [TripStatus.IN_PROGRESS]: [TripStatus.COMPLETED, TripStatus.DELAYED],
-      [TripStatus.DELAYED]: [TripStatus.IN_PROGRESS, TripStatus.COMPLETED],
+    const allowedTransitions: Record<string, string[]> = {
+      [TripStatus.SCHEDULED]: [TripStatus.ACTIVE, TripStatus.IN_PROGRESS, TripStatus.CANCELLED],
+      [TripStatus.ACTIVE]: [TripStatus.IN_PROGRESS, TripStatus.COMPLETED, TripStatus.CANCELLED],
+      [TripStatus.IN_PROGRESS]: [TripStatus.COMPLETED, TripStatus.ACTIVE, TripStatus.DELAYED, TripStatus.CANCELLED],
+      [TripStatus.DELAYED]: [TripStatus.IN_PROGRESS, TripStatus.ACTIVE, TripStatus.COMPLETED, TripStatus.CANCELLED],
       [TripStatus.COMPLETED]: [],
       [TripStatus.CANCELLED]: [],
     };
 
-    const currentStatus = trip.status;
-    const newStatus = statusDto.status;
+    const currentStatus = String(trip.status || '').toLowerCase();
+    const newStatus = String(statusDto.status || '').toLowerCase() as TripStatus;
 
     if (!allowedTransitions[currentStatus]?.includes(newStatus)) {
       throw new BadRequestException(`Cannot transition from ${currentStatus} to ${newStatus}`);

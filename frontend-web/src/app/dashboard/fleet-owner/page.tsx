@@ -25,6 +25,7 @@ import {
   BarChart3,
   RefreshCw,
   ChevronRight,
+  ChevronDown,
   Building2,
   Navigation,
   User,
@@ -36,6 +37,8 @@ import {
   CheckCircle2,
   Receipt,
   PlayCircle,
+  QrCode,
+  UserCheck,
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import DirectUpiSettingsCard from '@/components/fleet/DirectUpiSettingsCard';
@@ -79,47 +82,6 @@ function statusChip(status: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// KPI Card
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface KpiCardProps {
-  label: string;
-  value: string | number;
-  icon: React.ReactNode;
-  iconColor?: string;
-  iconBg?: string;
-  subText?: string;
-  href?: string;
-  pulse?: boolean;
-}
-
-function KpiCard({ label, value, icon, iconColor = 'text-gray-500', iconBg = 'bg-gray-50', subText, href, pulse }: KpiCardProps) {
-  const inner = (
-    <Card className="hover:border-gray-200 transition-colors duration-150 cursor-pointer" shadow="none">
-      <div>
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500 mb-2">{label}</p>
-            <p className="text-2xl font-bold text-gray-900 leading-tight tracking-tight">{value}</p>
-            {subText && (
-              <p className="text-xs text-gray-500 mt-2 truncate font-medium">{subText}</p>
-            )}
-          </div>
-          <div className={cn('p-2.5 rounded-xl shrink-0 relative', iconBg, iconColor)}>
-            {pulse && (
-              <span className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            )}
-            {icon}
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-
-  return href ? <Link href={href} className="block">{inner}</Link> : inner;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -145,6 +107,8 @@ export default function FleetOwnerDashboardPage() {
   const [isLoadingTrips, setIsLoadingTrips]       = useState(false);
   const [isLoadingVehicles, setIsLoadingVehicles] = useState(false);
   const [isRefreshing, setIsRefreshing]           = useState(false);
+  const [showUpiSettings, setShowUpiSettings]     = useState(false);
+  const [tripsTab, setTripsTab]                   = useState<'all' | 'active' | 'upcoming'>('all');
 
   const loadAll = useCallback(async () => {
     setIsRefreshing(true);
@@ -165,7 +129,7 @@ export default function FleetOwnerDashboardPage() {
         .catch(() => null)
         .finally(() => setIsLoadingTrips(false));
 
-      // Fetch vehicles with documents for expiry checking
+      // Fetch vehicles
       setIsLoadingVehicles(true);
       apiClient.getMyVehicles()
         .then((r: any) => setVehicles(r.data?.data ?? r.data ?? []))
@@ -182,19 +146,19 @@ export default function FleetOwnerDashboardPage() {
   // ── Derived values ──────────────────────────────────────────────────────────
 
   const activeTrips = useMemo(() =>
-    trips.filter(t => ['ACTIVE', 'IN_PROGRESS', 'active', 'in_progress'].includes(t.status)),
+    trips.filter(t => ['ACTIVE', 'IN_PROGRESS', 'active', 'in_progress', 'delayed', 'started'].includes(String(t.status || '').toLowerCase())),
   [trips]);
 
   const scheduledTrips = useMemo(() =>
-    trips.filter(t => ['SCHEDULED', 'scheduled'].includes(t.status)),
+    trips.filter(t => ['SCHEDULED', 'scheduled', 'upcoming'].includes(String(t.status || '').toLowerCase())),
   [trips]);
 
   const activeDrivers = useMemo(() =>
-    drivers.filter((d: any) => d.status === 'ACTIVE'),
+    drivers.filter((d: any) => String(d.status || '').toUpperCase() === 'ACTIVE'),
   [drivers]);
 
   const assignedDrivers = useMemo(() =>
-    drivers.filter((d: any) => d.assignedVehicle || d.vehicleId),
+    drivers.filter((d: any) => d.assignedVehicle || d.assignedVehicleId || d.vehicleId),
   [drivers]);
 
   const todayCount = useMemo(() => {
@@ -204,7 +168,7 @@ export default function FleetOwnerDashboardPage() {
     ).length;
   }, [trips]);
 
-  // ── Document expiry alerts ───────────────────────────────────────────────────
+  // Document expiry alerts
   const expiryAlerts = useMemo(() => {
     const now  = new Date();
     const list: { title: string; daysLeft: number; critical: boolean }[] = [];
@@ -238,716 +202,600 @@ export default function FleetOwnerDashboardPage() {
     return list.sort((a, b) => a.daysLeft - b.daysLeft);
   }, [vehicles]);
 
-  // ── Shorthand stats ─────────────────────────────────────────────────────────
+  // Shorthand stats
   const totalVehicles     = vehicleStats?.total     ?? vehicles.length;
   const approvedVehicles  = vehicleStats?.approved  ?? 0;
   const pendingVehicles   = vehicleStats?.pending   ?? 0;
   const rejectedVehicles  = vehicleStats?.rejected  ?? 0;
   const suspendedVehicles = vehicleStats?.suspended ?? 0;
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // RENDER
-  // ────────────────────────────────────────────────────────────────────────────
+  // Filtered trips for left column card
+  const displayedTrips = useMemo(() => {
+    if (tripsTab === 'active') return activeTrips;
+    if (tripsTab === 'upcoming') return scheduledTrips;
+    return trips;
+  }, [trips, tripsTab, activeTrips, scheduledTrips]);
 
   return (
-    <>
-
-      {/* ── Expiry Alert Banner ──────────────────────────────────────────────── */}
+    <div className="space-y-5 max-w-7xl mx-auto pb-8">
+      {/* ── Expiry Alert Ribbon (Compact, non-intrusive) ──────────────────────── */}
       {expiryAlerts.length > 0 && (
-        <div className="bg-amber-50 border-b border-amber-100 px-4 sm:px-6 py-2.5">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-2">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+          <div className="flex items-center gap-2 text-xs">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">
-              Expiry Alerts
+            <span className="font-bold text-amber-900">Document Expiries:</span>
+            <span className="text-amber-800">
+              {expiryAlerts[0].title} expires in <strong>{expiryAlerts[0].daysLeft} days</strong>.
+              {expiryAlerts.length > 1 && ` (+${expiryAlerts.length - 1} more)`}
             </span>
-            {expiryAlerts.slice(0, 3).map((a, i) => (
-              <span key={i} className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
-                a.critical
-                  ? 'bg-red-100 text-red-700 border-red-200'
-                  : 'bg-amber-100 text-amber-700 border-amber-200'
-              }`}>
-                {a.title} — {a.daysLeft}d left
+          </div>
+          <Link
+            href="/dashboard/fleet-owner/vehicles?tab=documents"
+            className="text-xs font-bold text-amber-900 hover:text-amber-950 flex items-center gap-1 underline underline-offset-2"
+          >
+            Review Compliance <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
+
+      {/* ── Compact Executive Header ────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            {currentFleetName ? (
+              <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-100">
+                <Building2 className="w-3 h-3" />
+                {currentFleetName}
               </span>
-            ))}
-            {expiryAlerts.length > 3 && (
-              <span className="text-[11px] text-amber-700 font-semibold">
-                +{expiryAlerts.length - 3} more
+            ) : null}
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+              {activeTrips.length > 0 ? (
+                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  {activeTrips.length} Trip{activeTrips.length > 1 ? 's' : ''} Live
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-slate-600 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                  Operations Ready
+                </span>
+              )}
+            </span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            Fleet Command Center
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Welcome back, <strong className="text-slate-700">{user?.firstName}</strong>. Real-time overview of your fleet, dispatches, and revenue.
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={loadAll}
+            disabled={isRefreshing}
+            title="Refresh fleet data"
+            className="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs flex items-center gap-1.5 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+
+          <Link href="/dashboard/fleet-owner/create-trip">
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs py-2 px-3.5 font-semibold">
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Create Trip
+            </Button>
+          </Link>
+
+          <Link href="/dashboard/fleet-owner/vehicles">
+            <Button variant="secondary" size="sm" className="rounded-xl text-xs py-2 px-3 font-semibold border-slate-200">
+              <Car className="w-3.5 h-3.5 mr-1" />
+              Add Vehicle
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* ── High-Density Executive KPI Cards (Row of 4) ────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Vehicles KPI */}
+        <Link href="/dashboard/fleet-owner/vehicles" className="block group">
+          <Card className="p-4 bg-white border border-slate-200/80 rounded-2xl hover:border-blue-400 hover:shadow-xs transition-all" shadow="none">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Vehicles</p>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <span className="text-2xl font-black text-slate-900">{approvedVehicles}</span>
+                  <span className="text-xs text-slate-400 font-medium">/ {totalVehicles} Total</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1 font-medium truncate">
+                  {pendingVehicles > 0 ? (
+                    <span className="text-amber-600 font-semibold">{pendingVehicles} Pending Review</span>
+                  ) : rejectedVehicles > 0 ? (
+                    <span className="text-rose-600 font-semibold">{rejectedVehicles} Needs Action</span>
+                  ) : (
+                    'All Approved & Ready'
+                  )}
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Truck className="w-4.5 h-4.5" />
+              </div>
+            </div>
+          </Card>
+        </Link>
+
+        {/* Trips KPI */}
+        <Link href="/dashboard/fleet-owner/trips?status=active" className="block group">
+          <Card className="p-4 bg-white border border-slate-200/80 rounded-2xl hover:border-cyan-400 hover:shadow-xs transition-all" shadow="none">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Live & Scheduled Trips</p>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <span className="text-2xl font-black text-slate-900">{activeTrips.length}</span>
+                  <span className="text-xs text-emerald-600 font-bold">Active Live</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1 font-medium truncate">
+                  {scheduledTrips.length} Scheduled • {todayCount} Departing Today
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform relative">
+                {activeTrips.length > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                )}
+                <Navigation className="w-4.5 h-4.5" />
+              </div>
+            </div>
+          </Card>
+        </Link>
+
+        {/* Drivers KPI */}
+        <Link href="/dashboard/fleet-owner/drivers" className="block group">
+          <Card className="p-4 bg-white border border-slate-200/80 rounded-2xl hover:border-violet-400 hover:shadow-xs transition-all" shadow="none">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Fleet Drivers</p>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <span className="text-2xl font-black text-slate-900">{activeDrivers.length}</span>
+                  <span className="text-xs text-slate-400 font-medium">/ {drivers.length} Active</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1 font-medium truncate">
+                  <span className="text-blue-600 font-semibold">{assignedDrivers.length} Assigned</span> • {drivers.length - assignedDrivers.length} Free
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Users className="w-4.5 h-4.5" />
+              </div>
+            </div>
+          </Card>
+        </Link>
+
+        {/* Revenue KPI */}
+        <Link href="/dashboard/fleet-owner/analytics" className="block group">
+          <Card className="p-4 bg-white border border-slate-200/80 rounded-2xl hover:border-emerald-400 hover:shadow-xs transition-all" shadow="none">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Monthly Revenue</p>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-2xl font-black text-slate-900">{fmtCurrency(revenue?.thisMonth)}</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1 font-medium truncate">
+                  Today: <strong className="text-emerald-700">{fmtCurrency(revenue?.today)}</strong> • Week: {fmtCurrency(revenue?.thisWeek)}
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <DollarSign className="w-4.5 h-4.5" />
+              </div>
+            </div>
+          </Card>
+        </Link>
+      </div>
+
+      {/* ── Active Trip Spotlight (Hero alert when a live trip is ongoing) ──── */}
+      {activeTrips.length > 0 && (
+        <div className="bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border-l-4 border-emerald-500 p-4 rounded-2xl shadow-xs bg-white">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-3 w-3 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600" />
               </span>
-            )}
-            <Link
-              href="/dashboard/fleet-owner/vehicles?tab=documents"
-              className="ml-auto text-[11px] font-bold text-amber-800 hover:text-amber-900 flex items-center gap-0.5 transition-colors"
-            >
-              Review All <ChevronRight className="w-3 h-3" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">Live Dispatch</span>
+                  <span className="text-[11px] bg-emerald-100 text-emerald-800 px-2 py-0.2 rounded-full font-bold">IN TRANSIT</span>
+                </div>
+                <p className="text-sm font-bold text-slate-900 mt-0.5">
+                  {activeTrips[0].source} → {activeTrips[0].destination}
+                </p>
+                <div className="flex flex-wrap gap-x-3 text-xs text-slate-600 mt-0.5">
+                  {activeTrips[0].vehicle?.registrationNumber && (
+                    <span className="font-mono text-slate-700">🚗 {activeTrips[0].vehicle.registrationNumber}</span>
+                  )}
+                  {activeTrips[0].driver?.name && (
+                    <span>👤 {activeTrips[0].driver.name}</span>
+                  )}
+                  <span>👥 {activeTrips[0].bookedSeats || 0}/{activeTrips[0].totalSeats || '?'} Seats</span>
+                </div>
+              </div>
+            </div>
+            <Link href={`/dashboard/fleet-owner/trips/${activeTrips[0].id}`}>
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold py-1.5 px-3 self-end sm:self-auto">
+                Manage Live Trip
+              </Button>
             </Link>
           </div>
         </div>
       )}
 
-      <div className="space-y-8">
+      {/* ── Main Two-Column Balanced Operational Layout ─────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-        {/* ── Header ────────────────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            {currentFleetName && (
-              <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-[11px] font-bold px-3 py-1.5 rounded-full mb-3 uppercase tracking-wide">
-                <Building2 className="w-3.5 h-3.5" />
-                {currentFleetName}
-              </div>
-            )}
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">
-              Fleet Command Center
-            </h1>
-            <p className="text-gray-400 mt-1 text-xs sm:text-sm">
-              Welcome back,{' '}
-              <span className="font-semibold text-gray-700">{user?.firstName}</span>.
-              Here's your fleet overview for today.
-            </p>
-          </div>
+        {/* ────────── LEFT COLUMN (7/12 - 58%) ──────────────────────────────── */}
+        <div className="lg:col-span-7 space-y-5">
 
-          <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-            <button
-              onClick={loadAll}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-
-            <Link href="/dashboard/notifications">
-              <button className="relative inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-medium hover:bg-slate-50 transition-all shadow-sm">
-                <Bell className="w-3.5 h-3.5" />
-                Alerts
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </button>
-            </Link>
-
-            <Link href="/dashboard/fleet-owner/create-trip">
-              <Button
-                variant="secondary"
-                className="rounded-xl text-sm py-2 font-semibold border-slate-200"
-                disabled={!currentFleetId}
-              >
-                <Calendar className="w-3.5 h-3.5 mr-1.5" />
-                Create Trip
-              </Button>
-            </Link>
-
-            <Link href="/dashboard/fleet-owner/vehicles">
-              <Button className="rounded-xl text-sm py-2 font-semibold">
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Add Vehicle
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* ── 8 KPI Cards ───────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <KpiCard
-            label="Total Vehicles"
-            value={totalVehicles}
-            icon={<Truck className="w-5 h-5" />}
-            iconColor="text-blue-600"
-            iconBg="bg-blue-50/50"
-            subText="Registered fleet size"
-            href="/dashboard/fleet-owner/vehicles"
-          />
-          <KpiCard
-            label="Approved Vehicles"
-            value={approvedVehicles}
-            icon={<CheckCircle className="w-5 h-5" />}
-            iconColor="text-emerald-600"
-            iconBg="bg-emerald-50/50"
-            subText="Ready for trips"
-            href="/dashboard/fleet-owner/vehicles?tab=approval"
-          />
-          <KpiCard
-            label="Pending Approval"
-            value={pendingVehicles}
-            icon={<Clock className="w-5 h-5" />}
-            iconColor="text-amber-600"
-            iconBg="bg-amber-50/50"
-            subText="Awaiting admin review"
-            href="/dashboard/fleet-owner/vehicles?tab=approval"
-          />
-          <KpiCard
-            label="Issues"
-            value={rejectedVehicles + suspendedVehicles}
-            icon={<XCircle className="w-5 h-5" />}
-            iconColor="text-rose-600"
-            iconBg="bg-rose-50/50"
-            subText={`${rejectedVehicles} rejected · ${suspendedVehicles} suspended`}
-            href="/dashboard/fleet-owner/vehicles?tab=approval"
-          />
-          <KpiCard
-            label="Active Drivers"
-            value={(activeDrivers.length || stats?.activeDrivers) ?? 0}
-            icon={<Users className="w-5 h-5" />}
-            iconColor="text-purple-650"
-            iconBg="bg-purple-50/50"
-            subText={`${drivers.length} total registered`}
-            href="/dashboard/fleet-owner/drivers"
-          />
-          <KpiCard
-            label="Active Trips"
-            value={(activeTrips.length || revenue?.activeTrips) ?? 0}
-            icon={<Navigation className="w-5 h-5" />}
-            iconColor="text-cyan-600"
-            iconBg="bg-cyan-50/50"
-            subText={`${scheduledTrips.length} scheduled`}
-            href="/dashboard/fleet-owner/trips?status=active"
-            pulse={activeTrips.length > 0}
-          />
-          <KpiCard
-            label="Today's Trips"
-            value={todayCount}
-            icon={<Calendar className="w-5 h-5" />}
-            iconColor="text-pink-650"
-            iconBg="bg-pink-50/50"
-            subText="Departing today"
-          />
-          <KpiCard
-            label="Payment Approvals"
-            value="Direct UPI"
-            icon={<Receipt className="w-5 h-5" />}
-            iconColor="text-blue-700"
-            iconBg="bg-blue-50/50"
-            subText="Review passenger UTRs"
-            href="/dashboard/fleet-owner/bookings?tab=upi-approvals"
-          />
-          <KpiCard
-            label="Monthly Revenue"
-            value={fmtCurrency(revenue?.thisMonth)}
-            icon={<DollarSign className="w-5 h-5" />}
-            iconColor="text-emerald-700"
-            iconBg="bg-emerald-50/50"
-            subText={`Today: ${fmtCurrency(revenue?.today)}`}
-            href="/dashboard/fleet-owner/analytics?tab=revenue"
-          />
-        </div>
-
-        {/* ── Direct UPI & QR Code Settings ─────────────────────────────── */}
-        <DirectUpiSettingsCard />
-
-        {/* ── Main 3-column grid ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* ────────── LEFT COLUMN (2/3) ──────────────────────────────────── */}
-          <div className="lg:col-span-2 space-y-6">
-
-            {/* Vehicle Status Summary */}
-            <Card
-              className="border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden"
-              padding="none"
-            >
-              {/* Header */}
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <Truck className="w-4.5 h-4.5 text-blue-600" />
-                    Vehicle Status Summary
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Approval breakdown across your fleet</p>
-                </div>
-                <div className="flex gap-2">
-                  <Link href="/dashboard/fleet-owner/vehicles">
-                    <Button variant="secondary" size="sm" className="rounded-xl text-xs py-1.5 border-slate-200 font-semibold">
-                      <Eye className="w-3.5 h-3.5 mr-1.5" />
-                      View All
-                    </Button>
-                  </Link>
-                  <Link href="/dashboard/fleet-owner/vehicles">
-                    <Button size="sm" className="rounded-xl text-xs py-1.5 font-semibold">
-                      <Plus className="w-3.5 h-3.5 mr-1.5" />
-                      Add Vehicle
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Status breakdown */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-100">
-                {[
-                  { label: 'Approved',  value: approvedVehicles,  dot: 'bg-emerald-500', bg: 'bg-emerald-50/60', text: 'text-emerald-700' },
-                  { label: 'Pending',   value: pendingVehicles,   dot: 'bg-amber-400',   bg: 'bg-amber-50/60',   text: 'text-amber-700' },
-                  { label: 'Rejected',  value: rejectedVehicles,  dot: 'bg-red-500',     bg: 'bg-red-50/60',     text: 'text-red-700' },
-                  { label: 'Suspended', value: suspendedVehicles, dot: 'bg-orange-500',  bg: 'bg-orange-50/60',  text: 'text-orange-700' },
-                ].map(item => (
-                  <Link
-                    key={item.label}
-                    href="/dashboard/fleet-owner/vehicles?tab=approval"
-                    className={`flex flex-col items-center justify-center py-6 ${item.bg} hover:brightness-95 transition-all`}
+          {/* Trips Operational Center */}
+          <Card className="border border-slate-200/80 rounded-2xl bg-white shadow-2xs overflow-hidden" padding="none">
+            {/* Header with quick sub-tabs */}
+            <div className="px-4 py-3.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Navigation className="w-4.5 h-4.5 text-blue-600" />
+                <h2 className="text-sm font-bold text-slate-900">Trip Operations</h2>
+                <div className="flex bg-slate-100 p-0.5 rounded-lg text-[11px] font-semibold ml-2">
+                  <button
+                    onClick={() => setTripsTab('all')}
+                    className={cn('px-2.5 py-1 rounded-md transition-all', tripsTab === 'all' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900')}
                   >
-                    <span className={`w-2 h-2 rounded-full ${item.dot} mb-2`} />
-                    <span className={`text-2xl font-extrabold ${item.text}`}>{item.value}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-
-              {/* Vehicle mini-list */}
-              {isLoadingVehicles ? (
-                <div className="p-6 text-center text-sm text-slate-400">Loading vehicles…</div>
-              ) : vehicles.length === 0 ? (
-                <div className="p-8 text-center">
-                  <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <Truck className="w-6 h-6 text-blue-400" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-700">No vehicles yet</p>
-                  <p className="text-xs text-slate-500 mt-1 mb-4">Add your first vehicle to get started.</p>
-                  <Link href="/dashboard/fleet-owner/vehicles">
-                    <Button size="sm" className="rounded-xl">
-                      <Plus className="w-3.5 h-3.5 mr-1.5" />
-                      Add Vehicle
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="p-4 space-y-2">
-                  {vehicles.slice(0, 5).map((v: any) => (
-                    <div
-                      key={v.id}
-                      className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors group"
-                    >
-                      {/* Icon */}
-                      <div className="w-9 h-9 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 border border-primary-100/50">
-                        <Car className="w-4.5 h-4.5" />
-                      </div>
-
-                      {/* Details */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate">
-                          {v.brand || v.make || ''} {v.model || ''}
-                          {v.year ? ` (${v.year})` : ''}
-                        </p>
-                        <p className="text-xs text-slate-500 font-mono">{v.registrationNumber || '—'}</p>
-                      </div>
-
-                      {/* Rejection reason */}
-                      {v.rejectionReason && (v.status || '').toUpperCase() === 'REJECTED' && (
-                        <p className="hidden sm:block text-[10px] text-rose-500 italic truncate max-w-[120px]" title={v.rejectionReason}>
-                          {v.rejectionReason}
-                        </p>
-                      )}
-
-                      {/* Status */}
-                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${statusChip(v.status)}`}>
-                        {v.status}
-                      </span>
-
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
-                    </div>
-                  ))}
-
-                  {vehicles.length > 5 && (
-                    <div className="pt-2 text-center">
-                      <Link
-                        href="/dashboard/fleet-owner/vehicles"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                      >
-                        View all {vehicles.length} vehicles <ArrowRight className="w-3 h-3" />
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
-            </Card>
-
-            {/* Active & Upcoming Trips */}
-            <Card
-              className="border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden"
-              padding="none"
-            >
-              {/* Header */}
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <Navigation className="w-4.5 h-4.5 text-cyan-600" />
-                    Active & Upcoming Trips
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {activeTrips.length} active · {scheduledTrips.length} scheduled
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Link href="/dashboard/fleet-owner/create-trip">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="rounded-xl text-xs py-1.5 border-slate-200 font-semibold"
-                      disabled={!currentFleetId}
-                    >
-                      <Plus className="w-3.5 h-3.5 mr-1.5" />
-                      Create
-                    </Button>
-                  </Link>
-                  <Link href="/dashboard/fleet-owner/trips">
-                    <Button size="sm" className="rounded-xl text-xs py-1.5 font-semibold">
-                      View All
-                    </Button>
-                  </Link>
+                    All ({trips.length})
+                  </button>
+                  <button
+                    onClick={() => setTripsTab('active')}
+                    className={cn('px-2.5 py-1 rounded-md transition-all', tripsTab === 'active' ? 'bg-white text-emerald-700 shadow-2xs' : 'text-slate-500 hover:text-slate-900')}
+                  >
+                    Active ({activeTrips.length})
+                  </button>
+                  <button
+                    onClick={() => setTripsTab('upcoming')}
+                    className={cn('px-2.5 py-1 rounded-md transition-all', tripsTab === 'upcoming' ? 'bg-white text-blue-700 shadow-2xs' : 'text-slate-500 hover:text-slate-900')}
+                  >
+                    Upcoming ({scheduledTrips.length})
+                  </button>
                 </div>
               </div>
 
-              {/* Content */}
-              {isLoadingTrips ? (
-                <div className="p-8 text-center text-sm text-slate-400">Loading trips…</div>
-              ) : trips.length === 0 ? (
-                <div className="p-10 text-center">
-                  <div className="w-14 h-14 bg-cyan-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <Calendar className="w-7 h-7 text-cyan-400" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-700">No trips yet</p>
-                  <p className="text-xs text-slate-500 mt-1 mb-4">
-                    Create your first trip to start accepting passenger bookings.
-                  </p>
-                  <Link href="/dashboard/fleet-owner/create-trip">
-                    <Button size="sm" className="rounded-xl" disabled={!currentFleetId}>
-                      <Plus className="w-3.5 h-3.5 mr-1.5" />
-                      Create Trip
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {[...activeTrips, ...scheduledTrips].slice(0, 6).map((trip: any) => {
-                    const isLive = ['ACTIVE', 'IN_PROGRESS', 'active', 'in_progress'].includes(trip.status);
-                    return (
-                      <div key={trip.id} className="flex items-start gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors group">
-                        {/* Live indicator */}
-                        <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-blue-400'}`} />
+              <Link href="/dashboard/fleet-owner/trips" className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5">
+                View All <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
 
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <p className="text-sm font-bold text-slate-800 truncate">
-                              {trip.source || trip.origin || 'Origin'} → {trip.destination || 'Destination'}
-                            </p>
-                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${statusChip(trip.status)}`}>
-                              {trip.status}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {fmtDate(trip.departureTime || trip.departureDate)}
-                            </span>
-                            {trip.vehicle && (
-                              <span className="flex items-center gap-1">
-                                <Car className="w-3 h-3" />
-                                {trip.vehicle.brand || trip.vehicle.make || ''} {trip.vehicle.model || ''}
-                              </span>
-                            )}
-                            {trip.driver?.user && (
-                              <span className="flex items-center gap-1">
-                                <User className="w-3 h-3" />
-                                {trip.driver.user.firstName} {trip.driver.user.lastName}
-                              </span>
-                            )}
-                            <span className="flex items-center gap-1">
-                              <Users className="w-3 h-3" />
-                              {trip.bookedSeats ?? 0}/{trip.totalSeats ?? '?'} seats
-                            </span>
-                          </div>
+            {/* Trips List */}
+            {isLoadingTrips ? (
+              <div className="p-8 text-center text-xs text-slate-400">Loading trips…</div>
+            ) : displayedTrips.length === 0 ? (
+              <div className="p-8 text-center">
+                <Route className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-semibold text-slate-700">No {tripsTab} trips</p>
+                <p className="text-[11px] text-slate-400 mt-0.5 mb-3">Schedule a new trip to start taking bookings.</p>
+                <Link href="/dashboard/fleet-owner/create-trip">
+                  <Button size="sm" className="rounded-xl text-xs py-1.5">Create Trip</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {displayedTrips.slice(0, 5).map((trip: any) => {
+                  const isLive = ['ACTIVE', 'IN_PROGRESS', 'active', 'in_progress'].includes(trip.status);
+                  const driverName = trip.driver?.name || `${trip.driver?.user?.firstName || ''} ${trip.driver?.user?.lastName || ''}`.trim() || trip.driverName;
+                  return (
+                    <div key={trip.id} className="p-3.5 sm:px-4 hover:bg-slate-50/80 transition-colors flex items-center justify-between gap-3 group">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-blue-400'}`} />
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                            {trip.source} → {trip.destination}
+                          </p>
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.2 rounded-full shrink-0 ${statusChip(trip.status)}`}>
+                            {trip.status}
+                          </span>
                         </div>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                          <span className="flex items-center gap-1 font-medium">
+                            <Clock className="w-3 h-3 text-slate-400" />
+                            {fmtDate(trip.departureTime || trip.departureDate)}
+                          </span>
+                          {trip.vehicle?.registrationNumber && (
+                            <span className="flex items-center gap-1 font-mono text-slate-600">
+                              <Car className="w-3 h-3 text-slate-400" />
+                              {trip.vehicle.registrationNumber}
+                            </span>
+                          )}
+                          {driverName && (
+                            <span className="flex items-center gap-1">
+                              <UserCheck className="w-3 h-3 text-slate-400" />
+                              {driverName}
+                            </span>
+                          )}
+                          <span className="text-slate-600 font-semibold">
+                            {trip.bookedSeats || 0}/{trip.totalSeats || '?'} booked
+                          </span>
+                        </div>
+                      </div>
 
-                        {/* View button */}
-                        <Link href={`/dashboard/trips/${trip.id}`}>
-                          <button className="shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all opacity-0 group-hover:opacity-100">
-                            View
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs font-bold text-slate-900 hidden sm:block">
+                          ₹{trip.pricePerSeat || trip.price || 0}
+                        </span>
+                        <Link href={`/dashboard/fleet-owner/trips/${trip.id}`}>
+                          <button className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors">
+                            Manage
                           </button>
                         </Link>
                       </div>
-                    );
-                  })}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
 
-                  {trips.length > 6 && (
-                    <div className="px-5 py-3 text-center">
-                      <Link
-                        href="/dashboard/fleet-owner/trips"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                      >
-                        View all {trips.length} trips <ArrowRight className="w-3 h-3" />
+          {/* Fleet Vehicles Status Card */}
+          <Card className="border border-slate-200/80 rounded-2xl bg-white shadow-2xs overflow-hidden" padding="none">
+            {/* Header */}
+            <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Truck className="w-4.5 h-4.5 text-blue-600" />
+                <h2 className="text-sm font-bold text-slate-900">Fleet Vehicles Overview</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link href="/dashboard/fleet-owner/vehicles" className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5">
+                  View All ({vehicles.length}) <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Compact Status Pills Bar */}
+            <div className="grid grid-cols-4 divide-x divide-slate-100 bg-slate-50/50 border-b border-slate-100 text-center py-2.5">
+              <div>
+                <p className="text-base font-black text-emerald-700">{approvedVehicles}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Approved</p>
+              </div>
+              <div>
+                <p className="text-base font-black text-amber-700">{pendingVehicles}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Pending</p>
+              </div>
+              <div>
+                <p className="text-base font-black text-rose-700">{rejectedVehicles}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Rejected</p>
+              </div>
+              <div>
+                <p className="text-base font-black text-orange-700">{suspendedVehicles}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Suspended</p>
+              </div>
+            </div>
+
+            {/* Mini Vehicle Roster */}
+            {isLoadingVehicles ? (
+              <div className="p-6 text-center text-xs text-slate-400">Loading vehicles…</div>
+            ) : vehicles.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-xs text-slate-500">No vehicles added yet.</p>
+                <Link href="/dashboard/fleet-owner/vehicles">
+                  <Button size="sm" className="rounded-xl text-xs mt-2">Add Vehicle</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {vehicles.slice(0, 4).map((v: any) => (
+                  <div key={v.id} className="p-3 px-4 hover:bg-slate-50 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        <Car className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">
+                          {v.brand || v.make} {v.model}
+                        </p>
+                        <p className="text-[11px] font-mono text-slate-500">{v.registrationNumber || 'No Plate'}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.2 rounded-full ${statusChip(v.status)}`}>
+                        {v.status}
+                      </span>
+                      <Link href={`/dashboard/fleet-owner/vehicles`}>
+                        <button className="text-xs text-blue-600 hover:text-blue-800 font-semibold p-1">
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
                       </Link>
                     </div>
-                  )}
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {/* ────────── RIGHT COLUMN (1/3) ─────────────────────────────────── */}
-          <div className="space-y-5">
-
-            {/* Revenue Widget */}
-            <Card
-              className="border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden"
-              padding="none"
-            >
-              <div className="px-5 py-4 border-b border-slate-100">
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <DollarSign className="w-4.5 h-4.5 text-emerald-600" />
-                  Revenue & Earnings
-                </h2>
-              </div>
-              <div className="p-4 space-y-2.5">
-                {[
-                  { label: 'Today',      value: revenue?.today,     textColor: 'text-slate-800',   bg: 'bg-slate-50'   },
-                  { label: 'This Week',  value: revenue?.thisWeek,  textColor: 'text-blue-700',    bg: 'bg-blue-50'    },
-                  { label: 'This Month', value: revenue?.thisMonth, textColor: 'text-emerald-700', bg: 'bg-emerald-50' },
-                  { label: 'All Time',   value: revenue?.total,     textColor: 'text-purple-700',  bg: 'bg-purple-50'  },
-                ].map(item => (
-                  <div
-                    key={item.label}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl ${item.bg}`}
-                  >
-                    <span className="text-xs font-semibold text-slate-500">{item.label}</span>
-                    <span className={`text-sm font-extrabold ${item.textColor}`}>
-                      {fmtCurrency(item.value)}
-                    </span>
                   </div>
                 ))}
               </div>
-              <div className="px-4 pb-4">
-                <Link href="/dashboard/fleet-owner/analytics">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full rounded-xl text-xs border-slate-200 font-semibold"
-                  >
-                    <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
-                    Full Analytics
-                  </Button>
-                </Link>
-              </div>
-            </Card>
+            )}
+          </Card>
+        </div>
 
-            {/* Driver Overview */}
-            <Card
-              className="border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden"
-              padding="none"
+        {/* ────────── RIGHT COLUMN (5/12 - 42%) ─────────────────────────────── */}
+        <div className="lg:col-span-5 space-y-5">
+
+          {/* Revenue Snapshot Card */}
+          <Card className="border border-slate-200/80 rounded-2xl bg-white shadow-2xs overflow-hidden" padding="none">
+            <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <DollarSign className="w-4.5 h-4.5 text-emerald-600" />
+                Revenue & Earnings
+              </h2>
+              <Link href="/dashboard/fleet-owner/analytics" className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5">
+                Analytics <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <div className="p-3.5 grid grid-cols-2 gap-2.5">
+              {[
+                { label: 'Today',      value: revenue?.today,     textColor: 'text-slate-900',   bg: 'bg-slate-50'   },
+                { label: 'This Week',  value: revenue?.thisWeek,  textColor: 'text-blue-700',    bg: 'bg-blue-50/70' },
+                { label: 'This Month', value: revenue?.thisMonth, textColor: 'text-emerald-700', bg: 'bg-emerald-50/70' },
+                { label: 'All Time',   value: revenue?.total,     textColor: 'text-violet-700',  bg: 'bg-violet-50/70' },
+              ].map(item => (
+                <div key={item.label} className={`p-2.5 rounded-xl ${item.bg}`}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{item.label}</p>
+                  <p className={`text-base font-extrabold mt-0.5 ${item.textColor}`}>{fmtCurrency(item.value)}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Direct Passenger UPI & QR Code Card (Compact with inline toggle) */}
+          <Card className="border border-slate-200/80 rounded-2xl bg-white shadow-2xs overflow-hidden" padding="none">
+            <button
+              onClick={() => setShowUpiSettings(!showUpiSettings)}
+              className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50/70 transition-colors text-left"
             >
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Users className="w-4.5 h-4.5 text-violet-600" />
-                  Driver Overview
-                </h2>
-                <Link href="/dashboard/fleet-owner/drivers">
-                  <button className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 transition-colors">
-                    Manage <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </Link>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <QrCode className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-bold text-slate-900">Direct Passenger UPI & QR</p>
+                    {user?.upiId && (
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate font-mono mt-0.5">
+                    {user?.upiId ? user.upiId : 'Configure UPI ID & QR Code'}
+                  </p>
+                </div>
               </div>
 
-              <div className="p-4">
-                {/* Mini stats grid */}
-                <div className="grid grid-cols-2 gap-2.5 mb-4">
-                  {[
-                    { label: 'Total',      value: drivers.length,           bg: 'bg-slate-50',   text: 'text-slate-800'   },
-                    { label: 'Active',     value: activeDrivers.length,     bg: 'bg-emerald-50', text: 'text-emerald-700' },
-                    { label: 'Assigned',   value: assignedDrivers.length,   bg: 'bg-blue-50',    text: 'text-blue-700'    },
-                    { label: 'Unassigned', value: drivers.length - assignedDrivers.length, bg: 'bg-amber-50', text: 'text-amber-700' },
-                  ].map(item => (
-                    <div key={item.label} className={`text-center p-3 rounded-xl ${item.bg}`}>
-                      <p className={`text-xl font-extrabold ${item.text}`}>{item.value}</p>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">{item.label}</p>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-xs font-semibold text-blue-600 hidden sm:inline">
+                  {showUpiSettings ? 'Close' : 'Manage'}
+                </span>
+                <ChevronDown className={cn('w-4 h-4 text-slate-400 transition-transform duration-200', showUpiSettings ? 'rotate-180' : '')} />
+              </div>
+            </button>
+
+            {/* Inline expandable settings container */}
+            {showUpiSettings && (
+              <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+                <DirectUpiSettingsCard />
+              </div>
+            )}
+          </Card>
+
+          {/* Drivers Snapshot */}
+          <Card className="border border-slate-200/80 rounded-2xl bg-white shadow-2xs overflow-hidden" padding="none">
+            <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Users className="w-4.5 h-4.5 text-violet-600" />
+                Driver Roster ({drivers.length})
+              </h2>
+              <Link href="/dashboard/fleet-owner/drivers" className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5">
+                Manage <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="p-3.5">
+              <div className="grid grid-cols-4 gap-2 mb-3 text-center">
+                <div className="bg-slate-50 p-2 rounded-lg">
+                  <p className="text-sm font-bold text-slate-900">{drivers.length}</p>
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-slate-400">Total</p>
+                </div>
+                <div className="bg-emerald-50 p-2 rounded-lg">
+                  <p className="text-sm font-bold text-emerald-700">{activeDrivers.length}</p>
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-emerald-600">Active</p>
+                </div>
+                <div className="bg-blue-50 p-2 rounded-lg">
+                  <p className="text-sm font-bold text-blue-700">{assignedDrivers.length}</p>
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-blue-600">Assigned</p>
+                </div>
+                <div className="bg-amber-50 p-2 rounded-lg">
+                  <p className="text-sm font-bold text-amber-700">{drivers.length - assignedDrivers.length}</p>
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-amber-600">Free</p>
+                </div>
+              </div>
+
+              {drivers.length === 0 ? (
+                <div className="text-center py-2 text-xs text-slate-400">
+                  No drivers yet. <Link href="/dashboard/fleet-owner/drivers" className="text-blue-600 underline">Add driver</Link>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {drivers.slice(0, 3).map((driver: any) => (
+                    <div key={driver.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center font-bold text-[10px] shrink-0">
+                          {(driver.name || driver.firstName || 'D')[0].toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-slate-800 truncate">
+                            {driver.name || `${driver.firstName || ''} ${driver.lastName || ''}`.trim() || 'Driver'}
+                          </p>
+                          <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                            {(driver.rating ?? 5).toFixed(1)} • {driver.totalTrips ?? 0} trips
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded-full ${statusChip(driver.status)}`}>
+                        {driver.status || 'Active'}
+                      </span>
                     </div>
                   ))}
                 </div>
+              )}
+            </div>
+          </Card>
 
-                {/* Driver mini list */}
-                {drivers.length === 0 ? (
-                  <div className="text-center py-3">
-                    <p className="text-xs text-slate-500 mb-2">No drivers registered yet.</p>
-                    <Link href="/dashboard/fleet-owner/drivers">
-                      <Button size="sm" className="rounded-xl text-xs">Add Driver</Button>
-                    </Link>
-                  </div>
+          {/* Compliance & KYC Card */}
+          <Card className="border border-slate-200/80 rounded-2xl bg-white shadow-2xs overflow-hidden" padding="none">
+            <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Shield className="w-4.5 h-4.5 text-amber-600" />
+                Compliance & Security
+              </h2>
+              <Link href="/dashboard/fleet-owner/vehicles?tab=documents" className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5">
+                Docs <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="p-3.5 space-y-2">
+              {/* KYC Status */}
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                  <span className="font-semibold text-slate-700">Account KYC</span>
+                </div>
+                <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 text-[10px]">
+                  {(user as any)?.kycStatus || 'VERIFIED'}
+                </span>
+              </div>
+
+              {/* Vehicle Documents */}
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  <span className="font-semibold text-slate-700">Vehicle Documents</span>
+                </div>
+                {expiryAlerts.length > 0 ? (
+                  <span className="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 text-[10px]">
+                    {expiryAlerts.length} Expiring Soon
+                  </span>
                 ) : (
-                  <div className="space-y-1.5">
-                    {drivers.slice(0, 3).map((driver: any) => (
-                      <div key={driver.id} className="flex items-center gap-2.5 px-3 py-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
-                        <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center font-bold text-xs shrink-0">
-                          {(driver.name || driver.firstName || 'D')[0].toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-slate-800 truncate">
-                            {driver.name || `${driver.firstName || ''} ${driver.lastName || ''}`.trim() || 'Driver'}
-                          </p>
-                          <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                            <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
-                            {(driver.rating ?? 0).toFixed(1)} · {driver.totalTrips ?? 0} trips
-                          </div>
-                        </div>
-                        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${statusChip(driver.status)}`}>
-                          {driver.status || 'N/A'}
-                        </span>
-                      </div>
-                    ))}
-                    {drivers.length > 3 && (
-                      <Link
-                        href="/dashboard/fleet-owner/drivers"
-                        className="flex items-center justify-center gap-0.5 text-[11px] font-semibold text-blue-600 hover:text-blue-700 pt-1 transition-colors"
-                      >
-                        +{drivers.length - 3} more <ChevronRight className="w-3 h-3" />
-                      </Link>
-                    )}
-                  </div>
+                  <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 text-[10px]">
+                    All Valid
+                  </span>
                 )}
               </div>
-            </Card>
+            </div>
+          </Card>
 
-            {/* Compliance & Approvals */}
-            <Card
-              className="border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden"
-              padding="none"
-            >
-              <div className="px-5 py-4 border-b border-slate-100">
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Shield className="w-4.5 h-4.5 text-amber-600" />
-                  Compliance & Approvals
-                </h2>
-              </div>
-
-              <div className="p-4 space-y-2.5">
-                {/* Pending vehicles */}
-                {pendingVehicles > 0 && (
-                  <Link href="/dashboard/fleet-owner/vehicles?tab=approval">
-                    <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl border border-amber-100 hover:bg-amber-100 transition-colors cursor-pointer">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
-                        <Clock className="w-4 h-4 text-amber-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs font-bold text-amber-800">
-                          {pendingVehicles} Vehicle{pendingVehicles > 1 ? 's' : ''} Pending
-                        </p>
-                        <p className="text-[10px] text-amber-600">Awaiting admin review</p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-amber-400 shrink-0" />
-                    </div>
-                  </Link>
-                )}
-
-                {/* Rejected vehicles */}
-                {rejectedVehicles > 0 && (
-                  <Link href="/dashboard/fleet-owner/vehicles?tab=approval">
-                    <div className="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-100 hover:bg-red-100 transition-colors cursor-pointer">
-                      <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
-                        <XCircle className="w-4 h-4 text-red-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs font-bold text-red-800">
-                          {rejectedVehicles} Vehicle{rejectedVehicles > 1 ? 's' : ''} Rejected
-                        </p>
-                        <p className="text-[10px] text-red-600">Review and resubmit</p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-red-400 shrink-0" />
-                    </div>
-                  </Link>
-                )}
-
-                {/* Expiry alerts */}
-                {expiryAlerts.length > 0 && (
-                  <Link href="/dashboard/fleet-owner/vehicles?tab=documents">
-                    <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-xl border border-orange-100 hover:bg-orange-100 transition-colors cursor-pointer">
-                      <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                        <AlertTriangle className="w-4 h-4 text-orange-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs font-bold text-orange-800">
-                          {expiryAlerts.length} Document{expiryAlerts.length > 1 ? 's' : ''} Expiring
-                        </p>
-                        <p className="text-[10px] text-orange-600 truncate" title={expiryAlerts[0].title}>
-                          Next: {expiryAlerts[0].title} in {expiryAlerts[0].daysLeft}d
-                        </p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-orange-400 shrink-0" />
-                    </div>
-                  </Link>
-                )}
-
-                {/* All clear */}
-                {pendingVehicles === 0 && rejectedVehicles === 0 && expiryAlerts.length === 0 && (
-                  <div className="text-center py-4">
-                    <CheckCircle2 className="w-9 h-9 text-emerald-400 mx-auto mb-2" />
-                    <p className="text-xs font-bold text-emerald-700">All Compliant</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">No pending actions required.</p>
-                  </div>
-                )}
-
-                <Link href="/dashboard/fleet-owner/vehicles?tab=documents" className="block mt-1">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full rounded-xl text-xs border-slate-200 font-semibold"
-                  >
-                    <FileText className="w-3.5 h-3.5 mr-1.5" />
-                    Review Documents
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-
-            {/* KYC & Business Verification */}
-            <Card
-              className="border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden"
-              padding="none"
-            >
-              <div className="px-5 py-4 border-b border-slate-100">
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <CheckCircle className="w-4.5 h-4.5 text-blue-600" />
-                  KYC & Verification
-                </h2>
-              </div>
-              <div className="p-4">
-                {(() => {
-                  const status = (user as any)?.kycStatus ?? 'NOT_STARTED';
-                  const config: Record<string, { bg: string; border: string; icon: string; title: string; desc: string; btnLabel?: string }> = {
-                    VERIFIED:    { bg: 'bg-emerald-50', border: 'border-emerald-100', icon: 'text-emerald-600', title: 'KYC Verified',      desc: 'Your identity has been verified.' },
-                    SUBMITTED:   { bg: 'bg-blue-50',    border: 'border-blue-100',    icon: 'text-blue-600',    title: 'Under Review',       desc: 'Documents submitted, pending review.' },
-                    REJECTED:    { bg: 'bg-red-50',     border: 'border-red-100',     icon: 'text-red-600',     title: 'KYC Rejected',       desc: 'Please resubmit your documents.',     btnLabel: 'Resubmit KYC' },
-                    NOT_STARTED: { bg: 'bg-gray-50',    border: 'border-gray-100',    icon: 'text-gray-500',    title: 'KYC Not Started',    desc: 'Upload documents to get verified.',    btnLabel: 'Start KYC' },
-                  };
-                  const c = config[status] ?? config.NOT_STARTED;
-
-                  return (
-                    <>
-                      <div className={`flex items-center gap-3 p-3 rounded-xl border ${c.bg} ${c.border}`}>
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${c.bg.replace('50', '100')}`}>
-                          <Shield className={`w-4 h-4 ${c.icon}`} />
-                        </div>
-                        <div>
-                          <p className={`text-xs font-bold ${c.icon}`}>{c.title}</p>
-                          <p className="text-[10px] text-slate-500">{c.desc}</p>
-                        </div>
-                      </div>
-                      {c.btnLabel && (
-                        <Link href="/dashboard/profile?tab=kyc" className="block mt-3">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="w-full rounded-xl text-xs border-slate-200 font-semibold"
-                          >
-                            {c.btnLabel}
-                          </Button>
-                        </Link>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            </Card>
-
-          </div>
-          {/* END RIGHT COLUMN */}
         </div>
       </div>
-    </>
+    </div>
   );
 }

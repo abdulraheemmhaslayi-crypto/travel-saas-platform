@@ -210,6 +210,15 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
+    if (updateProfileDto.phone && updateProfileDto.phone !== user.phone) {
+      const existingUserWithPhone = await this.userRepository.findOne({
+        where: { phone: updateProfileDto.phone },
+      });
+      if (existingUserWithPhone && existingUserWithPhone.id !== userId) {
+        throw new ConflictException('This phone number is already registered by another account');
+      }
+    }
+
     Object.assign(user, updateProfileDto);
     await this.userRepository.save(user);
 
