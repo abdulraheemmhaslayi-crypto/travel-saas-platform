@@ -7,14 +7,24 @@ import apiClient from '@/lib/api';
 // Frontend uses: origin, price, departureDate
 // Note: TypeORM decimal columns come back as strings from PostgreSQL, so Number() coercion is required
 function normalizeTrip(raw: Record<string, any>): Trip {
-  const pricePerSeat = raw.pricePerSeat !== undefined ? Number(raw.pricePerSeat) : undefined;
-  const basePrice = raw.basePrice !== undefined ? Number(raw.basePrice) : undefined;
+  const bookingModeRaw = String(raw.bookingMode || raw.booking_mode || 'SEAT').toUpperCase();
+  const bookingMode = (['SEAT', 'FULL_VEHICLE', 'BOTH'].includes(bookingModeRaw) ? bookingModeRaw : 'SEAT') as 'SEAT' | 'FULL_VEHICLE' | 'BOTH';
+  const fullVehiclePrice = raw.fullVehiclePrice != null
+    ? Math.round(Number(raw.fullVehiclePrice))
+    : (raw.full_vehicle_price != null ? Math.round(Number(raw.full_vehicle_price)) : undefined);
+  const rawPricePerSeat = raw.pricePerSeat !== undefined ? Math.round(Number(raw.pricePerSeat)) : undefined;
+  const basePrice = raw.basePrice !== undefined ? Math.round(Number(raw.basePrice)) : undefined;
+
+  const isFullVehicle = bookingMode === 'FULL_VEHICLE' || (typeof fullVehiclePrice === 'number' && fullVehiclePrice > 0);
+  const effectivePrice = isFullVehicle && fullVehiclePrice ? fullVehiclePrice : (raw.price !== undefined ? Math.round(Number(raw.price)) : (rawPricePerSeat ?? 0));
+
   return {
     ...raw,
+    bookingMode,
+    fullVehiclePrice,
     origin: raw.origin ?? raw.source ?? '',
-    // price is what the frontend uses for all calculations — map from pricePerSeat
-    price: raw.price !== undefined ? Number(raw.price) : (pricePerSeat ?? 0),
-    pricePerSeat: pricePerSeat ?? 0,
+    price: effectivePrice,
+    pricePerSeat: isFullVehicle && fullVehiclePrice ? fullVehiclePrice : (rawPricePerSeat ?? 0),
     basePrice: basePrice ?? 0,
     departureDate: raw.departureDate ?? raw.departureTime ?? '',
     departureTime: raw.departureTime ?? raw.departureDate ?? '',

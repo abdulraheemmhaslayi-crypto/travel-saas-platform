@@ -29,7 +29,8 @@ export default function DashboardLayout({
     pathname === '/dashboard/passenger/popular-routes' ||
     pathname?.startsWith('/dashboard/trips/') ||
     pathname === '/dashboard/trips' ||
-    pathname?.startsWith('/dashboard/bookings');
+    pathname?.startsWith('/dashboard/bookings') ||
+    pathname?.startsWith('/dashboard/fleet-owner');
 
   // Only show fullScreen blocking loading state for private/protected routes
   if (isInitializing && !isPublicGuestRoute) {

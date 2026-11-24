@@ -10,6 +10,9 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import { useAppStore } from '@/store';
+import { useAuthStore } from '@/store/slices/authSlice';
+import { useNotificationStore } from '@/store/slices/notificationSlice';
+import FleetEarningsMobile from '@/components/fleet/FleetEarningsMobile';
 import apiClient from '@/lib/api';
 import { 
   DollarSign, 
@@ -38,6 +41,8 @@ function EarningsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { showToast } = useAppStore();
+  const { user } = useAuthStore();
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
   const { revenue, isLoading: isRevenueLoading, getRevenue } = useFleetStore();
 
   const activeTab = searchParams ? searchParams.get('tab') || 'revenue' : 'revenue';
@@ -170,8 +175,30 @@ function EarningsContent() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <>
+      {/* Mobile Screen Component (Dedicated View Matching App Mockup) */}
+      <div className="block lg:hidden w-full min-w-0">
+        <FleetEarningsMobile
+          user={user}
+          unreadCount={unreadCount}
+          revenue={revenue}
+          wallet={wallet}
+          transactions={transactions}
+          bookings={bookings}
+          activeTab={activeTab as any}
+          onTabChange={(tab) => handleTabChange(tab)}
+          isLoading={isRevenueLoading || isDataLoading}
+          onRefresh={() => {
+            getRevenue();
+            loadDynamicData();
+          }}
+          onRequestPayout={() => setShowPayoutModal(true)}
+        />
+      </div>
+
+      {/* Desktop Screen Component */}
+      <div className="hidden lg:block space-y-6">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -492,6 +519,7 @@ function EarningsContent() {
 
         </div>
       )}
+      </div>
 
       {/* Payout Withdrawal Modal */}
       <Modal
@@ -550,7 +578,7 @@ function EarningsContent() {
           </div>
         </form>
       </Modal>
-    </div>
+    </>
   );
 }
 

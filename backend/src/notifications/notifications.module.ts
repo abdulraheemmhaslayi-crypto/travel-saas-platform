@@ -3,13 +3,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { Notification } from '../database/entities/notification.entity';
+import { PushSubscription } from '../database/entities/push-subscription.entity';
 import { User } from '../database/entities/user.entity';
 import { RedisModule } from '../redis/redis.module';
 import { KafkaModule } from '../kafka/kafka.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Notification, User]),
+    TypeOrmModule.forFeature([Notification, User, PushSubscription]),
     RedisModule,
     forwardRef(() => KafkaModule),
   ],

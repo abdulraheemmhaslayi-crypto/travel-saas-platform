@@ -155,3 +155,31 @@ export class NotificationPreferencesDto {
   @ApiProperty({ required: false })
   quietHoursEnd?: string | null;
 }
+
+export class PushSubscriptionKeysDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  p256dh: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  auth: string;
+}
+
+export class SubscribePushDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  endpoint: string;
+
+  @ApiProperty({ type: PushSubscriptionKeysDto })
+  @IsObject()
+  keys: PushSubscriptionKeysDto;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  userAgent?: string;
+}

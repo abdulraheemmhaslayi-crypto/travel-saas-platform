@@ -10,7 +10,7 @@ import { useBookingStore } from '@/store/slices/bookingSlice';
 import { useTripStore } from '@/store/slices/tripSlice';
 import { useNotificationStore } from '@/store/slices/notificationSlice';
 import { usePassengerStore } from '@/store/slices/passengerStore';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency, formatRideDateTime, cn } from '@/lib/utils';
 import MapView, { MapMarker } from '@/components/maps/MapView';
 import SearchInput from '@/components/maps/SearchInput';
 import DatePicker from '@/components/ui/DatePicker';
@@ -421,10 +421,17 @@ export default function PassengerDashboardPage() {
     return availableRealTrips[0] || null;
   }, [selectedTripId, availableRealTrips]);
 
+  const isSelectedFullVehicle =
+    (selectedTrip?.bookingMode || '').toUpperCase() === 'FULL_VEHICLE' ||
+    (Boolean(selectedTrip?.fullVehiclePrice) && Number(selectedTrip?.fullVehiclePrice) > 0);
+
   const selectedFare = useMemo(() => {
     if (!selectedTrip) return 0;
-    return Number(selectedTrip.pricePerSeat || selectedTrip.price || selectedTrip.basePrice || 0);
-  }, [selectedTrip]);
+    if (isSelectedFullVehicle) {
+      return Math.round(Number(selectedTrip.fullVehiclePrice || selectedTrip.price || 2999));
+    }
+    return Math.round(Number(selectedTrip.pricePerSeat || selectedTrip.price || selectedTrip.basePrice || 0));
+  }, [selectedTrip, isSelectedFullVehicle]);
 
   // ─── Confirm Booking Action ───────────────────────────────────────────────
   const handleConfirmBooking = () => {
@@ -996,7 +1003,12 @@ export default function PassengerDashboardPage() {
                     {availableRealTrips.map((trip) => {
                       const isSelected = (selectedTripId || availableRealTrips[0]?.id) === trip.id;
                       const tripImg = getTripVehicleImage(trip.vehicle || trip.vehicleType);
-                      const priceVal = Number(trip.pricePerSeat || trip.price || trip.basePrice || 0);
+                      const isFullVehicle =
+                        (trip.bookingMode || '').toUpperCase() === 'FULL_VEHICLE' ||
+                        (Boolean(trip.fullVehiclePrice) && Number(trip.fullVehiclePrice) > 0);
+                      const priceVal = isFullVehicle
+                        ? Math.round(Number(trip.fullVehiclePrice || trip.price || 2999))
+                        : Math.round(Number(trip.pricePerSeat || trip.price || trip.basePrice || 0));
 
                       return (
                         <div
@@ -1025,31 +1037,39 @@ export default function PassengerDashboardPage() {
                             />
 
                             <div className="min-w-0 flex-1">
-                              <h4 className="text-xs sm:text-sm font-bold text-gray-900 truncate capitalize leading-tight">
-                                {trip.vehicle
-                                  ? `${trip.vehicle.brand} ${trip.vehicle.model}`
-                                  : trip.vehicleName || 'Toyota Innova'}
-                              </h4>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h4 className="text-xs sm:text-sm font-bold text-gray-900 truncate capitalize leading-tight">
+                                  {trip.vehicle
+                                    ? `${trip.vehicle.brand} ${trip.vehicle.model}`
+                                    : trip.vehicleName || 'Toyota Innova'}
+                                </h4>
+                                {isFullVehicle && (
+                                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded shrink-0">
+                                    Full Car
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-[11px] text-gray-500 font-medium mt-0.5 truncate">
                                 {trip.driver?.user?.firstName
                                   ? `Capt. ${trip.driver.user.firstName}`
                                   : trip.operatorName || 'Verified Fleet'}{' '}
-                                • {trip.availableSeats || 1} seats open
+                                • {isFullVehicle ? 'Private Cab • Entire Car' : `${trip.availableSeats || 1} seats open`}
                               </p>
-                              {trip.departureTime && (
-                                <p className="text-[10px] text-blue-600 font-semibold mt-0.5">
-                                  Departure: {new Date(trip.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                              )}
+                              <p className="text-[10px] text-indigo-600 font-bold mt-0.5 flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-indigo-500 shrink-0" />
+                                <span>{formatRideDateTime(trip.departureDate || trip.departureTime)}</span>
+                              </p>
                             </div>
                           </div>
 
                           {/* Right: Real Fare & Duration */}
                           <div className="text-right shrink-0 min-w-[70px] sm:min-w-[85px] pl-1">
                             <p className="text-xs sm:text-sm font-black text-gray-900 whitespace-nowrap">
-                              {baseCurrencySymbol} {priceVal > 0 ? priceVal : 399}
+                              {baseCurrencySymbol} {priceVal > 0 ? priceVal : (isFullVehicle ? 2999 : 399)}
                             </p>
-                            <span className="text-[10px] text-gray-400 block whitespace-nowrap">per seat</span>
+                            <span className="text-[10px] text-gray-400 block whitespace-nowrap">
+                              {isFullVehicle ? 'entire car' : 'per seat'}
+                            </span>
                             <p className="text-[10px] text-gray-400 font-medium mt-0.5 whitespace-nowrap">
                               {formatDuration(estimatedMins)} • {Math.round(distanceKm)} km
                             </p>
@@ -1102,7 +1122,13 @@ export default function PassengerDashboardPage() {
                   className="w-full h-11 sm:h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
                   <Car className="w-4 h-4" />
-                  <span>{isAuthenticated ? 'Confirm Ticket' : `Sign In to Book • ${baseCurrencySymbol} ${selectedFare > 0 ? selectedFare : 399}`}</span>
+                  <span>
+                    {selectedTrip?.bookingMode === 'FULL_VEHICLE'
+                      ? `Book Entire Car • ${baseCurrencySymbol} ${selectedFare > 0 ? selectedFare : 2999}`
+                      : isAuthenticated
+                      ? 'Confirm Ticket'
+                      : `Sign In to Book • ${baseCurrencySymbol} ${selectedFare > 0 ? selectedFare : 399}`}
+                  </span>
                 </button>
               </div>
             </div>

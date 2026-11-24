@@ -39,7 +39,7 @@ import {
 import MapView, { MapMarker } from '@/components/maps/MapView';
 import SearchInput from '@/components/maps/SearchInput';
 import DatePicker from '@/components/ui/DatePicker';
-import { cn } from '@/lib/utils';
+import { cn, formatRideDateTime } from '@/lib/utils';
 
 export interface PassengerDashboardMobileProps {
   user: any;
@@ -822,9 +822,12 @@ export default function PassengerDashboardMobile({
                       const isSelected =
                         (selectedTripId || availableRealTrips[0]?.id) === trip.id;
                       const tripImg = getTripVehicleImage(trip.vehicle || trip.vehicleType);
-                      const priceVal = Number(
-                        trip.pricePerSeat || trip.price || trip.basePrice || 0
-                      );
+                      const isFullVehicle =
+                        (trip.bookingMode || '').toUpperCase() === 'FULL_VEHICLE' ||
+                        (Boolean(trip.fullVehiclePrice) && Number(trip.fullVehiclePrice) > 0);
+                      const priceVal = isFullVehicle
+                        ? Math.round(Number(trip.fullVehiclePrice || trip.price || trip.pricePerSeat || 2999))
+                        : Math.round(Number(trip.pricePerSeat || trip.price || trip.basePrice || 399));
                       const vName = formatVehicleName(
                         trip.vehicle
                           ? `${trip.vehicle.brand} ${trip.vehicle.model}`
@@ -866,19 +869,23 @@ export default function PassengerDashboardMobile({
 
                             {/* Vehicle Details */}
                             <div className="min-w-0 flex-1">
-                              <h4 className="text-xs font-black text-slate-900 truncate">
-                                {vName}
-                              </h4>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h4 className="text-xs font-black text-slate-900 truncate">
+                                  {vName}
+                                </h4>
+                                {isFullVehicle && (
+                                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded shrink-0">
+                                    Full Car
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-indigo-600 font-bold truncate mt-0.5 flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-indigo-500 shrink-0" />
+                                <span>{formatRideDateTime(trip.departureDate || trip.departureTime)}</span>
+                              </p>
                               <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
-                                {trip.departureTime
-                                  ? new Date(trip.departureTime).toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })
-                                  : 'Flexible Departure'}
-                                {' • '}
                                 <span className="text-emerald-600 font-bold">
-                                  {trip.availableSeats || 4} seats left
+                                  {isFullVehicle ? 'Private Cab (Entire Car)' : `${trip.availableSeats || 4} seats left`}
                                 </span>
                               </p>
                             </div>
@@ -890,7 +897,7 @@ export default function PassengerDashboardMobile({
                               {baseCurrencySymbol} {priceVal > 0 ? priceVal : 399}
                             </span>
                             <span className="text-[9px] text-slate-400 block leading-tight">
-                              per seat
+                              {isFullVehicle ? 'entire car' : 'per seat'}
                             </span>
                           </div>
                         </div>

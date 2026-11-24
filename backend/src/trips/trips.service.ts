@@ -145,6 +145,8 @@ export class TripsService {
         availableSeats: vehicle.seatingCapacity,
         bookedSeats: 0,
         status: TripStatus.SCHEDULED,
+        bookingMode: createTripDto.bookingMode || 'SEAT',
+        fullVehiclePrice: createTripDto.fullVehiclePrice ? Number(createTripDto.fullVehiclePrice) : null,
         isRecurring: createTripDto.isRecurring || false,
         recurrencePattern: createTripDto.recurrencePattern || null,
         recurrenceEndDate: createTripDto.recurrenceEndDate || null,
@@ -197,7 +199,14 @@ export class TripsService {
       createdTrips.push(trip);
     }
 
-    return this.findById(createdTrips[0].id);
+    const createdTrip = await this.findById(createdTrips[0].id);
+    if (createdTrip) {
+      this.notificationsService.broadcastNewTripNotification(createdTrip).catch((err) => {
+        // Log without failing transaction
+        console.warn('Failed to broadcast new trip notification:', err?.message);
+      });
+    }
+    return createdTrip;
   }
 
   async search(searchDto: TripSearchDto) {
@@ -220,7 +229,7 @@ export class TripsService {
 
     const where: any = {
       availableSeats: MoreThanOrEqual(seats),
-      status: TripStatus.SCHEDULED,
+      status: In([TripStatus.SCHEDULED, TripStatus.ACTIVE]),
       allowBooking: true,
     };
 

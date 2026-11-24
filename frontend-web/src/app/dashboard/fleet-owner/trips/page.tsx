@@ -7,6 +7,9 @@ import apiClient from '@/lib/api';
 import Loading from '@/components/common/Loading';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { useAuthStore } from '@/store/slices/authSlice';
+import { useNotificationStore } from '@/store/slices/notificationSlice';
+import FleetTripsMobile from '@/components/fleet/FleetTripsMobile';
 import { Calendar, Clock, MapPin, Plus, RefreshCw, Car, UserCheck, AlertCircle, Play } from 'lucide-react';
 
 type TripTab = 'all' | 'active' | 'upcoming' | 'completed' | 'cancelled';
@@ -44,6 +47,8 @@ const normalizeTripStatus = (rawStatus: string): 'active' | 'upcoming' | 'comple
 function FleetOwnerTripsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useAuthStore();
+  const { unreadCount } = useNotificationStore();
   const [trips, setTrips] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +140,25 @@ function FleetOwnerTripsPageContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <>
+      {/* ── Dedicated Mobile Screen (< lg) ── */}
+      <div className="block lg:hidden w-full min-w-0">
+        <FleetTripsMobile
+          user={user}
+          unreadCount={unreadCount}
+          trips={trips}
+          filteredTrips={filteredTrips}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          tabCounts={tabCounts}
+          isLoading={isLoading}
+          error={error}
+          onRefresh={fetchTrips}
+        />
+      </div>
+
+      {/* ── Desktop Command Center View (>= lg) ── */}
+      <div className="hidden lg:block space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -346,7 +369,8 @@ function FleetOwnerTripsPageContent() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

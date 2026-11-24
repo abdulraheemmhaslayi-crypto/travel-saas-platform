@@ -10,6 +10,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, LessThan } from 'typeorm';
 import { Observable, Subject } from 'rxjs';
 import { Notification } from '../database/entities/notification.entity';
+import { PushSubscription } from '../database/entities/push-subscription.entity';
+import * as webpush from 'web-push';
 import { User } from '../database/entities/user.entity';
 import { RedisService } from '../redis/redis.service';
 import { KafkaService } from '../kafka/kafka.service';
@@ -21,23 +23,35 @@ import {
   MarkReadDto,
   NotificationPreferencesDto,
   UnreadCountDto,
+  SubscribePushDto,
 } from './notifications.dto';
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
   private readonly userSubscriptions = new Map<string, Subject<MessageEvent>>();
+  private readonly vapidPublicKey = process.env.VAPID_PUBLIC_KEY || 'BID0ExjDkQXy3onl3AKZtuX5j687y-gzIZ7_Qq6xi8spRVUaXjIjqEBgYbQUjqT-7Q14O7xmmjd4uvOTpM7Agls';
+  private readonly vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || 'VD8-q7PrK_mc7NJODDpujk62xNsRGTjF0hOd80RLGfk';
+  private readonly vapidSubject = process.env.VAPID_SUBJECT || 'mailto:support@kokantravel.com';
 
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(PushSubscription)
+    private readonly pushSubRepository: Repository<PushSubscription>,
     private readonly redisService: RedisService,
     private readonly kafkaService: KafkaService,
     @Inject(forwardRef(() => JobsService))
     private readonly jobsService: JobsService,
-  ) {}
+  ) {
+    try {
+      webpush.setVapidDetails(this.vapidSubject, this.vapidPublicKey, this.vapidPrivateKey);
+    } catch (e) {
+      this.logger.warn('Failed to configure webpush VAPID details: ' + (e as Error).message);
+    }
+  }
 
   async createNotification(
     dto: CreateNotificationDto,
@@ -367,5 +381,98 @@ export class NotificationsService {
 
  
 
+
+
+  getVapidPublicKey(): string {
+    return this.vapidPublicKey;
+  }
+
+  async savePushSubscription(dto: SubscribePushDto, userId?: string): Promise<{ success: boolean; id: string }> {
+    try {
+      let sub = await this.pushSubRepository.findOne({ where: { endpoint: dto.endpoint } });
+      if (!sub) {
+        sub = this.pushSubRepository.create({
+          endpoint: dto.endpoint,
+          p256dh: dto.keys.p256dh,
+          auth: dto.keys.auth,
+          userId: userId || null,
+          userAgent: dto.userAgent || null,
+          isActive: true,
+        });
+      } else {
+        sub.p256dh = dto.keys.p256dh;
+        sub.auth = dto.keys.auth;
+        if (userId) sub.userId = userId;
+        if (dto.userAgent) sub.userAgent = dto.userAgent;
+        sub.isActive = true;
+      }
+      const saved = await this.pushSubRepository.save(sub);
+      this.logger.log(`Saved push subscription for endpoint: ${dto.endpoint.slice(0, 35)}...`);
+      return { success: true, id: saved.id };
+    } catch (err) {
+      this.logger.error('Failed to save push subscription: ' + (err as Error).message);
+      throw err;
+    }
+  }
+
+  async broadcastNewTripNotification(trip: any): Promise<{ sent: number; failed: number }> {
+    try {
+      const activeSubs = await this.pushSubRepository.find({ where: { isActive: true } });
+      if (!activeSubs || activeSubs.length === 0) {
+        this.logger.log('No active push subscriptions found for new trip broadcast.');
+        return { sent: 0, failed: 0 };
+      }
+
+      const origin = trip?.origin || trip?.fromCity || (trip?.routes && trip.routes[0]?.pickupLocation) || 'Kokan';
+      const destination = trip?.destination || trip?.toCity || (trip?.routes && trip.routes[trip.routes.length - 1]?.dropoffLocation) || 'Maharashtra';
+      const dateStr = trip?.departureTime
+        ? new Date(trip.departureTime).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+        : 'Scheduled';
+      const price = trip?.pricePerSeat || trip?.basePrice || 399;
+
+      const payload = JSON.stringify({
+        title: `🚗 New Trip: ${origin} ➔ ${destination}`,
+        body: `Departure: ${dateStr} • Seats starting at ₹${price}. Tap to view & book now!`,
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/badge-72x72.png',
+        image: '/images/banner-car.png',
+        url: `/dashboard/bookings/${trip?.id || ''}`,
+        tripId: trip?.id,
+        tag: `new-trip-${trip?.id || Date.now()}`,
+      });
+
+      let sent = 0;
+      let failed = 0;
+
+      await Promise.allSettled(
+        activeSubs.map(async (sub) => {
+          const pushConfig = {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth,
+            },
+          };
+          try {
+            await webpush.sendNotification(pushConfig, payload);
+            sent++;
+          } catch (err: any) {
+            failed++;
+            if (err?.statusCode === 404 || err?.statusCode === 410) {
+              // Expired or unsubscribed subscription, mark inactive
+              sub.isActive = false;
+              await this.pushSubRepository.save(sub);
+            }
+          }
+        })
+      );
+
+      this.logger.log(`Broadcasted new trip push notification: ${sent} sent, ${failed} failed out of ${activeSubs.length} total subscribers.`);
+      return { sent, failed };
+    } catch (err) {
+      this.logger.error('Error during new trip push broadcast: ' + (err as Error).message);
+      return { sent: 0, failed: 0 };
+    }
+  }
 
 }

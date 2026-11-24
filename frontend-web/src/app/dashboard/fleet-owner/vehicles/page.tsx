@@ -6,6 +6,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useFleetStore } from '@/store/slices/fleetSlice';
 import { useAppStore } from '@/store';
 import { useAuthStore } from '@/store/slices/authSlice';
+import { useNotificationStore } from '@/store/slices/notificationSlice';
+import FleetVehiclesMobile from '@/components/fleet/FleetVehiclesMobile';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -84,6 +86,7 @@ function FleetOwnerVehiclesPageContent() {
 
   const { showToast } = useAppStore();
   const { user } = useAuthStore();
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -508,7 +511,44 @@ function FleetOwnerVehiclesPageContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <>
+      {/* Mobile Screen Component (Dedicated View Matching App Mockup) */}
+      <div className="block lg:hidden w-full min-w-0">
+        <FleetVehiclesMobile
+          user={user}
+          unreadCount={unreadCount}
+          vehicles={vehicles}
+          vehicleStats={vehicleStats}
+          currentTab={currentTab}
+          setCurrentTab={setCurrentTab}
+          isLoading={isLoading}
+          onRefresh={async () => {
+            await Promise.all([getVehicles(), getVehicleStats(), getFleetStats()]);
+          }}
+          onAddVehicle={() => {
+            if (!currentFleetId) {
+              setShowCreateFleetModal(true);
+            } else {
+              setIsAddModalOpen(true);
+            }
+          }}
+          onViewDetails={(v) => {
+            setSelectedVehicle(v);
+            setDetailsTab('info');
+            setIsDetailsModalOpen(true);
+          }}
+          onEditVehicle={(v) => {
+            handleOpenEdit(v);
+          }}
+          onDeleteVehicle={(v) => {
+            setSelectedVehicle(v);
+            setIsConfirmDeleteOpen(true);
+          }}
+        />
+      </div>
+
+      {/* Desktop Screen Component */}
+      <div className="hidden lg:block space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -1059,6 +1099,7 @@ function FleetOwnerVehiclesPageContent() {
             onPageChange={() => {}}
           />
         )}
+      </div>
       </div>
 
       {/* Details modal */}
@@ -1905,7 +1946,7 @@ function FleetOwnerVehiclesPageContent() {
           </div>
         </div>
       </Modal>
-    </div>
+    </>
   );
 }
 

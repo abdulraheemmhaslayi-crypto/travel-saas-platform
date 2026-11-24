@@ -85,9 +85,12 @@ export class Booking {
   @Column({ type: 'uuid', nullable: true })
   outboundSeatId: string;
 
-  @OneToOne(() => TripSeat, (seat) => seat.booking)
+  @ManyToOne(() => TripSeat, { nullable: true })
   @JoinColumn({ name: 'outboundSeatId' })
   seat: TripSeat;
+
+  @OneToMany(() => TripSeat, (seat) => seat.booking)
+  seats: TripSeat[];
 
   @Column({ type: 'uuid', nullable: true })
   returnSeatId: string;

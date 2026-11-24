@@ -11,6 +11,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import SearchInput from '@/components/maps/SearchInput';
+import { cn } from '@/lib/utils';
 
 const tripTypeOptions = [
   { value: 'one_way', label: 'One Way' },
@@ -37,6 +38,8 @@ export default function FleetOwnerCreateTripPage() {
     arrivalTime: '',
     basePrice: '',
     pricePerSeat: '',
+    bookingMode: 'SEAT' as 'SEAT' | 'FULL_VEHICLE' | 'BOTH',
+    fullVehiclePrice: '',
     isRecurring: false,
     recurrencePattern: 'daily',
     recurrenceEndDate: '',
@@ -48,7 +51,6 @@ export default function FleetOwnerCreateTripPage() {
   useEffect(() => {
     getVehicles();
   }, [getVehicles]);
-
 
   const handleChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -79,8 +81,24 @@ export default function FleetOwnerCreateTripPage() {
       showToast('Please select both Source and Destination from the suggestions.', 'error');
       return;
     }
-    if (!form.basePrice || !form.pricePerSeat) {
-      showToast('Enter both base price and price per seat.', 'error');
+
+    if (!form.basePrice) {
+      showToast('Enter base price.', 'error');
+      return;
+    }
+
+    if (form.bookingMode === 'SEAT' && !form.pricePerSeat) {
+      showToast('Enter price per seat.', 'error');
+      return;
+    }
+
+    if (form.bookingMode === 'FULL_VEHICLE' && !form.fullVehiclePrice) {
+      showToast('Enter complete vehicle booking price.', 'error');
+      return;
+    }
+
+    if (form.bookingMode === 'BOTH' && (!form.pricePerSeat || !form.fullVehiclePrice)) {
+      showToast('Enter both price per seat and complete vehicle price.', 'error');
       return;
     }
 
@@ -89,9 +107,10 @@ export default function FleetOwnerCreateTripPage() {
     const destLat = parseFloat(form.destLat);
     const destLng = parseFloat(form.destLng);
     const basePrice = parseFloat(form.basePrice);
-    const pricePerSeat = parseFloat(form.pricePerSeat);
+    const pricePerSeat = parseFloat(form.pricePerSeat) || 0;
+    const fullVehiclePrice = form.fullVehiclePrice ? parseFloat(form.fullVehiclePrice) : undefined;
 
-    if ([sourceLat, sourceLng, destLat, destLng, basePrice, pricePerSeat].some(Number.isNaN)) {
+    if ([sourceLat, sourceLng, destLat, destLng, basePrice].some(Number.isNaN)) {
       showToast('Latitude, longitude and price fields must be valid numbers.', 'error');
       return;
     }
@@ -131,6 +150,8 @@ export default function FleetOwnerCreateTripPage() {
         arrivalTime: form.arrivalTime ? new Date(form.arrivalTime).toISOString() : undefined,
         basePrice,
         pricePerSeat,
+        bookingMode: form.bookingMode,
+        fullVehiclePrice,
         isRecurring: form.isRecurring,
         recurrencePattern: form.isRecurring ? form.recurrencePattern : undefined,
         recurrenceEndDate: form.isRecurring && form.recurrenceEndDate ? new Date(`${form.recurrenceEndDate}T23:59:59Z`).toISOString() : undefined,
@@ -198,6 +219,7 @@ export default function FleetOwnerCreateTripPage() {
             </div>
           ) : (
             <div className="grid gap-6">
+              {/* Vehicle Selection & Trip Title */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Select
                   label="Select Vehicle"
@@ -218,8 +240,8 @@ export default function FleetOwnerCreateTripPage() {
                   required
                 />
               </div>
-              {/*   */}
 
+              {/* Source & Destination Search Inputs */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <SearchInput
                   label="Source"
@@ -265,6 +287,7 @@ export default function FleetOwnerCreateTripPage() {
                 />
               </div>
 
+              {/* Source Coordinates */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Input
                   label="Source Latitude"
@@ -284,6 +307,7 @@ export default function FleetOwnerCreateTripPage() {
                 />
               </div>
 
+              {/* Destination Coordinates */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Input
                   label="Destination Latitude"
@@ -303,6 +327,7 @@ export default function FleetOwnerCreateTripPage() {
                 />
               </div>
 
+              {/* Departure & Arrival Times */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Input
                   label="Departure Time"
@@ -319,25 +344,151 @@ export default function FleetOwnerCreateTripPage() {
                 />
               </div>
 
+              {/* ── Booking Mode (Single Person vs Complete Car) ── */}
+              <div className="border-t border-gray-100 pt-5">
+                <label className="text-sm font-bold text-gray-900 block mb-1.5">
+                  Booking Mode / Option
+                </label>
+                <p className="text-xs text-gray-500 mb-3.5">
+                  Choose whether passengers book individual seats or must book the complete car.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                  {/* Option 1: SEAT */}
+                  <div
+                    onClick={() => {
+                      handleChange('bookingMode', 'SEAT');
+                    }}
+                    className={cn(
+                      'p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between select-none',
+                      form.bookingMode === 'SEAT'
+                        ? 'border-[#4F46E5] bg-indigo-50/40 shadow-2xs ring-1 ring-[#4F46E5]'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-xs sm:text-sm text-slate-900">Per-Seat (Single)</span>
+                      <span className={cn('w-4 h-4 rounded-full border-2 flex items-center justify-center', form.bookingMode === 'SEAT' ? 'border-[#4F46E5] bg-[#4F46E5]' : 'border-slate-300')}>
+                        {form.bookingMode === 'SEAT' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed mt-1">
+                      Passengers book individual seats, sharing the vehicle with others.
+                    </p>
+                  </div>
+
+                  {/* Option 2: FULL_VEHICLE */}
+                  <div
+                    onClick={() => {
+                      handleChange('bookingMode', 'FULL_VEHICLE');
+                    }}
+                    className={cn(
+                      'p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between select-none',
+                      form.bookingMode === 'FULL_VEHICLE'
+                        ? 'border-[#4F46E5] bg-indigo-50/40 shadow-2xs ring-1 ring-[#4F46E5]'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-xs sm:text-sm text-slate-900">Complete Car Only</span>
+                      <span className={cn('w-4 h-4 rounded-full border-2 flex items-center justify-center', form.bookingMode === 'FULL_VEHICLE' ? 'border-[#4F46E5] bg-[#4F46E5]' : 'border-slate-300')}>
+                        {form.bookingMode === 'FULL_VEHICLE' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed mt-1">
+                      Entire car reserved exclusively for 1 customer/group (Private Cab).
+                    </p>
+                  </div>
+
+                  {/* Option 3: BOTH */}
+                  <div
+                    onClick={() => {
+                      handleChange('bookingMode', 'BOTH');
+                    }}
+                    className={cn(
+                      'p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between select-none',
+                      form.bookingMode === 'BOTH'
+                        ? 'border-[#4F46E5] bg-indigo-50/40 shadow-2xs ring-1 ring-[#4F46E5]'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-xs sm:text-sm text-slate-900">Both Options</span>
+                      <span className={cn('w-4 h-4 rounded-full border-2 flex items-center justify-center', form.bookingMode === 'BOTH' ? 'border-[#4F46E5] bg-[#4F46E5]' : 'border-slate-300')}>
+                        {form.bookingMode === 'BOTH' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed mt-1">
+                      Passengers can choose either per-seat or book the whole car.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pricing Inputs */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Input
-                  label="Base Price"
+                  label="Base Price (₹)"
                   type="number"
                   step="0.01"
                   value={form.basePrice}
                   onChange={(event) => handleChange('basePrice', event.target.value)}
+                  placeholder="e.g. 100"
                   required
                 />
-                <Input
-                  label="Price Per Seat"
-                  type="number"
-                  step="0.01"
-                  value={form.pricePerSeat}
-                  onChange={(event) => handleChange('pricePerSeat', event.target.value)}
-                  required
-                />
+
+                {form.bookingMode === 'FULL_VEHICLE' ? (
+                  <Input
+                    label="Complete Car Booking Price (₹)"
+                    type="number"
+                    step="0.01"
+                    value={form.fullVehiclePrice}
+                    onChange={(event) => {
+                      handleChange('fullVehiclePrice', event.target.value);
+                      const capacity = vehicles.find((v) => v.id === form.vehicleId)?.seatingCapacity || 4;
+                      const val = parseFloat(event.target.value);
+                      if (!isNaN(val) && val > 0) {
+                        handleChange('pricePerSeat', String(Math.round(val / capacity)));
+                      }
+                    }}
+                    placeholder="e.g. 2999 (Entire Vehicle Fare)"
+                    required
+                  />
+                ) : form.bookingMode === 'BOTH' ? (
+                  <>
+                    <Input
+                      label="Price Per Seat (₹)"
+                      type="number"
+                      step="0.01"
+                      value={form.pricePerSeat}
+                      onChange={(event) => handleChange('pricePerSeat', event.target.value)}
+                      placeholder="e.g. 499"
+                      required
+                    />
+                    <Input
+                      label="Complete Car Booking Price (₹)"
+                      type="number"
+                      step="0.01"
+                      value={form.fullVehiclePrice}
+                      onChange={(event) => handleChange('fullVehiclePrice', event.target.value)}
+                      placeholder="e.g. 2999 (Entire Vehicle Fare)"
+                      required
+                    />
+                  </>
+                ) : (
+                  <Input
+                    label="Price Per Seat (₹)"
+                    type="number"
+                    step="0.01"
+                    value={form.pricePerSeat}
+                    onChange={(event) => handleChange('pricePerSeat', event.target.value)}
+                    placeholder="e.g. 499"
+                    required
+                  />
+                )}
               </div>
 
+              {/* Trip Type & Description */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Select
                   label="Trip Type"
@@ -397,6 +548,7 @@ export default function FleetOwnerCreateTripPage() {
                 </div>
               </div>
 
+              {/* Actions */}
               <div className="flex justify-end gap-3">
                 <Link href="/dashboard/fleet-owner/vehicles">
                   <Button variant="secondary">Cancel</Button>

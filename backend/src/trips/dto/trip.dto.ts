@@ -157,6 +157,17 @@ export class CreateTripDto {
   @IsNumber()
   returnPricePerSeat?: number;
 
+  @ApiPropertyOptional({ example: 'SEAT', enum: ['SEAT', 'FULL_VEHICLE', 'BOTH'] })
+  @IsOptional()
+  @IsString()
+  bookingMode?: string;
+
+  @ApiPropertyOptional({ example: 2500.00 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  fullVehiclePrice?: number;
+
   @ApiPropertyOptional({ example: 150 })
   @IsOptional()
   @IsNumber()

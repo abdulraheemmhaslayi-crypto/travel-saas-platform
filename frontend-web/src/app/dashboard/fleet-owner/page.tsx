@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import DirectUpiSettingsCard from '@/components/fleet/DirectUpiSettingsCard';
+import FleetOwnerDashboardMobile from '@/components/fleet/FleetOwnerDashboardMobile';
 import Button from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
@@ -217,7 +218,36 @@ export default function FleetOwnerDashboardPage() {
   }, [trips, tripsTab, activeTrips, scheduledTrips]);
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto pb-8">
+    <>
+      {/* ── Dedicated Mobile App Screen (Visible only on mobile/tablet < lg) ── */}
+      <div className="block lg:hidden w-full min-w-0">
+        <FleetOwnerDashboardMobile
+          user={user}
+          unreadCount={unreadCount}
+          currentFleetName={currentFleetName}
+          trips={trips}
+          vehicles={vehicles}
+          drivers={drivers}
+          stats={stats}
+          revenue={revenue}
+          vehicleStats={vehicleStats}
+          activeTrips={activeTrips}
+          scheduledTrips={scheduledTrips}
+          todayCount={todayCount}
+          activeDrivers={activeDrivers}
+          assignedDrivers={assignedDrivers}
+          expiryAlerts={expiryAlerts}
+          isLoadingTrips={isLoadingTrips}
+          isLoadingVehicles={isLoadingVehicles}
+          isRefreshing={isRefreshing}
+          onRefresh={loadAll}
+          showUpiSettings={showUpiSettings}
+          setShowUpiSettings={setShowUpiSettings}
+        />
+      </div>
+
+      {/* ── Desktop Command Center View (Screens >= lg) ─────────────────── */}
+      <div className="hidden lg:block space-y-5 max-w-7xl mx-auto pb-8">
       {/* ── Expiry Alert Ribbon (Compact, non-intrusive) ──────────────────────── */}
       {expiryAlerts.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
@@ -797,5 +827,6 @@ export default function FleetOwnerDashboardPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

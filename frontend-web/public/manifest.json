@@ -1,0 +1,56 @@
+{
+  "name": "Kokan Travel - Intercity Rides & Fleet Management",
+  "short_name": "Kokan Travel",
+  "description": "Book intercity cab & bus seats and manage fleet operations across Kokan, Mumbai, and Pune.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
+  "orientation": "portrait-primary",
+  "background_color": "#F8FAFC",
+  "theme_color": "#4F46E5",
+  "categories": ["travel", "transportation", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Find Rides",
+      "short_name": "Search",
+      "description": "Search available intercity routes and cabs",
+      "url": "/dashboard/passenger",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Fleet Portal",
+      "short_name": "Fleet",
+      "description": "Manage vehicles, drivers, and scheduled trips",
+      "url": "/dashboard/fleet-owner",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

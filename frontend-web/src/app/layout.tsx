@@ -3,11 +3,12 @@ import type { Metadata, Viewport } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import ToastProvider from '@/components/ui/ToastProvider';
 import MobileNav from '@/components/layout/MobileNav';
+import PwaManager from '@/components/pwa/PwaManager';
 import './globals.css';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
   variable: '--font-sans',
 });
@@ -18,7 +19,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#2563eb',
+  themeColor: '#4F46E5',
 };
 
 export const metadata: Metadata = {
@@ -96,12 +97,14 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/images/kokan-logo.png', type: 'image/png' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [
-      { url: '/images/kokan-logo.png' },
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -120,6 +123,7 @@ export default function RootLayout({
         {children}
         <ToastProvider />
         <MobileNav />
+        <PwaManager />
       </body>
     </html>
   );

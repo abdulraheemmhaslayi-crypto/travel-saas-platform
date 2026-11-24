@@ -38,6 +38,42 @@ export function formatDateTime(date: string | Date | null | undefined): string {
   }
 }
 
+export function formatRideDateTime(dateStr?: string | Date | null): string {
+  if (!dateStr) return 'Flexible Departure';
+  try {
+    const d = dateStr instanceof Date ? dateStr : new Date(dateStr);
+    if (isNaN(d.getTime())) return 'Flexible Departure';
+
+    const now = new Date();
+    const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const timeStr = d.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    if (dDay.getTime() === today.getTime()) {
+      return `Today • ${timeStr}`;
+    }
+    if (dDay.getTime() === tomorrow.getTime()) {
+      return `Tomorrow • ${timeStr}`;
+    }
+
+    const dateFormatted = d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
+
+    return `${dateFormatted} • ${timeStr}`;
+  } catch {
+    return 'Flexible Departure';
+  }
+}
+
 export function formatCurrency(amount: number | string | undefined | null, currency?: string | null): string {
   const safeCurrency = currency && typeof currency === 'string' && currency.trim().length === 3 ? currency.trim().toUpperCase() : 'INR';
   const num = typeof amount === 'number' && !isNaN(amount) ? amount : (Number(amount) || 0);

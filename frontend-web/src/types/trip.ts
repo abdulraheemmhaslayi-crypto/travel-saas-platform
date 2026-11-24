@@ -22,6 +22,8 @@ export interface Trip {
   arrivalTime?: string;
   basePrice?: number;
   pricePerSeat?: number;
+  bookingMode?: 'SEAT' | 'FULL_VEHICLE' | 'BOTH';
+  fullVehiclePrice?: number;
   distanceKm?: number;
   estimatedDuration?: number;
   isReturnTripAvailable?: boolean;

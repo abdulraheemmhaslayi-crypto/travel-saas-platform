@@ -140,12 +140,16 @@ export class BookingsService {
                 throw new ConflictException('Selected seats are already reserved or booked in the database.');
               }
 
-              // Pricing
-              const pricePerSeat = bookingType === 'return' && trip.returnPricePerSeat
-                ? trip.returnPricePerSeat
-                : trip.pricePerSeat;
-
-              const totalAmount = pricePerSeat * seatNumbers.length;
+                            // Pricing
+              let totalAmount: number;
+              if (trip.bookingMode === 'FULL_VEHICLE' && trip.fullVehiclePrice) {
+                totalAmount = Number(trip.fullVehiclePrice);
+              } else {
+                const pricePerSeat = bookingType === 'return' && trip.returnPricePerSeat
+                  ? trip.returnPricePerSeat
+                  : trip.pricePerSeat;
+                totalAmount = pricePerSeat * seatNumbers.length;
+              }
               const platformFee = totalAmount * 0.10;
               const taxAmount = totalAmount * 0.18;
               finalAmount = totalAmount + platformFee + taxAmount;

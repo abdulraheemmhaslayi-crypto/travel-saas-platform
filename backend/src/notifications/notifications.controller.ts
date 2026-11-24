@@ -20,6 +20,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { RoleName } from '../database/entities/role.entity';
 import {
   CreateNotificationDto,
@@ -28,6 +29,7 @@ import {
   MarkReadDto,
   NotificationPreferencesDto,
   UnreadCountDto,
+  SubscribePushDto,
 } from './notifications.dto';
 
 @ApiTags('Notifications')
@@ -109,4 +111,22 @@ export class NotificationsController {
   notificationStream(@CurrentUser() user: any): Observable<MessageEvent> {
     return this.notificationsService.subscribeToUserEvents(user.userId);
   }
+
+  @Public()
+  @Get('push/vapid-public-key')
+  @ApiOperation({ summary: 'Get VAPID public key for push notifications' })
+  getVapidPublicKey(): { publicKey: string } {
+    return { publicKey: this.notificationsService.getVapidPublicKey() };
+  }
+
+  @Public()
+  @Post('push/subscribe')
+  @ApiOperation({ summary: 'Subscribe device to PWA push notifications' })
+  async subscribePush(
+    @Body() dto: SubscribePushDto,
+    @CurrentUser() user?: any,
+  ): Promise<{ success: boolean; id: string }> {
+    return this.notificationsService.savePushSubscription(dto, user?.userId);
+  }
+
 }

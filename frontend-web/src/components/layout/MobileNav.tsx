@@ -15,6 +15,10 @@ import {
   User,
   Compass,
   Home as HomeIcon,
+  Car,
+  IndianRupee,
+  LayoutGrid,
+  Headphones,
 } from 'lucide-react';
 
 const MobileNav: React.FC = () => {
@@ -54,12 +58,22 @@ const MobileNav: React.FC = () => {
     }
 
     if (type === 'FLEET_OWNER' || type === 'VEHICLE_OWNER') {
+      const isDrivers = pathname?.startsWith('/dashboard/fleet-owner/drivers');
+      const isSupport = pathname?.startsWith('/dashboard/support');
       return [
-        { href: '/dashboard/vehicle-owner', label: 'Home', icon: LayoutDashboard },
-        { href: '/dashboard/trips', label: 'Trips', icon: Calendar },
-        { href: '/dashboard/bookings', label: 'Bookings', icon: Calendar },
-        { href: '/dashboard/wallet', label: 'Wallet', icon: Wallet },
-        { href: '/dashboard/profile', label: 'Profile', icon: User },
+        { href: '/dashboard/fleet-owner', label: 'Dashboard', icon: HomeIcon },
+        { href: '/dashboard/fleet-owner/trips', label: 'Trips', icon: Calendar },
+        {
+          href: isDrivers ? '/dashboard/fleet-owner/drivers' : '/dashboard/fleet-owner/vehicles',
+          label: isDrivers ? 'Drivers' : 'Fleet',
+          icon: Car,
+        },
+        { href: '/dashboard/fleet-owner/earnings', label: 'Earnings', icon: IndianRupee },
+        {
+          href: isSupport ? '/dashboard/support' : '/dashboard/profile',
+          label: isSupport ? 'Support' : 'More',
+          icon: isSupport ? Headphones : LayoutGrid,
+        },
       ];
     }
 
@@ -76,6 +90,12 @@ const MobileNav: React.FC = () => {
   const isCurrentActive = (href: string) => {
     if (href === '/dashboard/passenger') {
       return pathname === '/dashboard/passenger' || pathname === '/' || pathname === '/dashboard/trips/search';
+    }
+    if (href === '/dashboard/fleet-owner') {
+      return pathname === '/dashboard/fleet-owner' || pathname === '/dashboard/vehicle-owner';
+    }
+    if (href === '/dashboard/fleet-owner/vehicles' || href === '/dashboard/fleet-owner/drivers') {
+      return pathname?.startsWith('/dashboard/fleet-owner/vehicles') || pathname?.startsWith('/dashboard/fleet-owner/drivers');
     }
     return pathname === href || pathname?.startsWith(`${href}/`);
   };
@@ -101,7 +121,7 @@ const MobileNav: React.FC = () => {
                     <Icon
                       className={cn(
                         'w-[19px] h-[19px] text-[#4F46E5] transition-transform duration-200',
-                        item.label === 'Home' ? 'fill-[#4F46E5]' : 'stroke-[2.2]'
+                        item.label === 'Home' || item.label === 'Dashboard' ? 'fill-[#4F46E5]' : 'stroke-[2.2]'
                       )}
                     />
                   </div>

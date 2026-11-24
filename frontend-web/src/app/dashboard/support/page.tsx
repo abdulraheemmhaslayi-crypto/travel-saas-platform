@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createTicketSchema, type CreateTicketFormData } from '@/lib/validation-support';
 import { TicketStatus, TicketPriority, TicketCategory } from '@/types/support';
 import TicketCard from '@/components/support/TicketCard';
+import SupportTicketsMobile from '@/components/support/SupportTicketsMobile';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -88,7 +89,23 @@ export default function SupportDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full">
+      {/* Mobile View (Matches media_1795518508645_2fbb1f1a.jpg) */}
+      <div className="block md:hidden -m-4 sm:-m-6">
+        <SupportTicketsMobile
+          tickets={tickets}
+          filters={filters}
+          totalCount={totalCount}
+          isLoading={isLoading}
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+          handleFilterChange={handleFilterChange}
+          setShowCreateModal={setShowCreateModal}
+        />
+      </div>
+
+      {/* Desktop View */}
+      <div className="hidden md:block space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -226,6 +243,8 @@ export default function SupportDashboardPage() {
           ))}
         </div>
       )}
+
+      </div>
 
       {/* Create Ticket Modal */}
       <Modal

@@ -4,6 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useFleetStore } from '@/store/slices/fleetSlice';
 import { useAppStore } from '@/store';
+import { useAuthStore } from '@/store/slices/authSlice';
+import { useNotificationStore } from '@/store/slices/notificationSlice';
+import FleetDriversMobile from '@/components/fleet/FleetDriversMobile';
 import Loading from '@/components/common/Loading';
 import DataTable from '@/components/admin/DataTable';
 import Card from '@/components/ui/Card';
@@ -18,6 +21,8 @@ const validTabs: DriverTab[] = ['all', 'assignments', 'documents', 'performance'
 function FleetOwnerDriversPageContent() {
   const { drivers, vehicles, isLoading, error, getDrivers, addDriver, getVehicles, assignVehicleToDriver } = useFleetStore();
   const { showToast } = useAppStore();
+  const { user } = useAuthStore();
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
   const searchParams = useSearchParams();
   const router = useRouter();
   const [showAddDriverModal, setShowAddDriverModal] = useState(false);
@@ -430,97 +435,121 @@ function FleetOwnerDriversPageContent() {
     : 'N/A';
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Users className="w-6 h-6 text-blue-600" />
-            Drivers
-          </h1>
-          <p className="text-gray-600 mt-1">View your fleet drivers and their performance.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={getDrivers}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => setShowAddDriverModal(true)} className="bg-blue-600 hover:bg-blue-700">
-            <UserPlus className="w-4 h-4 mr-2" />
-            Add Driver
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border border-gray-200 shadow-sm bg-white">
-          <div className="p-4">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Drivers</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{totalDrivers}</p>
-          </div>
-        </Card>
-        <Card className="border border-gray-200 shadow-sm bg-white">
-          <div className="p-4">
-            <p className="text-xs font-semibold text-green-600 uppercase tracking-wider">Active</p>
-            <p className="text-2xl font-bold text-green-700 mt-1">{activeDrivers}</p>
-          </div>
-        </Card>
-        <Card className="border border-gray-200 shadow-sm bg-white">
-          <div className="p-4">
-            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Verified</p>
-            <p className="text-2xl font-bold text-blue-700 mt-1">{verifiedDrivers}</p>
-          </div>
-        </Card>
-        <Card className="border border-gray-200 shadow-sm bg-white">
-          <div className="p-4">
-            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Avg Rating</p>
-            <p className="text-2xl font-bold text-amber-700 mt-1">{avgRating}</p>
-          </div>
-        </Card>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="flex gap-1 overflow-x-auto pb-1">
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
-          {([
-            { id: 'all' as const, label: 'All Drivers', icon: <Users className="w-3.5 h-3.5" /> },
-            { id: 'assignments' as const, label: 'Assignments', icon: <UserCog className="w-3.5 h-3.5" /> },
-            { id: 'documents' as const, label: 'Documents', icon: <FileText className="w-3.5 h-3.5" /> },
-            { id: 'performance' as const, label: 'Performance', icon: <Activity className="w-3.5 h-3.5" /> },
-          ]).map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setCurrentTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap ${
-                currentTab === tab.id
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      {isLoading ? (
-        <Loading text="Loading drivers..." />
-      ) : (
-        <DataTable
-          title={getTableTitle()}
-          subtitle={currentTab === 'all' ? 'Active driver roster' : undefined}
-          columns={getColumns()}
-          data={drivers}
-          keyExtractor={(driver) => driver.id}
+    <>
+      {/* Mobile Screen Component (Dedicated View Matching App Mockup) */}
+      <div className="block lg:hidden w-full min-w-0">
+        <FleetDriversMobile
+          user={user}
+          unreadCount={unreadCount}
+          drivers={drivers}
+          vehicles={vehicles}
+          currentTab={currentTab}
+          setCurrentTab={setCurrentTab}
           isLoading={isLoading}
-          totalCount={drivers.length}
-          page={1}
-          onPageChange={() => undefined}
-          emptyMessage="No drivers found"
+          onRefresh={getDrivers}
+          onAddDriver={() => setShowAddDriverModal(true)}
+          onAssignVehicle={(driver) => {
+            setSelectedDriverForAssign(driver);
+            setSelectedVehicleId(driver.assignedVehicle?.id || driver.assignedVehicleId || '');
+            setShowAssignModal(true);
+          }}
+          onViewDocs={() => setCurrentTab('documents')}
         />
-      )}
+      </div>
+
+      {/* Desktop Screen Component */}
+      <div className="hidden lg:block space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Users className="w-6 h-6 text-blue-600" />
+              Drivers
+            </h1>
+            <p className="text-gray-600 mt-1">View your fleet drivers and their performance.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={getDrivers}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+            <Button size="sm" onClick={() => setShowAddDriverModal(true)} className="bg-blue-600 hover:bg-blue-700">
+              <UserPlus className="w-4 h-4 mr-2" />
+              Add Driver
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border border-gray-200 shadow-sm bg-white">
+            <div className="p-4">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Drivers</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{totalDrivers}</p>
+            </div>
+          </Card>
+          <Card className="border border-gray-200 shadow-sm bg-white">
+            <div className="p-4">
+              <p className="text-xs font-semibold text-green-600 uppercase tracking-wider">Active</p>
+              <p className="text-2xl font-bold text-green-700 mt-1">{activeDrivers}</p>
+            </div>
+          </Card>
+          <Card className="border border-gray-200 shadow-sm bg-white">
+            <div className="p-4">
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Verified</p>
+              <p className="text-2xl font-bold text-blue-700 mt-1">{verifiedDrivers}</p>
+            </div>
+          </Card>
+          <Card className="border border-gray-200 shadow-sm bg-white">
+            <div className="p-4">
+              <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Avg Rating</p>
+              <p className="text-2xl font-bold text-amber-700 mt-1">{avgRating}</p>
+            </div>
+          </Card>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-1 overflow-x-auto pb-1">
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+            {([
+              { id: 'all' as const, label: 'All Drivers', icon: <Users className="w-3.5 h-3.5" /> },
+              { id: 'assignments' as const, label: 'Assignments', icon: <UserCog className="w-3.5 h-3.5" /> },
+              { id: 'documents' as const, label: 'Documents', icon: <FileText className="w-3.5 h-3.5" /> },
+              { id: 'performance' as const, label: 'Performance', icon: <Activity className="w-3.5 h-3.5" /> },
+            ]).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setCurrentTab(tab.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap ${
+                  currentTab === tab.id
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {isLoading ? (
+          <Loading text="Loading drivers..." />
+        ) : (
+          <DataTable
+            title={getTableTitle()}
+            subtitle={currentTab === 'all' ? 'Active driver roster' : undefined}
+            columns={getColumns()}
+            data={drivers}
+            keyExtractor={(driver) => driver.id}
+            isLoading={isLoading}
+            totalCount={drivers.length}
+            page={1}
+            onPageChange={() => undefined}
+            emptyMessage="No drivers found"
+          />
+        )}
+      </div>
 
       {/* Add Driver Modal */}
       {showAddDriverModal && (
@@ -857,7 +886,7 @@ function FleetOwnerDriversPageContent() {
           </Card>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

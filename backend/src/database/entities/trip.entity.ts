@@ -119,6 +119,12 @@ export class Trip {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   returnPricePerSeat: number;
 
+  @Column({ type: 'varchar', length: 20, default: 'SEAT' })
+  bookingMode: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  fullVehiclePrice: number;
+
   @Column({ type: 'int', nullable: true })
   distanceKm: number;
 

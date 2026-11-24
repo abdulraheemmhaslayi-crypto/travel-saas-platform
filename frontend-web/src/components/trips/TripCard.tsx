@@ -137,10 +137,15 @@ const TripCard: React.FC<TripCardProps> = ({ trip, variant = 'default', onBook }
           </div>
           <div className="text-right shrink-0">
             <p className="text-base font-black text-blue-600">
-              {formatCurrency(trip.pricePerSeat || trip.price || 0, trip.currency || 'INR')}
+              {formatCurrency(
+                trip.bookingMode === 'FULL_VEHICLE'
+                  ? (trip.fullVehiclePrice || trip.pricePerSeat || trip.price || 0)
+                  : (trip.pricePerSeat || trip.price || 0),
+                trip.currency || 'INR'
+              )}
             </p>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 inline-block">
-              {trip.availableSeats} seats left
+              {trip.bookingMode === 'FULL_VEHICLE' ? 'Entire Car' : `${trip.availableSeats} seats left`}
             </span>
           </div>
         </div>
@@ -178,12 +183,20 @@ const TripCard: React.FC<TripCardProps> = ({ trip, variant = 'default', onBook }
 
         {/* Pricing */}
         <div className="text-right shrink-0">
-          <div className="text-xl sm:text-2xl font-black text-blue-600 tracking-tight">
-            {formatCurrency(trip.pricePerSeat || trip.price || 0, trip.currency || 'INR')}
-          </div>
-          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block -mt-0.5">
-            per seat
-          </span>
+          {(() => {
+            const isFull = (trip.bookingMode || '').toUpperCase() === 'FULL_VEHICLE' || (Boolean(trip.fullVehiclePrice) && Number(trip.fullVehiclePrice) > 0);
+            const displayFare = Math.round(Number(isFull ? (trip.fullVehiclePrice || trip.price || 2999) : (trip.pricePerSeat || trip.price || 0)));
+            return (
+              <>
+                <div className="text-xl sm:text-2xl font-black text-blue-600 tracking-tight">
+                  {formatCurrency(displayFare, trip.currency || 'INR')}
+                </div>
+                <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block -mt-0.5">
+                  {isFull ? 'entire car' : trip.bookingMode === 'BOTH' ? 'per seat / full' : 'per seat'}
+                </span>
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -316,7 +329,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, variant = 'default', onBook }
               }}
               className="flex-1 sm:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition-all text-center flex items-center justify-center gap-1.5"
             >
-              <span>Book Seat</span>
+              <span>{trip.bookingMode === 'FULL_VEHICLE' ? 'Book Entire Car' : 'Book Seat'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           ) : (

@@ -10,6 +10,7 @@ import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
 import Badge from '@/components/ui/Badge';
 import Loading from '@/components/common/Loading';
+import FleetTripDetailMobile from '@/components/fleet/FleetTripDetailMobile';
 import { 
   ArrowLeft, Calendar, Clock, MapPin, Users, Car, 
   Trash2, ShieldAlert, CheckCircle2, AlertTriangle, RefreshCw,
@@ -211,9 +212,27 @@ export default function FleetOwnerTripDetailPage() {
   const isCancellable = bookingCount === 0 && trip.status !== 'CANCELLED' && trip.status !== 'COMPLETED';
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="w-full">
+      {/* ── Mobile View (Matching Design Screenshot) ── */}
+      <div className="block md:hidden">
+        <FleetTripDetailMobile
+          trip={trip}
+          drivers={drivers}
+          selectedDriverId={selectedDriverId}
+          setSelectedDriverId={setSelectedDriverId}
+          handleAssignDriver={handleAssignDriver}
+          handleStatusChange={handleStatusChange}
+          handleDeleteTrip={handleDeleteTrip}
+          isActionLoading={isActionLoading}
+          isCancellable={isCancellable}
+          assignedDriver={assignedDriver}
+        />
+      </div>
+
+      {/* ── Desktop View (Original View) ── */}
+      <div className="hidden md:block space-y-6 max-w-5xl mx-auto pb-12">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/fleet-owner/trips"
@@ -506,5 +525,6 @@ export default function FleetOwnerTripDetailPage() {
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

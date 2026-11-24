@@ -9,7 +9,7 @@ import { useAppStore } from '@/store';
 import MapView, { MapMarker } from '@/components/maps/MapView';
 import SearchInput from '@/components/maps/SearchInput';
 import DatePicker from '@/components/ui/DatePicker';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, formatRideDateTime } from '@/lib/utils';
 import {
   MapPin,
   ArrowRight,
@@ -346,8 +346,15 @@ export default function MobileTripSearchScreen() {
     return filteredTrips[0] || null;
   }, [selectedTripId, allTrips, filteredTrips]);
 
-  const selectedFare = Number(
-    selectedTrip?.pricePerSeat || selectedTrip?.price || selectedTrip?.basePrice || 399
+  const isSelectedFullVehicle =
+    (selectedTrip?.bookingMode || '').toUpperCase() === 'FULL_VEHICLE' ||
+    (Boolean(selectedTrip?.fullVehiclePrice) && Number(selectedTrip?.fullVehiclePrice) > 0);
+  const selectedFare = Math.round(
+    Number(
+      isSelectedFullVehicle
+        ? (selectedTrip?.fullVehiclePrice || selectedTrip?.price || 2999)
+        : (selectedTrip?.pricePerSeat || selectedTrip?.price || selectedTrip?.basePrice || 399)
+    )
   );
 
   const handleConfirmBooking = () => {
@@ -787,7 +794,12 @@ export default function MobileTripSearchScreen() {
                     {filteredTrips.map((trip) => {
                       const isSelected = (selectedTripId || filteredTrips[0]?.id) === trip.id;
                       const tripImg = getTripVehicleImage(trip.vehicle || trip.vehicleType);
-                      const priceVal = Number(trip.pricePerSeat || trip.price || trip.basePrice || 399);
+                      const isFullVehicle =
+                        (trip.bookingMode || '').toUpperCase() === 'FULL_VEHICLE' ||
+                        (Boolean(trip.fullVehiclePrice) && Number(trip.fullVehiclePrice) > 0);
+                      const priceVal = isFullVehicle
+                        ? Math.round(Number(trip.fullVehiclePrice || trip.price || trip.pricePerSeat || 2999))
+                        : Math.round(Number(trip.pricePerSeat || trip.price || trip.basePrice || 399));
                       const vName = formatVehicleName(
                         trip.vehicle ? `${trip.vehicle.brand} ${trip.vehicle.model}` : trip.vehicleName || 'Toyota Innova'
                       );
@@ -816,17 +828,21 @@ export default function MobileTripSearchScreen() {
                             <img src={tripImg} alt={vName} className="w-14 h-10 object-contain shrink-0 drop-shadow-xs" />
 
                             <div className="min-w-0 flex-1">
-                              <h4 className="text-xs font-black text-slate-900 truncate">{vName}</h4>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h4 className="text-xs font-black text-slate-900 truncate">{vName}</h4>
+                                {isFullVehicle && (
+                                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded shrink-0">
+                                    Full Car
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-indigo-600 font-bold truncate mt-0.5 flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-indigo-500 shrink-0" />
+                                <span>{formatRideDateTime(trip.departureDate || trip.departureTime)}</span>
+                              </p>
                               <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
-                                {trip.departureTime
-                                  ? new Date(trip.departureTime).toLocaleTimeString('en-US', {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })
-                                  : 'Flexible Departure'}
-                                {' • '}
                                 <span className="text-emerald-600 font-bold">
-                                  {trip.availableSeats || 4} seats left
+                                  {isFullVehicle ? 'Private Cab (Entire Car)' : `${trip.availableSeats || 4} seats left`}
                                 </span>
                               </p>
                             </div>
@@ -836,7 +852,7 @@ export default function MobileTripSearchScreen() {
                             <span className="text-xs sm:text-sm font-black text-[#4F46E5]">
                               ₹ {priceVal > 0 ? priceVal : 399}
                             </span>
-                            <span className="text-[9px] text-slate-400 block leading-tight">per seat</span>
+                            <span className="text-[9px] text-slate-400 block leading-tight">{isFullVehicle ? 'entire car' : 'per seat'}</span>
                           </div>
                         </div>
                       );
@@ -871,7 +887,9 @@ export default function MobileTripSearchScreen() {
                 >
                   <Car className="w-5 h-5 text-white stroke-[2.2] shrink-0" />
                   <span>
-                    {user
+                    {isSelectedFullVehicle
+                      ? `Book Entire Car • ₹${selectedFare > 0 ? selectedFare : 2999}`
+                      : user
                       ? `Confirm Booking • ₹${selectedFare > 0 ? selectedFare : 399}`
                       : `Sign In to Book a Ride ₹${selectedFare > 0 ? selectedFare : 399}`}
                   </span>
